@@ -24,7 +24,7 @@ const ROLE_COLORS: Record<string, string> = {
 export function TaskTable({ tasks }: TaskTableProps) {
 	return (
 		<div className="overflow-x-auto">
-			<table className="min-w-full divide-y divide-gray-200 text-sm" role="table">
+			<table className="min-w-full divide-y divide-gray-200 text-sm">
 				<thead className="bg-gray-50">
 					<tr>
 						<th className="px-3 py-2 text-left font-medium text-gray-500">ID</th>
@@ -47,12 +47,8 @@ export function TaskTable({ tasks }: TaskTableProps) {
 							<td className={`px-3 py-2 font-medium ${ROLE_COLORS[task.agentRole] ?? ""}`}>
 								{task.agentRole}
 							</td>
-							<td className="px-3 py-2 text-right font-mono">
-								${task.estimatedCost.toFixed(2)}
-							</td>
-							<td className="px-3 py-2 text-right font-mono">
-								{task.sigmaEstimate.toFixed(1)}
-							</td>
+							<td className="px-3 py-2 text-right font-mono">${task.estimatedCost.toFixed(2)}</td>
+							<td className="px-3 py-2 text-right font-mono">{task.sigmaEstimate.toFixed(1)}</td>
 							<td className="px-3 py-2">
 								<span
 									className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[task.status] ?? ""}`}

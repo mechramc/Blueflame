@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S8 GitHub Integration** (complete) — S8-001 and S8-002 done
+**S9 Budget System** (complete) — S9-001 and S9-002 done
 
 ## Sprint Progress
 
@@ -48,8 +48,8 @@
 ### Week 4 (Mar 3–9) — Budget + Dashboard
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
-| S9-001: Budget tracking | S9 | P1 | Not started |
-| S9-002: Partial execution | S9 | P1 | Not started |
+| S9-001: Budget tracking | S9 | P1 | **DONE** |
+| S9-002: Budget UI | S9 | P1 | **DONE** |
 | S10-001: Run status dashboard | S10 | P1 | Not started |
 | S10-002: Cost visualization | S10 | P1 | Not started |
 
@@ -61,7 +61,7 @@
 
 ## Task Progress
 - **Total**: 24/27 complete
-- **P0**: 21/21 | **P1**: 0/4 | **Demo/Submit**: 0/2 | S8 (bonus P0): 2/2
+- **P0**: 21/21 | **P1**: 2/4 | **Demo/Submit**: 0/2 | S8 (bonus P0): 2/2
 - **Critical path**: COMPLETE (all P0 tasks done)
 
 ## Decisions Log
@@ -92,7 +92,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 43 |
-| apps/api | 130 |
+| apps/web | 58 |
+| apps/api | 156 |
 | packages/* | 144 |
-| **Total** | **317** |
+| **Total** | **358** |

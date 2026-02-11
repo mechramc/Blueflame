@@ -14,10 +14,11 @@ app.get("/health", (_req, res) => {
 	res.json({ status: "ok", service: "blueflame-api" });
 });
 
-import { specsRouter } from "./routes/specs.js";
-import { plansRouter } from "./routes/plans.js";
 import { authorizeRouter } from "./routes/authorize.js";
+import { budgetRouter } from "./routes/budget.js";
 import { executionRouter } from "./routes/execution.js";
+import { plansRouter } from "./routes/plans.js";
+import { specsRouter } from "./routes/specs.js";
 import { webhookRouter } from "./webhooks/github.js";
 
 app.use("/api/chat", chatRouter);
@@ -26,6 +27,7 @@ app.use("/api/plans", plansRouter);
 app.use("/api/authorize", authorizeRouter);
 app.use("/api/execution", executionRouter);
 app.use("/api/webhooks", webhookRouter);
+app.use("/api/budget", budgetRouter);
 
 const httpServer = createServer(app);
 

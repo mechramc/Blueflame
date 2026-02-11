@@ -9,14 +9,14 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-11
-- **Session**: 3
+- **Session**: 4
 
 ## Current State
-- **Phase**: S8 GitHub Integration (complete)
-- **Last completed task**: S8-002 — GitHub webhook handler for CI feedback loop
-- **Next task**: S9-001 — Budget monitor (P1)
+- **Phase**: S9 Budget System (complete)
+- **Last completed task**: S9-002 — Budget UI with pause decision modal
+- **Next task**: S10-001 — Run status dashboard (P1)
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 317 tests)
+- **Repo is green**: YES (build, lint, test all pass — 358 tests)
 
 ## What Just Happened
 - **S1-001 COMPLETE**: Turborepo monorepo fully scaffolded (6 packages)
@@ -168,12 +168,22 @@
   - Wired to POST /api/webhooks/github in API entry point
   - 15 tests (7 signature verification + 8 webhook handler)
 
+- **S9-001 COMPLETE**: Cost tracker + budget monitor:
+  - `apps/api/src/services/cost-tracker.ts` — per-agent cost accounting with model pricing tiers (gpt-4o, gpt-4o-mini, claude-sonnet-4-5, claude-haiku-4-5)
+  - `apps/api/src/services/budget-monitor.ts` — budget state management, WARNING at 80%, CRITICAL/PAUSE at 95%, handleBudgetDecision (Resume/Accept/Abandon)
+  - `apps/api/src/routes/budget.ts` — REST API: GET /:runId, POST /init, POST /:runId/check, POST /:runId/decision, GET /:runId/cost
+  - 26 tests (11 cost-tracker + 15 budget-monitor)
+
+- **S9-002 COMPLETE**: Budget UI with pause decision modal:
+  - `apps/web/components/budget/CostProgressBar.tsx` — progress bar with green/yellow/red color transitions
+  - `apps/web/components/budget/BudgetWarning.tsx` — alert overlay at 80%+ (warning) and 95%+ (critical)
+  - `apps/web/components/budget/PauseDecisionModal.tsx` — 3-option modal (Resume with top-up, Accept Partial, Abandon)
+  - 15 tests (6 CostProgressBar + 4 BudgetWarning + 5 PauseDecisionModal)
+
 ## What To Pick Up Next
-1. **S9-001**: Budget tracking service (P1)
-2. **S9-002**: Budget UI (P1)
-3. **S10-001**: Run status dashboard (P1)
-4. **S10-002**: DAG progress + action stream (P1)
-5. Demo recording + submission package
+1. **S10-001**: Run status dashboard (P1)
+2. **S10-002**: DAG progress + action stream (P1)
+3. Demo recording + submission package
 
 ## Blockers
 - None
@@ -189,7 +199,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 317 (130 API + 44 Cosmos + 43 Web + 72 Foundry + 24 GitHub App + 4 Shared) |
+| Total | 358 (156 API + 44 Cosmos + 58 Web + 72 Foundry + 24 GitHub App + 4 Shared) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
