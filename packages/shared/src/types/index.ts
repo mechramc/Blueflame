@@ -8,6 +8,7 @@
 // Enums
 export {
 	AgentRole,
+	AgentRoleExtended,
 	AgentStatus,
 	BudgetDecision,
 	ConstraintEnforcement,
@@ -15,6 +16,9 @@ export {
 	ConstraintSource,
 	ConstraintType,
 	DocumentType,
+	FailureSource,
+	FailureType,
+	RemediationStatus,
 	RunStatus,
 	SpecStatus,
 	TaskStatus,
@@ -37,6 +41,18 @@ export type {
 } from "./spec.js";
 
 export type { ChatMessage, MessageRole } from "./message.js";
+
+// Failure Intelligence types
+export type {
+	FailedStep,
+	NormalizedFailure,
+	PipelineEnvironment,
+	Remediation,
+	RemediationTask,
+	RootCauseAnalysis,
+	TestFailureDetail,
+	TestResults,
+} from "./failure.js";
 
 // State machine helpers
 export { RUN_TRANSITIONS } from "./run.js";

@@ -27,6 +27,7 @@ export enum AgentRole {
 	Builder = "BUILDER",
 	Verifier = "VERIFIER",
 	Explainer = "EXPLAINER",
+	Fixer = "FIXER",
 }
 
 /** Agent execution states (Section 13.2) */
@@ -90,9 +91,45 @@ export enum TaskStatus {
 	Deferred = "DEFERRED",
 }
 
-/** Budget decision when paused at 95% (Section 16.2) */
+/** Budget decision when paused at 95% (Section 17.2) */
 export enum BudgetDecision {
 	Resume = "RESUME",
 	Accept = "ACCEPT",
 	Abandon = "ABANDON",
+}
+
+/** Agent roles — extended with Fixer (Section 7.1, 10.4) */
+export enum AgentRoleExtended {
+	Planner = "PLANNER",
+	Builder = "BUILDER",
+	Verifier = "VERIFIER",
+	Explainer = "EXPLAINER",
+	Fixer = "FIXER",
+}
+
+/** CI/CD failure source provider (Section 10.3) */
+export enum FailureSource {
+	AzureDevOps = "azure-devops",
+	GitHubActions = "github-actions",
+}
+
+/** CI/CD failure category (Section 10.3) */
+export enum FailureType {
+	Test = "test",
+	Build = "build",
+	Lint = "lint",
+	Deploy = "deploy",
+	Timeout = "timeout",
+	Infrastructure = "infrastructure",
+}
+
+/** Remediation status lifecycle */
+export enum RemediationStatus {
+	Pending = "PENDING",
+	Analyzing = "ANALYZING",
+	PlanReady = "PLAN_READY",
+	Authorized = "AUTHORIZED",
+	Executing = "EXECUTING",
+	Completed = "COMPLETED",
+	Failed = "FAILED",
 }

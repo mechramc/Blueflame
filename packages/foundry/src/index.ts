@@ -73,3 +73,15 @@ export {
 } from "./agents/explainer.js";
 
 export { EXPLAINER_SYSTEM_PROMPT } from "./agents/prompts/explainer-system.js";
+
+export {
+	type FixerConfig,
+	type FixerError,
+	type FixerOutput,
+	type FixerResult,
+	analyzeFailure,
+	buildFixerPrompt,
+	parseFixerOutput,
+} from "./agents/fixer.js";
+
+export { FIXER_SYSTEM_PROMPT } from "./agents/prompts/fixer-system.js";
