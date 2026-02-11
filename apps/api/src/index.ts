@@ -14,7 +14,10 @@ app.get("/health", (_req, res) => {
 	res.json({ status: "ok", service: "blueflame-api" });
 });
 
+import { specsRouter } from "./routes/specs.js";
+
 app.use("/api/chat", chatRouter);
+app.use("/api/specs", specsRouter);
 
 const httpServer = createServer(app);
 

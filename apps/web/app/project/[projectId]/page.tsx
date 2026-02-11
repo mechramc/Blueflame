@@ -1,30 +1,31 @@
 "use client";
 
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { SplitView } from "@/components/layout/SplitView";
+import { SpecEditor } from "@/components/spec/SpecEditor";
 import { useParams } from "next/navigation";
+import { useCallback } from "react";
 
 /**
- * Project page — split-view layout with chat (left) and spec/plan panels (right).
- * The right panel will be added in S5-002 (Spec editor UI).
+ * Project page — resizable split-view with chat (left) and spec editor (right).
  */
 export default function ProjectPage() {
 	const params = useParams<{ projectId: string }>();
 	const projectId = params.projectId;
 
-	return (
-		<div className="flex h-screen">
-			{/* Left: Chat panel */}
-			<div className="w-1/2 border-r border-gray-800">
-				<ChatPanel projectId={projectId} />
-			</div>
+	const handleGenerateSpec = useCallback(() => {
+		// TODO: S5-002 will wire this to the spec generation API
+		console.log("[ProjectPage] Generate spec requested for", projectId);
+	}, [projectId]);
 
-			{/* Right: Spec/Plan panel (S5-002) */}
-			<div className="flex w-1/2 items-center justify-center">
-				<div className="text-center">
-					<p className="text-sm text-gray-500">Spec and plan panels will appear here</p>
-					<p className="text-xs text-gray-600">Coming in S5-002</p>
-				</div>
-			</div>
+	return (
+		<div className="h-screen">
+			<SplitView
+				left={<ChatPanel projectId={projectId} />}
+				right={<SpecEditor projectId={projectId} onGenerateSpec={handleGenerateSpec} />}
+				defaultLeftPercent={40}
+				minWidth={350}
+			/>
 		</div>
 	);
 }

@@ -13,3 +13,10 @@ export {
 } from "./agents/designer.js";
 
 export { DESIGNER_SYSTEM_PROMPT } from "./agents/prompts/designer-system.js";
+
+export {
+	type SpecGeneratorConfig,
+	generateSpec,
+} from "./agents/spec-generator.js";
+
+export { SPEC_GENERATION_SYSTEM_PROMPT } from "./agents/prompts/spec-generation-system.js";

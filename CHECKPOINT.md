@@ -12,11 +12,11 @@
 - **Session**: 1
 
 ## Current State
-- **Phase**: S4 Chat Interface
-- **Last completed task**: S4-002 — Designer agent
-- **Next task**: S5-001 — Spec generation, S5-002 — Spec editor UI
+- **Phase**: S5 Spec Engine (complete)
+- **Last completed task**: S5-003 — Spec freeze + versioning
+- **Next task**: S6-001 — Task decomposition
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass)
+- **Repo is green**: YES (build, lint, test all pass — 133 tests)
 
 ## What Just Happened
 - **S1-001 COMPLETE**: Turborepo monorepo fully scaffolded (6 packages)
@@ -87,24 +87,46 @@
   - Wired into `apps/api/src/index.ts` via chatRouter
   - 17 new tests: 8 foundry (prompt + message conversion) + 9 conversation service
 
+- **S5-001 COMPLETE**: Spec editor UI (Monaco YAML editor + status badges + actions):
+  - `apps/web/components/spec/SpecStatusBadge.tsx` — DRAFT/ACCEPTED/FROZEN badges with color coding
+  - `apps/web/components/spec/SpecActions.tsx` — Accept, Freeze, Regenerate buttons per status
+  - `apps/web/components/spec/SpecEditor.tsx` — Monaco editor with YAML, dynamic import (SSR-safe), readOnly when frozen
+  - `apps/web/components/layout/SplitView.tsx` — resizable horizontal split with draggable divider
+  - Updated project page to use SplitView (chat left, spec right)
+  - 12 tests (9 SpecActions/SpecStatusBadge + 3 SplitView)
+
+- **S5-002 COMPLETE**: Spec generation from conversation context:
+  - `packages/foundry/src/agents/prompts/spec-generation-system.ts` — YAML output prompt with required fields/ID formats
+  - `packages/foundry/src/agents/spec-generator.ts` — generateSpec(), formatConversation(), cleanYaml()
+  - `apps/api/src/services/spec-generation.ts` — in-memory spec store (CRUD, accept)
+  - `apps/api/src/routes/specs.ts` — POST /generate, GET /:projectId, PUT /:specId/accept, PUT /:specId/freeze
+  - 13 tests (4 foundry spec-generator + 9 spec-generation service)
+
+- **S5-003 COMPLETE**: Spec freeze + versioning with SHA-256 hash:
+  - `packages/shared/src/utils/hash.ts` — SHA-256 utility (sub-path export to avoid bundling node:crypto in browser)
+  - `apps/api/src/services/spec-freeze.ts` — freezeSpec (ACCEPTED→FROZEN), editFrozenSpec (creates new DRAFT version)
+  - 12 tests (4 hash + 8 freeze)
+
 ## What To Pick Up Next
-1. **S5-001**: Spec generation from conversation context
-2. **S5-002**: Spec editor UI
-3. **S5-003**: Spec freeze + versioning
+1. **S6-001**: Task decomposition (Planner agent)
+2. **S6-002**: DAG + authorization UI
+3. **S6-003**: Plan lock (immutable plan.lock.json)
 
 ## Blockers
 - None
 
 ## Key Files to Read Before Starting
 - `packages/shared/src/types/` — all domain types (read before implementing repos/services)
-- `infra/main.bicep` — Bicep orchestrator (read before deploying or modifying infra)
-- `Blueflame-Spec-v3-ACAR.md` — sections 7 (auth/RBAC), 13.2 (Cosmos containers)
+- `packages/foundry/src/agents/` — agent prompts + streaming clients (designer, spec-generator)
+- `apps/api/src/services/` — spec-generation, spec-freeze, conversation, change-feed-bridge
+- `apps/api/src/routes/` — chat.ts, specs.ts (API routes)
+- `Blueflame-Spec-v3-ACAR.md` — sections 8 (plan engine), 9 (agents), 10 (GitHub)
 - `tasks.yaml` — acceptance criteria for each task
 
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 96 (32 API + 44 Cosmos + 12 Web + 8 Foundry) |
+| Total | 133 (49 API + 44 Cosmos + 24 Web + 12 Foundry + 4 Shared) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

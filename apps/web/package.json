@@ -15,6 +15,7 @@
 		"@azure/msal-browser": "^3.30.0",
 		"@azure/msal-react": "^2.2.0",
 		"@blueflame/shared": "*",
+		"@monaco-editor/react": "^4.7.0",
 		"next": "^14.2.0",
 		"react": "^18.3.0",
 		"react-dom": "^18.3.0",

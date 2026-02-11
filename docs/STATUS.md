@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S1 Scaffold & Infrastructure** (in progress) — S1-001 complete
+**S5 Spec Engine** (complete) — S5-001 through S5-003 done
 
 ## Sprint Progress
 
@@ -28,9 +28,9 @@
 | S3-003: Cosmos DB change feed processor | S3 | P0 | **DONE** |
 | S4-001: Chat UI | S4 | P0 | **DONE** |
 | S4-002: Designer Agent | S4 | P0 | **DONE** |
-| S5-001: Spec generation | S5 | P0 | Not started |
-| S5-002: Spec editor UI | S5 | P0 | Not started |
-| S5-003: Spec freeze + versioning | S5 | P0 | Not started |
+| S5-001: Spec editor UI | S5 | P0 | **DONE** |
+| S5-002: Spec generation | S5 | P0 | **DONE** |
+| S5-003: Spec freeze + versioning | S5 | P0 | **DONE** |
 
 ### Week 3 (Feb 24–Mar 2) — Planning + Agents + GitHub
 | Task | System | Priority | Status |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 12/27 complete
-- **P0**: 12/21 | **P1**: 0/6
+- **Total**: 15/27 complete
+- **P0**: 15/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -76,6 +76,7 @@
 | 2026-02-11 | MSAL v2/v3 (not v5) for React auth | MSAL React v5 requires React 19; we use React 18 with Next.js 14 |
 | 2026-02-11 | next.config.mjs (not .ts) | Next.js 14 doesn't support .ts config |
 | 2026-02-11 | --passWithNoTests for vitest | Prevents CI failure on empty packages |
+| 2026-02-11 | Sub-path export for sha256 (`@blueflame/shared/utils/hash`) | Avoid bundling `node:crypto` in Next.js client |
 
 ## Blockers
 - None currently identified
@@ -91,7 +92,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 12 |
-| apps/api | 32 |
-| packages/* | 52 |
-| **Total** | **96** |
+| apps/web | 24 |
+| apps/api | 49 |
+| packages/* | 60 |
+| **Total** | **133** |
