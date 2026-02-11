@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S5 Spec Engine** (complete) — S5-001 through S5-003 done
+**S6 Planning Engine** (complete) — S6-001 through S6-003 done
 
 ## Sprint Progress
 
@@ -35,9 +35,9 @@
 ### Week 3 (Feb 24–Mar 2) — Planning + Agents + GitHub
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
-| S6-001: Task decomposition | S6 | P0 | Not started |
-| S6-002: DAG + authorization UI | S6 | P0 | Not started |
-| S6-003: Plan lock | S6 | P0 | Not started |
+| S6-001: Task decomposition | S6 | P0 | **DONE** |
+| S6-002: DAG + authorization UI | S6 | P0 | **DONE** |
+| S6-003: Plan lock | S6 | P0 | **DONE** |
 | S7-001: Builder agent | S7 | P0 | Not started |
 | S7-002: Verifier agent | S7 | P0 | Not started |
 | S7-003: Explainer agent | S7 | P0 | Not started |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 15/27 complete
-- **P0**: 15/21 | **P1**: 0/6
+- **Total**: 18/27 complete
+- **P0**: 18/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -92,7 +92,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 24 |
-| apps/api | 49 |
-| packages/* | 60 |
-| **Total** | **133** |
+| apps/web | 43 |
+| apps/api | 69 |
+| packages/* | 76 |
+| **Total** | **188** |

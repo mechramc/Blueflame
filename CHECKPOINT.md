@@ -12,11 +12,11 @@
 - **Session**: 1
 
 ## Current State
-- **Phase**: S5 Spec Engine (complete)
-- **Last completed task**: S5-003 — Spec freeze + versioning
-- **Next task**: S6-001 — Task decomposition
+- **Phase**: S6 Planning Engine (complete)
+- **Last completed task**: S6-003 — Authorization gate (plan.lock creation)
+- **Next task**: S7-001 — Builder agent
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 133 tests)
+- **Repo is green**: YES (build, lint, test all pass — 188 tests)
 
 ## What Just Happened
 - **S1-001 COMPLETE**: Turborepo monorepo fully scaffolded (6 packages)
@@ -107,10 +107,33 @@
   - `apps/api/src/services/spec-freeze.ts` — freezeSpec (ACCEPTED→FROZEN), editFrozenSpec (creates new DRAFT version)
   - 12 tests (4 hash + 8 freeze)
 
+- **S6-001 COMPLETE**: Planner agent for task decomposition:
+  - `packages/foundry/src/agents/prompts/planner-system.ts` — JSON output prompt with DAG rules, σ estimates, agent role assignment
+  - `packages/foundry/src/agents/planner.ts` — generatePlan(), parsePlanOutput(), validateDAG() (Kahn's algorithm cycle detection)
+  - `apps/api/src/services/planning.ts` — in-memory plan store, createPlanFromRaw(), getPlanByRunId()
+  - `apps/api/src/routes/plans.ts` — POST /generate, GET /:runId
+  - 16 foundry tests (5 prompt + 5 parser + 6 DAG validation) + 10 planning service tests
+
+- **S6-002 COMPLETE**: Task plan UI with DAG visualization:
+  - `apps/web/components/plan/TaskTable.tsx` — table with ID, description, deps, role, cost, σ, status columns
+  - `apps/web/components/plan/TaskDAG.tsx` — SVG DAG with topological layer layout, color-coded by agent role
+  - `apps/web/components/plan/BudgetInput.tsx` — USD budget ceiling input with 120% default
+  - `apps/web/components/plan/AuthorizeButton.tsx` — role-gated button (Authorizer+ only)
+  - `apps/web/components/plan/AuthorizeModal.tsx` — confirmation modal with budget/task summary
+  - 19 web tests (4 TaskTable + 3 TaskDAG + 4 BudgetInput + 5 AuthorizeButton + 3 AuthorizeModal)
+
+- **S6-003 COMPLETE**: Authorization gate (immutable PlanLock):
+  - `apps/api/src/services/authorization.ts` — authorizePlan() with role/spec/budget/hash validation
+  - `apps/api/src/routes/authorize.ts` — POST /api/authorize, GET /api/authorize/:runId
+  - Default agent permissions (BUILDER, VERIFIER, EXPLAINER) with token/cost limits
+  - Constraint snapshot included in lock
+  - 10 authorization tests (role checks, budget validation, constraint snapshot, lock retrieval)
+
 ## What To Pick Up Next
-1. **S6-001**: Task decomposition (Planner agent)
-2. **S6-002**: DAG + authorization UI
-3. **S6-003**: Plan lock (immutable plan.lock.json)
+1. **S7-001**: Builder agent (code implementation, branch management)
+2. **S7-002**: Verifier agent (test execution, acceptance criteria checking)
+3. **S7-003**: Explainer agent (root cause analysis, PR descriptions)
+4. **S7-004**: Orchestrator agent (DAG execution, agent spawning)
 
 ## Blockers
 - None
@@ -126,7 +149,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 133 (49 API + 44 Cosmos + 24 Web + 12 Foundry + 4 Shared) |
+| Total | 188 (69 API + 44 Cosmos + 43 Web + 28 Foundry + 4 Shared) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

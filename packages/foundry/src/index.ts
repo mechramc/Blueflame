@@ -20,3 +20,14 @@ export {
 } from "./agents/spec-generator.js";
 
 export { SPEC_GENERATION_SYSTEM_PROMPT } from "./agents/prompts/spec-generation-system.js";
+
+export {
+	type PlannerConfig,
+	type RawPlanOutput,
+	type RawPlanTask,
+	generatePlan,
+	parsePlanOutput,
+	validateDAG,
+} from "./agents/planner.js";
+
+export { PLANNER_SYSTEM_PROMPT } from "./agents/prompts/planner-system.js";

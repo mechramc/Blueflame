@@ -15,9 +15,13 @@ app.get("/health", (_req, res) => {
 });
 
 import { specsRouter } from "./routes/specs.js";
+import { plansRouter } from "./routes/plans.js";
+import { authorizeRouter } from "./routes/authorize.js";
 
 app.use("/api/chat", chatRouter);
 app.use("/api/specs", specsRouter);
+app.use("/api/plans", plansRouter);
+app.use("/api/authorize", authorizeRouter);
 
 const httpServer = createServer(app);
 

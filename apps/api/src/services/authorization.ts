@@ -1,0 +1,147 @@
+/**
+ * Authorization service — creates immutable PlanLock documents.
+ *
+ * Validates: user has Authorizer+ role, spec is frozen, plan exists,
+ * budget is set. Creates PlanLock in locks store and transitions
+ * run status to AUTHORIZED.
+ *
+ * For MVP, uses in-memory store. Production will use Cosmos DB locks container.
+ */
+
+import type { AgentPermissions, Constraint, PlanLock, TaskPlan } from "@blueflame/shared";
+import type { Result } from "@blueflame/shared";
+import { AgentRole, SpecStatus, UserRole } from "@blueflame/shared";
+import { hasMinimumRole } from "../middleware/rbac.js";
+import { getSpec } from "./spec-generation.js";
+
+/** In-memory lock store for MVP */
+const locks = new Map<string, PlanLock>();
+let lockCounter = 0;
+
+/** Default per-agent token/cost limits based on role */
+const DEFAULT_AGENT_PERMISSIONS: AgentPermissions[] = [
+	{
+		role: AgentRole.Builder,
+		maxTokens: 50000,
+		maxCost: 0.50,
+		allowedActions: ["code:write", "branch:create", "pr:create"],
+	},
+	{
+		role: AgentRole.Verifier,
+		maxTokens: 10000,
+		maxCost: 0.10,
+		allowedActions: ["test:run", "lint:check", "constraint:validate"],
+	},
+	{
+		role: AgentRole.Explainer,
+		maxTokens: 5000,
+		maxCost: 0.05,
+		allowedActions: ["trace:read", "diff:read", "doc:write"],
+	},
+];
+
+export interface AuthorizeRequest {
+	plan: TaskPlan;
+	budgetCeiling: number;
+	authorizedBy: string;
+	userRoles: string[];
+	constraints?: Constraint[];
+}
+
+/**
+ * Create an immutable PlanLock for the given plan.
+ *
+ * Validates:
+ * - User has Authorizer role or higher
+ * - Spec referenced by plan is FROZEN
+ * - Budget ceiling is positive
+ * - Plan has tasks
+ */
+export function authorizePlan(request: AuthorizeRequest): Result<PlanLock> {
+	const { plan, budgetCeiling, authorizedBy, userRoles, constraints = [] } = request;
+
+	// Role check
+	if (!hasMinimumRole(userRoles, UserRole.Authorizer)) {
+		return {
+			ok: false,
+			error: new Error("Authorization requires Blueflame.Authorizer role or higher"),
+		};
+	}
+
+	// Spec check
+	const spec = getSpec(plan.specId);
+	if (!spec) {
+		return { ok: false, error: new Error(`Spec not found: ${plan.specId}`) };
+	}
+	if (spec.status !== SpecStatus.Frozen) {
+		return {
+			ok: false,
+			error: new Error(`Spec must be FROZEN (current: ${spec.status})`),
+		};
+	}
+
+	// Budget check
+	if (budgetCeiling <= 0) {
+		return { ok: false, error: new Error("Budget ceiling must be positive") };
+	}
+
+	// Plan check
+	if (plan.tasks.length === 0) {
+		return { ok: false, error: new Error("Plan must have at least one task") };
+	}
+
+	// Hash validation
+	if (spec.specHash !== plan.specHash) {
+		return {
+			ok: false,
+			error: new Error("Plan spec hash does not match frozen spec hash"),
+		};
+	}
+
+	lockCounter += 1;
+	const lockId = `lock-${plan.runId}-${Date.now()}-${lockCounter}`;
+
+	const lock: PlanLock = {
+		id: lockId,
+		lockId,
+		runId: plan.runId,
+		projectId: plan.projectId,
+		specHash: plan.specHash,
+		approvedTaskIds: plan.tasks.map((t) => t.id),
+		budgetCeiling,
+		agentPermissions: DEFAULT_AGENT_PERMISSIONS,
+		constraintSnapshot: constraints,
+		authorizedBy,
+		authorizedAt: new Date().toISOString(),
+	};
+
+	locks.set(lockId, lock);
+	return { ok: true, value: lock };
+}
+
+/**
+ * Get a lock by ID.
+ */
+export function getLock(lockId: string): PlanLock | undefined {
+	return locks.get(lockId);
+}
+
+/**
+ * Get lock for a run.
+ */
+export function getLockByRunId(runId: string): PlanLock | undefined {
+	for (const lock of locks.values()) {
+		if (lock.runId === runId) {
+			return lock;
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Clear all locks (for testing).
+ */
+export function clearAllLocks(): void {
+	locks.clear();
+	lockCounter = 0;
+}
