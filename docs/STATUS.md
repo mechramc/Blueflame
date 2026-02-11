@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S11 Failure Intelligence** — COMPLETE
+**Demo Wiring** — COMPLETE (all pages wired to API, navigation added, demo seed endpoint)
 
 ## Sprint Progress
 
@@ -65,6 +65,17 @@
 | S11-004: Failure dashboard UI | S11 | P1 | **DONE** |
 | S11-005: Enterprise upgrade docs | S11 | P1 | **DONE** (in spec §23) |
 
+### Session 6 Continued — Demo Wiring
+| Task | Priority | Status |
+|------|----------|--------|
+| NavHeader + contextual breadcrumb navigation | P0 | **DONE** |
+| Landing page with demo project card | P0 | **DONE** |
+| Wire ChatPanel to API + Socket.IO streaming | P0 | **DONE** |
+| Wire SpecEditor to self-contained API | P0 | **DONE** |
+| Wire failures page to remediation API | P0 | **DONE** |
+| Demo seed endpoint (POST /api/demo/seed) | P0 | **DONE** |
+| Biome formatting fixes (24 files) | P0 | **DONE** |
+
 ### Week 6 (Mar 14–15) — Polish + Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -72,8 +83,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 31/32 complete
-- **P0**: 24/24 | **P1**: 7/7 | **Demo/Submit**: 0/2 (only non-code tasks remain)
+- **Total**: 32/34 complete (added 7 demo wiring tasks, all done; +2 demo/submit remain)
+- **P0**: 31/31 | **P1**: 7/7 | **Demo/Submit**: 0/2 (only non-code tasks remain)
 - **Critical path**: Demo recording → Submission
 - **Deferred**: S14-001, S14-002 (Spec Delta Detection — post-hackathon)
 

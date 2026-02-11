@@ -9,60 +9,59 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-11
-- **Session**: 6
+- **Session**: 6 (continued)
 
 ## Current State
-- **Phase**: S11 Failure Intelligence — COMPLETE
-- **Last completed task**: S11-004 — Failure Intelligence Dashboard UI
+- **Phase**: Demo Wiring — COMPLETE
+- **Last completed task**: Demo seed endpoint + full page wiring verification
 - **Next task**: Demo recording + submission (only non-code tasks remain)
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass — 453 tests)
-- **Last commit**: `e41f161` — phase(s11): implement failure intelligence
+- **Last commit**: `3bf809a` — phase(demo): wire all pages to API, add navigation, demo seed endpoint
 
-## What Just Happened (Session 6)
+## What Just Happened (Session 6 continued)
 
-### S11 Failure Intelligence — Full Implementation (Committed + Pushed)
+### Demo Wiring — All Pages Now Functional (Committed + Pushed)
 
-**S11-001: Normalized Failure Schema + ADO Adapter**
-- `packages/shared/src/types/failure.ts` — 8 interfaces (NormalizedFailure, Remediation, RootCauseAnalysis, RemediationTask, FailedStep, TestFailureDetail, TestResults, PipelineEnvironment)
-- `packages/shared/src/types/enums.ts` — 4 new enums (FailureSource, FailureType, RemediationStatus, AgentRoleExtended)
-- `apps/api/src/webhooks/ado.ts` — ADO webhook handler with HMAC signature verification, build.complete normalization, failed step/test extraction, runId extraction from tags/branch
-- `apps/api/src/services/failure-store.ts` — In-memory failure store (query by id/runId/projectId)
-- `apps/api/src/routes/failures.ts` — REST endpoints (GET all, by runId, by projectId, by id)
+Full audit revealed most web pages were shells with no API wiring. Fixed all 7 issues:
 
-**S11-002: Fixer Agent (Foundry)**
-- `packages/foundry/src/agents/fixer.ts` — analyzeFailure(), buildFixerPrompt(), parseFixerOutput() following verifier agent pattern
-- `packages/foundry/src/agents/prompts/fixer-system.ts` — System prompt with analysis rules, confidence guidelines (0.0–1.0), remediation task format
+**Navigation + Landing**
+- `apps/web/components/layout/NavHeader.tsx` — NEW: Contextual breadcrumb nav (Projects / Spec / Run / Failures) with "Demo Mode" badge
+- `apps/web/app/layout.tsx` — NavHeader mounted in root layout (44px header on all pages)
+- `apps/web/app/page.tsx` — Rewritten: demo project card with links to all 3 views + feature highlights
 
-**S11-003: Remediation Authorization Gate**
-- `apps/api/src/services/remediation.ts` — Full lifecycle state machine: PENDING → ANALYZING → PLAN_READY → AUTHORIZED → EXECUTING → COMPLETED/FAILED
-- `apps/api/src/routes/remediation.ts` — 8 REST endpoints for CRUD + state transitions
+**Chat Panel (fully wired)**
+- `apps/web/components/chat/ChatPanel.tsx` — Rewritten: GET /api/chat/:projectId (history), POST /api/chat (send), Socket.IO run:status (streaming tokens), graceful fallbacks
 
-**S11-004: Failure Intelligence Dashboard UI**
-- `apps/web/components/failures/FailureTimeline.tsx` — Chronological timeline with type-colored dots, branch display, remediation badges
-- `apps/web/components/failures/RootCauseDisplay.tsx` — Summary, confidence gauge, root cause detail, affected files, remediation tasks
-- `apps/web/components/failures/RemediationPlanView.tsx` — Status badge, parent/remediation lock links, authorize button (PLAN_READY state)
-- `apps/web/app/project/[projectId]/failures/page.tsx` — Split-view page (timeline left, detail right)
+**Spec Editor (self-contained)**
+- `apps/web/components/spec/SpecEditor.tsx` — Rewritten: GET /api/specs/:projectId (load), POST /api/specs/generate, PUT accept/freeze. Removed external `onGenerateSpec` prop.
+- `apps/web/app/project/[projectId]/page.tsx` — Simplified (SpecEditor is now self-wired)
 
-**Wiring**
-- `apps/api/src/index.ts` — adoWebhookRouter, failuresRouter, remediationRouter registered
-- `packages/foundry/src/index.ts` — Fixer agent exports added
+**Failures Page (fully wired)**
+- `apps/web/app/project/[projectId]/failures/page.tsx` — Rewritten: GET /api/failures?projectId, GET /api/remediation?failureId, POST /api/remediation/:id/authorize
 
-**Tests: +56 new (397 → 453)**
-- 7 failure-store tests, 8 ADO webhook tests, 12 remediation service tests
-- 9 fixer agent tests (prompt builder + output parser)
-- 7 FailureTimeline tests, 8 RootCauseDisplay tests, 7 RemediationPlanView tests
+**Demo Seed Endpoint**
+- `apps/api/src/routes/demo-seed.ts` — NEW: POST /api/demo/seed (4 conversations, 1 YAML spec, 3 failures, 2 remediations with root cause), POST /api/demo/reset
+- `apps/api/src/index.ts` — demoSeedRouter wired at /api/demo
+
+**Biome fixes**: 24 files auto-formatted (import sorting, CRLF normalization)
+
+### S11 Failure Intelligence (earlier in session 6)
+
+- S11-001 through S11-005 all complete (see prior sessions summary)
+- +56 tests, +2,399 lines across 23 files
 
 ## Prior Sessions Summary
 
 - **Sessions 1–4**: S1-001 through S10-002 — ALL COMPLETE (26 tasks)
 - **Session 5**: Visual animations (16 keyframes, 11 components) + document overhaul (spec, README, tasks, status)
-- **Session 6**: S11 Failure Intelligence (5 tasks, 23 files, +2,399 lines, +56 tests)
+- **Session 6**: S11 Failure Intelligence (5 tasks, 23 files, +2,399 lines, +56 tests) + Demo wiring (7 tasks, 22 files, +940 lines)
 
 ## What To Pick Up Next
-1. **Demo recording** — 7 workflows end-to-end demonstration
-2. **Submission package** — hackathon entry materials
-3. **Optional polish**: Integration testing, Playwright E2E, edge case hardening
+1. **Run the demo**: `npm run dev` in apps/api + apps/web, hit POST /api/demo/seed, browse the UI
+2. **Demo recording** — 7 workflows end-to-end demonstration
+3. **Submission package** — hackathon entry materials
+4. **Optional polish**: Integration testing, Playwright E2E, edge case hardening
 
 ## Blockers
 - None
@@ -72,7 +71,9 @@
 - `packages/shared/src/types/` — All domain types including failure.ts
 - `packages/foundry/src/agents/` — All 5 agents (designer, spec-generator, planner, builder, verifier, fixer)
 - `apps/api/src/services/` — All services (orchestrator, authorization, failure-store, remediation)
+- `apps/api/src/routes/demo-seed.ts` — Demo data seeder (conversations, spec, failures, remediations)
 - `apps/api/src/webhooks/` — GitHub + ADO webhook handlers
+- `apps/web/components/layout/NavHeader.tsx` — Global navigation header
 - `apps/web/components/failures/` — Failure Intelligence UI
 
 ## Test Counts
