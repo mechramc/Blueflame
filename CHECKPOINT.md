@@ -13,8 +13,8 @@
 
 ## Current State
 - **Phase**: S1 Scaffold & Infrastructure
-- **Last completed task**: S1-004 — SignalR connection (Socket.IO)
-- **Next task**: S2-001 — Entra ID auth, S2-002 — RBAC middleware
+- **Last completed task**: S2-002 — RBAC middleware
+- **Next task**: S3-001 — Cosmos DB repositories, S3-002 — Seed/migration
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
@@ -30,11 +30,24 @@
   - `apps/web/hooks/useSignalR.ts` — React hook for typed channel subscriptions
   - `apps/api/src/signalr/hub.test.ts` — 5 tests (connect, echo, getHub, subscribe, unsubscribe)
   - **Decision**: Socket.IO instead of Azure SignalR SDK (no server-side Node.js SDK exists); Azure Web PubSub Socket.IO adapter for production
+- **S2-001 COMPLETE**: Entra ID SSO with MSAL React v2 / MSAL Browser v3:
+  - `apps/web/lib/msal-config.ts` — MSAL configuration (client ID, tenant ID, redirect URIs)
+  - `apps/web/components/auth/AuthProvider.tsx` — MsalProvider wrapper with dynamic import (SSR-safe)
+  - `apps/web/components/auth/SignInButton.tsx` — Microsoft SSO sign-in button
+  - `apps/web/components/auth/UserMenu.tsx` — user name/email + sign-out
+  - `apps/web/middleware.ts` — Next.js middleware with public path exclusions
+  - **Decision**: MSAL v2/v3 (not v5) due to React 18 requirement
+- **S2-002 COMPLETE**: RBAC middleware + role-based UI gating:
+  - `apps/api/src/middleware/auth.ts` — JWT validation via Entra ID JWKS endpoint
+  - `apps/api/src/middleware/rbac.ts` — hierarchical role enforcement (Viewer < Editor < Authorizer < Admin)
+  - `apps/web/hooks/useRole.ts` — React hook returning highest role + hasMinimumRole()
+  - `apps/web/components/auth/RoleGate.tsx` — conditional render by minimum role
+  - `apps/api/src/middleware/rbac.test.ts` — 13 tests (getHighestRole, hasMinimumRole, requireRole middleware)
 
 ## What To Pick Up Next
-1. **S2-001**: Entra ID authentication (depends on S1-001)
-2. **S2-002**: RBAC middleware (depends on S2-001)
-3. **S3-001**: Cosmos DB repositories (depends on S1-002 + S1-005)
+1. **S3-001**: Cosmos DB client + base repository (depends on S1-002 + S1-005)
+2. **S3-002**: Cosmos DB seed/migration scripts
+3. **S3-003**: Cosmos DB integration tests
 
 ## Blockers
 - None
@@ -48,7 +61,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 5 (SignalR hub: connect, echo, getHub, subscribe, unsubscribe) |
+| Total | 18 (5 SignalR hub + 13 RBAC) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

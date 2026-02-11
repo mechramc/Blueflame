@@ -17,8 +17,8 @@
 | S1-003: CI/CD pipelines | S1 | P0 | **DONE** |
 | S1-004: SignalR connection | S1 | P0 | **DONE** |
 | S1-005: Shared types package | S1 | P0 | **DONE** |
-| S2-001: Entra ID auth | S2 | P0 | Not started |
-| S2-002: RBAC middleware | S2 | P0 | Not started |
+| S2-001: Entra ID auth | S2 | P0 | **DONE** |
+| S2-002: RBAC middleware | S2 | P0 | **DONE** |
 
 ### Week 2 (Feb 17–23) — Data Layer + Chat + Spec Engine
 | Task | System | Priority | Status |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 5/27 complete
-- **P0**: 5/21 | **P1**: 0/6
+- **Total**: 7/27 complete
+- **P0**: 7/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -73,6 +73,7 @@
 | 2026-02-11 | CHECKPOINT.md for cross-tool handoff | Claude Code ↔ Codex continuity |
 | 2026-02-11 | Express for API (not Fastify) | Simpler, more ecosystem support |
 | 2026-02-11 | Socket.IO for real-time (not Azure SignalR SDK) | No server-side Node.js SDK for Azure SignalR; Socket.IO works with Azure Web PubSub adapter for prod |
+| 2026-02-11 | MSAL v2/v3 (not v5) for React auth | MSAL React v5 requires React 19; we use React 18 with Next.js 14 |
 | 2026-02-11 | next.config.mjs (not .ts) | Next.js 14 doesn't support .ts config |
 | 2026-02-11 | --passWithNoTests for vitest | Prevents CI failure on empty packages |
 
@@ -91,6 +92,6 @@
 | Scope | Count |
 |-------|-------|
 | apps/web | 0 |
-| apps/api | 5 |
+| apps/api | 18 |
 | packages/* | 0 |
-| **Total** | **5** |
+| **Total** | **18** |

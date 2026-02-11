@@ -12,6 +12,8 @@
 		"clean": "rm -rf .next .turbo node_modules"
 	},
 	"dependencies": {
+		"@azure/msal-browser": "^3.30.0",
+		"@azure/msal-react": "^2.2.0",
 		"@blueflame/shared": "*",
 		"next": "^14.2.0",
 		"react": "^18.3.0",
