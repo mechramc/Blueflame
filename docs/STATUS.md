@@ -5,14 +5,14 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**pre-start-audit** (complete) → Next: **S1 Scaffold & Infrastructure**
+**S1 Scaffold & Infrastructure** (in progress) — S1-001 complete
 
 ## Sprint Progress
 
 ### Week 1 (Feb 10–16) — Scaffold & Infrastructure + Auth
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
-| S1-001: Turborepo monorepo init | S1 | P0 | Not started |
+| S1-001: Turborepo monorepo init | S1 | P0 | **DONE** |
 | S1-002: Azure Bicep templates | S1 | P0 | Not started |
 | S1-003: CI/CD pipelines | S1 | P0 | Not started |
 | S1-004: Dev environment scripts | S1 | P0 | Not started |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 0/27 complete
-- **P0**: 0/21 | **P1**: 0/6
+- **Total**: 1/27 complete
+- **P0**: 1/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -71,6 +71,9 @@
 | 2026-02-11 | Biome over ESLint + Prettier | Faster, single tool, less config |
 | 2026-02-11 | Turborepo + npm workspaces | Per spec; proven in Agni |
 | 2026-02-11 | CHECKPOINT.md for cross-tool handoff | Claude Code ↔ Codex continuity |
+| 2026-02-11 | Express for API (not Fastify) | Simpler, more ecosystem support |
+| 2026-02-11 | next.config.mjs (not .ts) | Next.js 14 doesn't support .ts config |
+| 2026-02-11 | --passWithNoTests for vitest | Prevents CI failure on empty packages |
 
 ## Blockers
 - None currently identified

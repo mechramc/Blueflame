@@ -1,0 +1,23 @@
+{
+	"name": "blueflame",
+	"private": true,
+	"workspaces": ["apps/*", "packages/*"],
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "biome check .",
+		"lint:fix": "biome check --fix .",
+		"test": "turbo run test",
+		"typecheck": "turbo run typecheck",
+		"clean": "turbo run clean"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
+		"turbo": "^2.3.0",
+		"typescript": "^5.7.0"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"packageManager": "npm@10.8.0"
+}
