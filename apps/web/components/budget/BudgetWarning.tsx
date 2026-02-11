@@ -8,6 +8,7 @@ interface BudgetWarningProps {
 
 /**
  * Warning alert overlay shown at 80%+ budget usage.
+ * Pulsing animation at critical (95%+).
  */
 export function BudgetWarning({ currentSpend, ceiling, percentUsed }: BudgetWarningProps) {
 	if (percentUsed < 80) return null;
@@ -18,7 +19,7 @@ export function BudgetWarning({ currentSpend, ceiling, percentUsed }: BudgetWarn
 		<div
 			className={`rounded-lg border p-3 ${
 				isCritical
-					? "border-red-300 bg-red-50 text-red-800"
+					? "border-red-300 bg-red-50 text-red-800 animate-warning-pulse"
 					: "border-yellow-300 bg-yellow-50 text-yellow-800"
 			}`}
 			role="alert"
@@ -28,7 +29,7 @@ export function BudgetWarning({ currentSpend, ceiling, percentUsed }: BudgetWarn
 				<span className="text-lg">{isCritical ? "\u26D4" : "\u26A0\uFE0F"}</span>
 				<div>
 					<p className="text-sm font-semibold">
-						{isCritical ? "Budget Critical — Execution Paused" : "Budget Warning"}
+						{isCritical ? "Budget Critical \u2014 Execution Paused" : "Budget Warning"}
 					</p>
 					<p className="text-xs mt-0.5">
 						Spent ${currentSpend.toFixed(2)} of ${ceiling.toFixed(2)} ({percentUsed.toFixed(1)}%)

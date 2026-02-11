@@ -32,10 +32,13 @@ export function AuthorizeButton({
 	disabled = false,
 }: AuthorizeButtonProps) {
 	const [showModal, setShowModal] = useState(false);
+	const [ripple, setRipple] = useState(false);
 	const canAuthorize = hasMinRole(userRoles, UserRole.Authorizer);
+	const isReady = canAuthorize && !disabled;
 
 	const handleClick = () => {
 		if (canAuthorize) {
+			setRipple(true);
 			setShowModal(true);
 		}
 	};
@@ -47,19 +50,25 @@ export function AuthorizeButton({
 
 	return (
 		<>
-			<button
-				type="button"
-				onClick={handleClick}
-				disabled={disabled || !canAuthorize}
-				className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-				title={canAuthorize ? "Authorize execution" : "Requires Authorizer role or higher"}
-			>
-				Authorize Execution
-			</button>
+			<div className="relative inline-block">
+				<button
+					type="button"
+					onClick={handleClick}
+					disabled={disabled || !canAuthorize}
+					className={`rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed ${isReady ? "animate-pulse-glow" : ""}`}
+					title={canAuthorize ? "Authorize execution" : "Requires Authorizer role or higher"}
+				>
+					Authorize Execution
+				</button>
+				{ripple && (
+					<span
+						className="absolute inset-0 rounded bg-green-400 animate-launch-ripple pointer-events-none"
+						onAnimationEnd={() => setRipple(false)}
+					/>
+				)}
+			</div>
 			{!canAuthorize && (
-				<p className="text-xs text-red-500 mt-1">
-					Requires Blueflame_Authorizer role or higher
-				</p>
+				<p className="text-xs text-red-500 mt-1">Requires Blueflame_Authorizer role or higher</p>
 			)}
 			{showModal && (
 				<AuthorizeModal

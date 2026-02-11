@@ -30,10 +30,11 @@ describe("CostProgressBar", () => {
 		expect(bar?.className).toContain("bg-yellow-500");
 	});
 
-	it("should show red color at 95%+", () => {
+	it("should show burn gradient at 90%+", () => {
 		const { container } = render(<CostProgressBar currentSpend={9.8} ceiling={10} />);
 		const bar = container.querySelector("[role='progressbar']");
-		expect(bar?.className).toContain("bg-red-500");
+		expect(bar?.className).toContain("bg-burn-gradient");
+		expect(bar?.className).toContain("animate-burn-progress");
 	});
 
 	it("should cap at 100%", () => {

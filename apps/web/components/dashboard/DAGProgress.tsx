@@ -4,6 +4,8 @@ import type { PlanTask } from "@blueflame/shared";
 
 interface DAGProgressProps {
 	tasks: PlanTask[];
+	recentlyChangedTaskIds?: string[];
+	preservedTaskIds?: string[];
 }
 
 /** Status → node color mapping: gray (pending) → blue (running) → green (complete) → red (failed) */
@@ -25,9 +27,13 @@ interface NodePosition {
 
 /**
  * DAG visualization where nodes light up based on task status.
- * Mirrors TaskDAG layout but uses status-based colors instead of role-based.
+ * Supports flash for recently changed nodes, glow for preserved work, and pulse for rebuilding.
  */
-export function DAGProgress({ tasks }: DAGProgressProps) {
+export function DAGProgress({
+	tasks,
+	recentlyChangedTaskIds = [],
+	preservedTaskIds = [],
+}: DAGProgressProps) {
 	const positions = computeLayout(tasks);
 
 	if (positions.length === 0) {
@@ -76,8 +82,25 @@ export function DAGProgress({ tasks }: DAGProgressProps) {
 				{/* Nodes */}
 				{positions.map((node) => {
 					const colors = STATUS_FILLS[node.task.status] ?? DEFAULT_FILL;
+					const isChanged = recentlyChangedTaskIds.includes(node.task.id);
+					const isPreserved = preservedTaskIds.includes(node.task.id);
+					const isRebuilding = isChanged && node.task.status === "RUNNING";
+
+					let animStyle = "";
+					if (isChanged && !isRebuilding) {
+						animStyle = "animate-node-flash";
+					} else if (isPreserved) {
+						animStyle = "animate-preserved-glow";
+					} else if (isRebuilding) {
+						animStyle = "animate-rebuild-pulse";
+					}
+
 					return (
-						<g key={node.task.id} data-testid={`dag-progress-node-${node.task.id}`}>
+						<g
+							key={node.task.id}
+							data-testid={`dag-progress-node-${node.task.id}`}
+							className={animStyle}
+						>
 							<rect
 								x={node.x}
 								y={node.y}
@@ -98,6 +121,16 @@ export function DAGProgress({ tasks }: DAGProgressProps) {
 							>
 								{node.task.id}
 							</text>
+							{isPreserved && (
+								<text
+									x={node.x + 130}
+									y={node.y + 12}
+									fontSize={12}
+									data-testid={`preserved-check-${node.task.id}`}
+								>
+									{"\u2713"}
+								</text>
+							)}
 						</g>
 					);
 				})}

@@ -72,6 +72,37 @@ describe("AgentStatusCard", () => {
 		const dashes = screen.getAllByText("\u2014");
 		expect(dashes.length).toBeGreaterThan(0);
 	});
+
+	it("should show blocked indicator when isBlocked is true", () => {
+		const blockedAgent = { ...mockAgent, isBlocked: true };
+		render(<AgentStatusCard agent={blockedAgent} />);
+		expect(screen.getByTestId("blocked-indicator")).toBeTruthy();
+	});
+
+	it("should apply flash-red animation when blocked", () => {
+		const blockedAgent = { ...mockAgent, isBlocked: true };
+		const { container } = render(<AgentStatusCard agent={blockedAgent} />);
+		const card = container.firstElementChild;
+		expect(card?.className).toContain("animate-flash-red");
+	});
+
+	it("should show sigma bar", () => {
+		render(<AgentStatusCard agent={mockAgent} />);
+		expect(screen.getByTestId("sigma-bar")).toBeTruthy();
+	});
+
+	it("should apply escalate-pulse for high sigma agents", () => {
+		const highSigmaAgent = { ...mockAgent, sigmaValue: 0.85 };
+		const { container } = render(<AgentStatusCard agent={highSigmaAgent} />);
+		const card = container.firstElementChild;
+		expect(card?.className).toContain("animate-escalate-pulse");
+	});
+
+	it("should show verified badge for high sigma completed agents", () => {
+		const completedHighSigma = { ...mockAgent, sigmaValue: 0.85, status: "COMPLETED" };
+		render(<AgentStatusCard agent={completedHighSigma} />);
+		expect(screen.getByTestId("verified-badge")).toBeTruthy();
+	});
 });
 
 describe("AgentGrid", () => {
@@ -84,6 +115,20 @@ describe("AgentGrid", () => {
 	it("should show empty message when no agents", () => {
 		render(<AgentGrid agents={[]} />);
 		expect(screen.getByTestId("agent-grid-empty")).toBeTruthy();
+	});
+
+	it("should apply spawn animation when justAuthorized", () => {
+		const { container } = render(<AgentGrid agents={[mockAgent]} justAuthorized={true} />);
+		const wrapper = container.querySelector("[data-testid='agent-grid'] > div");
+		expect(wrapper?.className).toContain("animate-spawn-agent");
+	});
+
+	it("should apply reinforcement animation for new agents", () => {
+		const { container } = render(
+			<AgentGrid agents={[mockAgent]} newReinforcementIds={["agent-1"]} />,
+		);
+		const wrapper = container.querySelector("[data-testid='agent-grid'] > div");
+		expect(wrapper?.className).toContain("animate-reinforcement-arrive");
 	});
 });
 
@@ -153,6 +198,25 @@ describe("DAGProgress", () => {
 	it("should show empty message when no tasks", () => {
 		render(<DAGProgress tasks={[]} />);
 		expect(screen.getByTestId("dag-progress-empty")).toBeTruthy();
+	});
+
+	it("should apply node-flash animation for recently changed tasks", () => {
+		const { container } = render(
+			<DAGProgress tasks={mockTasks} recentlyChangedTaskIds={["T-001"]} />,
+		);
+		const node = container.querySelector("[data-testid='dag-progress-node-T-001']");
+		expect(node?.getAttribute("class")).toContain("animate-node-flash");
+	});
+
+	it("should apply preserved-glow animation for preserved tasks", () => {
+		const { container } = render(<DAGProgress tasks={mockTasks} preservedTaskIds={["T-001"]} />);
+		const node = container.querySelector("[data-testid='dag-progress-node-T-001']");
+		expect(node?.getAttribute("class")).toContain("animate-preserved-glow");
+	});
+
+	it("should show checkmark for preserved tasks", () => {
+		render(<DAGProgress tasks={mockTasks} preservedTaskIds={["T-001"]} />);
+		expect(screen.getByTestId("preserved-check-T-001")).toBeTruthy();
 	});
 });
 
@@ -236,5 +300,22 @@ describe("DashboardLayout", () => {
 		expect(screen.getByText("Agents")).toBeTruthy();
 		expect(screen.getByText("Task Progress")).toBeTruthy();
 		expect(screen.getByText("Action Stream")).toBeTruthy();
+	});
+
+	it("should thread animation props to children", () => {
+		const { container } = render(
+			<DashboardLayout
+				runId="run-1"
+				agents={[mockAgent]}
+				tasks={mockTasks}
+				events={[]}
+				currentSpend={0}
+				ceiling={1}
+				percentUsed={0}
+				justAuthorized={true}
+			/>,
+		);
+		const agentWrapper = container.querySelector("[data-testid='agent-grid'] > div");
+		expect(agentWrapper?.className).toContain("animate-spawn-agent");
 	});
 });

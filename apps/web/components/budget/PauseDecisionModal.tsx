@@ -15,16 +15,18 @@ interface PauseDecisionModalProps {
  * - Resume: top up budget and continue
  * - Accept Partial: keep partial results, stop execution
  * - Abandon: discard and stop
+ *
+ * Enters with freeze-overlay backdrop + modal-blast scale bounce.
  */
 export function PauseDecisionModal({ currentSpend, ceiling, onDecision }: PauseDecisionModalProps) {
 	const [topUp, setTopUp] = useState(Math.ceil(ceiling * 0.5 * 100) / 100);
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-freeze-overlay"
 			data-testid="pause-decision-modal"
 		>
-			<div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+			<div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 animate-modal-blast">
 				<h2 className="text-lg font-semibold text-red-700 mb-2">Budget Limit Reached</h2>
 				<p className="text-sm text-gray-600 mb-4">
 					Execution has been paused because spending reached the budget ceiling.

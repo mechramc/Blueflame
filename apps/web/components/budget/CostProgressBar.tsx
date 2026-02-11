@@ -8,11 +8,17 @@ interface CostProgressBarProps {
 /**
  * Progress bar showing current spend vs. budget ceiling.
  * Color transitions: green (<80%) → yellow (80-95%) → red (>=95%).
+ * Animated burn gradient at 90%+.
  */
 export function CostProgressBar({ currentSpend, ceiling }: CostProgressBarProps) {
 	const percent = ceiling > 0 ? Math.min((currentSpend / ceiling) * 100, 100) : 0;
+	const isBurning = percent >= 90;
 
-	const barColor = percent >= 95 ? "bg-red-500" : percent >= 80 ? "bg-yellow-500" : "bg-green-500";
+	const barColor = isBurning
+		? "bg-burn-gradient bg-200% animate-burn-progress"
+		: percent >= 80
+			? "bg-yellow-500"
+			: "bg-green-500";
 
 	const textColor =
 		percent >= 95 ? "text-red-600" : percent >= 80 ? "text-yellow-600" : "text-green-600";

@@ -17,10 +17,15 @@ interface DashboardLayoutProps {
 	currentSpend: number;
 	ceiling: number;
 	percentUsed: number;
+	justAuthorized?: boolean;
+	newReinforcementIds?: string[];
+	recentlyChangedTaskIds?: string[];
+	preservedTaskIds?: string[];
 }
 
 /**
  * Unified run dashboard combining: agent cards, DAG progress, cost bar, and action stream.
+ * Threads animation props to child components.
  */
 export function DashboardLayout({
 	runId,
@@ -30,6 +35,10 @@ export function DashboardLayout({
 	currentSpend,
 	ceiling,
 	percentUsed,
+	justAuthorized = false,
+	newReinforcementIds = [],
+	recentlyChangedTaskIds = [],
+	preservedTaskIds = [],
 }: DashboardLayoutProps) {
 	return (
 		<div className="p-4 space-y-4" data-testid="dashboard-layout">
@@ -49,13 +58,21 @@ export function DashboardLayout({
 			{/* Agent cards */}
 			<div>
 				<h2 className="text-sm font-semibold text-gray-700 mb-2">Agents</h2>
-				<AgentGrid agents={agents} />
+				<AgentGrid
+					agents={agents}
+					justAuthorized={justAuthorized}
+					newReinforcementIds={newReinforcementIds}
+				/>
 			</div>
 
 			{/* DAG progress */}
 			<div>
 				<h2 className="text-sm font-semibold text-gray-700 mb-2">Task Progress</h2>
-				<DAGProgress tasks={tasks} />
+				<DAGProgress
+					tasks={tasks}
+					recentlyChangedTaskIds={recentlyChangedTaskIds}
+					preservedTaskIds={preservedTaskIds}
+				/>
 			</div>
 
 			{/* Action stream */}

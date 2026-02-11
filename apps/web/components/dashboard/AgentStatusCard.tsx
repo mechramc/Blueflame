@@ -11,13 +11,18 @@ export interface AgentCardData {
 	tokensUsed: number;
 	costIncurred: number;
 	sigmaValue: number;
+	isBlocked?: boolean;
 }
 
 interface AgentStatusCardProps {
 	agent: AgentCardData;
 }
 
-const DEFAULT_STYLE = { bg: "bg-gray-50 border-gray-300", text: "text-gray-700", dot: "bg-gray-500" };
+const DEFAULT_STYLE = {
+	bg: "bg-gray-50 border-gray-300",
+	text: "text-gray-700",
+	dot: "bg-gray-500",
+};
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
 	EXECUTING: { bg: "bg-green-50 border-green-300", text: "text-green-700", dot: "bg-green-500" },
@@ -33,30 +38,68 @@ const ROLE_LABELS: Record<string, string> = {
 	PLANNER: "Planner",
 };
 
+const SIGMA_THRESHOLD = 0.7;
+
 /**
  * Card showing an individual agent's status, task, model, and token count.
+ * Supports blocked flash, sigma bar chart, and escalation pulse for high-σ tasks.
  */
 export function AgentStatusCard({ agent }: AgentStatusCardProps) {
 	const style = STATUS_STYLES[agent.status] ?? DEFAULT_STYLE;
+	const isHighSigma = agent.sigmaValue >= SIGMA_THRESHOLD;
+	const sigmaPercent = Math.min(agent.sigmaValue * 100, 100);
+
+	const animClass = agent.isBlocked
+		? "animate-flash-red"
+		: isHighSigma
+			? "animate-escalate-pulse"
+			: "";
 
 	return (
 		<div
-			className={`rounded-lg border p-3 ${style.bg}`}
+			className={`rounded-lg border p-3 ${style.bg} ${animClass}`}
 			data-testid={`agent-card-${agent.agentId}`}
 		>
 			<div className="flex items-center justify-between mb-2">
 				<span className="text-sm font-semibold text-gray-900">
 					{ROLE_LABELS[agent.role] ?? agent.role}
+					{agent.isBlocked && (
+						<span className="ml-1.5" data-testid="blocked-indicator">
+							{"\u{1F6D1}"}
+						</span>
+					)}
 				</span>
 				<span className={`flex items-center gap-1.5 text-xs font-medium ${style.text}`}>
 					<span className={`w-2 h-2 rounded-full ${style.dot}`} />
 					{agent.status}
+					{isHighSigma && agent.status === "COMPLETED" && (
+						<span className="animate-badge-pop inline-block" data-testid="verified-badge">
+							{"\u2705"}
+						</span>
+					)}
 				</span>
 			</div>
+
+			{/* Sigma complexity bar */}
+			<div className="mb-2" data-testid="sigma-bar">
+				<div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+					<span>σ complexity</span>
+					<span className="font-mono">{agent.sigmaValue.toFixed(2)}</span>
+				</div>
+				<div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+					<div
+						className={`h-full rounded-full transition-all duration-500 ${
+							isHighSigma ? "bg-amber-500" : "bg-blue-400"
+						}`}
+						style={{ width: `${sigmaPercent}%` }}
+					/>
+				</div>
+			</div>
+
 			<div className="space-y-1 text-xs text-gray-600">
 				<div className="flex justify-between">
 					<span>Task:</span>
-					<span className="font-mono">{agent.taskId ?? "—"}</span>
+					<span className="font-mono">{agent.taskId ?? "\u2014"}</span>
 				</div>
 				<div className="flex justify-between">
 					<span>Model:</span>
