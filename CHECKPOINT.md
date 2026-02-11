@@ -13,8 +13,8 @@
 
 ## Current State
 - **Phase**: S1 Scaffold & Infrastructure
-- **Last completed task**: S2-002 — RBAC middleware
-- **Next task**: S3-001 — Cosmos DB repositories, S3-002 — Seed/migration
+- **Last completed task**: S3-001 — Cosmos DB client + base repository
+- **Next task**: S3-002 — 7 container repositories, S3-003 — Change feed
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
@@ -44,10 +44,17 @@
   - `apps/web/components/auth/RoleGate.tsx` — conditional render by minimum role
   - `apps/api/src/middleware/rbac.test.ts` — 13 tests (getHighestRole, hasMinimumRole, requireRole middleware)
 
+- **S3-001 COMPLETE**: Cosmos DB client + base repository:
+  - `packages/cosmos/src/config.ts` — Zod-validated config, emulator support, container name constants
+  - `packages/cosmos/src/client.ts` — singleton CosmosClient, getDatabase, getContainer
+  - `packages/cosmos/src/errors.ts` — typed errors (NotFound, Conflict, Precondition, TooManyRequests, wrapCosmosError)
+  - `packages/cosmos/src/repository.ts` — generic Repository<T> with create/read/update/delete/query/queryAll + retry with exponential backoff
+  - 20 tests (10 errors + 10 repository CRUD/query)
+
 ## What To Pick Up Next
-1. **S3-001**: Cosmos DB client + base repository (depends on S1-002 + S1-005)
-2. **S3-002**: Cosmos DB seed/migration scripts
-3. **S3-003**: Cosmos DB integration tests
+1. **S3-002**: All 7 container repositories (specs, plans, locks, runs, agents, constraints, documents)
+2. **S3-003**: Cosmos change feed processor
+3. **S4-001**: Chat UI component
 
 ## Blockers
 - None
@@ -61,7 +68,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 18 (5 SignalR hub + 13 RBAC) |
+| Total | 38 (5 SignalR + 13 RBAC + 20 Cosmos) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

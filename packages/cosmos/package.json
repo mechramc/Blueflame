@@ -18,7 +18,9 @@
 		"clean": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
-		"@blueflame/shared": "*"
+		"@azure/cosmos": "^4.9.1",
+		"@blueflame/shared": "*",
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"typescript": "^5.7.0",

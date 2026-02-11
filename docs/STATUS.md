@@ -23,7 +23,7 @@
 ### Week 2 (Feb 17–23) — Data Layer + Chat + Spec Engine
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
-| S3-001: Cosmos DB repositories | S3 | P0 | Not started |
+| S3-001: Cosmos DB client + base repo | S3 | P0 | **DONE** |
 | S3-002: Cosmos DB seed/migration | S3 | P0 | Not started |
 | S3-003: Cosmos DB integration tests | S3 | P0 | Not started |
 | S4-001: Chat UI | S4 | P0 | Not started |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 7/27 complete
-- **P0**: 7/21 | **P1**: 0/6
+- **Total**: 8/27 complete
+- **P0**: 8/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -93,5 +93,5 @@
 |-------|-------|
 | apps/web | 0 |
 | apps/api | 18 |
-| packages/* | 0 |
-| **Total** | **18** |
+| packages/* | 20 |
+| **Total** | **38** |
