@@ -9,78 +9,89 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-11
-- **Session**: 5
+- **Session**: 6
 
 ## Current State
-- **Phase**: S11 Failure Intelligence (planning complete, implementation next)
-- **Last completed task**: Document updates — spec, README, tasks, status
-- **Next task**: S11-001 — Normalized Failure Schema + ADO Adapter
+- **Phase**: S11 Failure Intelligence — COMPLETE
+- **Last completed task**: S11-004 — Failure Intelligence Dashboard UI
+- **Next task**: Demo recording + submission (only non-code tasks remain)
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 397 tests)
+- **Repo is green**: YES (build, lint, test all pass — 453 tests)
+- **Last commit**: `e41f161` — phase(s11): implement failure intelligence
 
-## What Just Happened (Session 5)
+## What Just Happened (Session 6)
 
-### Visual Animations (Committed + Pushed)
-- 16 CSS `@keyframes` in `globals.css` + Tailwind animation utilities
-- 11 component files modified with dramatic visual moments:
-  - Authorization launch (pulse-glow, ripple, modal-blast, spawn-agent)
-  - Constraint violations (slide-in-top, shake-x toast)
-  - Escalation (flash-red, escalate-pulse, badge-pop, reinforcement-arrive)
-  - Budget wall (burn-progress gradient, warning-pulse, freeze-overlay)
-  - Spec change (node-flash, preserved-glow, rebuild-pulse)
-- 1 new component: `ConstraintViolationToast`
-- `prefers-reduced-motion` respected globally
-- 18 new dashboard tests + 7 constraint toast tests = 25 new tests
+### S11 Failure Intelligence — Full Implementation (Committed + Pushed)
 
-### Document Overhaul (This Session)
-- **Spec (`Blueflame-Spec-v3-ACAR.md`)**: Added Section 10 (CI/CD Failure Intelligence), Workflow 7, Section 23 (Enterprise Upgrade Paths), Fixer agent role, failures Cosmos container, ADO in Azure services map. Renumbered all sections (22 → 24). Updated service counts (10→11 Foundry, 12→13 Azure, 7→8 Cosmos, 4→5 agents, 6→7 workflows).
-- **README.md**: Complete rewrite — badges, problem/solution, mermaid architecture diagram, features, agent roles, 7 workflows, tech stack, enterprise upgrade paths, project structure, quick start, testing, security/governance, roadmap, hackathon section.
-- **tasks-readable.md**: All 26 task statuses updated from "Not started" to DONE. Added S11-001 through S11-005 (Failure Intelligence). Updated dependency graph. Demo checklist updated for 7 workflows.
-- **STATUS.md**: Updated to reflect current state (see below).
-- **CHECKPOINT.md**: This file.
+**S11-001: Normalized Failure Schema + ADO Adapter**
+- `packages/shared/src/types/failure.ts` — 8 interfaces (NormalizedFailure, Remediation, RootCauseAnalysis, RemediationTask, FailedStep, TestFailureDetail, TestResults, PipelineEnvironment)
+- `packages/shared/src/types/enums.ts` — 4 new enums (FailureSource, FailureType, RemediationStatus, AgentRoleExtended)
+- `apps/api/src/webhooks/ado.ts` — ADO webhook handler with HMAC signature verification, build.complete normalization, failed step/test extraction, runId extraction from tags/branch
+- `apps/api/src/services/failure-store.ts` — In-memory failure store (query by id/runId/projectId)
+- `apps/api/src/routes/failures.ts` — REST endpoints (GET all, by runId, by projectId, by id)
+
+**S11-002: Fixer Agent (Foundry)**
+- `packages/foundry/src/agents/fixer.ts` — analyzeFailure(), buildFixerPrompt(), parseFixerOutput() following verifier agent pattern
+- `packages/foundry/src/agents/prompts/fixer-system.ts` — System prompt with analysis rules, confidence guidelines (0.0–1.0), remediation task format
+
+**S11-003: Remediation Authorization Gate**
+- `apps/api/src/services/remediation.ts` — Full lifecycle state machine: PENDING → ANALYZING → PLAN_READY → AUTHORIZED → EXECUTING → COMPLETED/FAILED
+- `apps/api/src/routes/remediation.ts` — 8 REST endpoints for CRUD + state transitions
+
+**S11-004: Failure Intelligence Dashboard UI**
+- `apps/web/components/failures/FailureTimeline.tsx` — Chronological timeline with type-colored dots, branch display, remediation badges
+- `apps/web/components/failures/RootCauseDisplay.tsx` — Summary, confidence gauge, root cause detail, affected files, remediation tasks
+- `apps/web/components/failures/RemediationPlanView.tsx` — Status badge, parent/remediation lock links, authorize button (PLAN_READY state)
+- `apps/web/app/project/[projectId]/failures/page.tsx` — Split-view page (timeline left, detail right)
+
+**Wiring**
+- `apps/api/src/index.ts` — adoWebhookRouter, failuresRouter, remediationRouter registered
+- `packages/foundry/src/index.ts` — Fixer agent exports added
+
+**Tests: +56 new (397 → 453)**
+- 7 failure-store tests, 8 ADO webhook tests, 12 remediation service tests
+- 9 fixer agent tests (prompt builder + output parser)
+- 7 FailureTimeline tests, 8 RootCauseDisplay tests, 7 RemediationPlanView tests
 
 ## Prior Sessions Summary
 
-- **S1-001 through S10-002**: ALL COMPLETE (see Session 4 checkpoint for details)
-- **S1-S10**: 26 tasks complete, 397 tests, all builds/lint/tests green
-- **Key decisions**: Socket.IO over Azure SignalR SDK; MSAL v2/v3; Sub-path export for sha256; Test files excluded from tsc build; Biome over ESLint+Prettier
+- **Sessions 1–4**: S1-001 through S10-002 — ALL COMPLETE (26 tasks)
+- **Session 5**: Visual animations (16 keyframes, 11 components) + document overhaul (spec, README, tasks, status)
+- **Session 6**: S11 Failure Intelligence (5 tasks, 23 files, +2,399 lines, +56 tests)
 
 ## What To Pick Up Next
-1. **S11-001**: Normalized Failure Schema + ADO Adapter
-   - Create `packages/shared/src/types/failure.ts` (Zod schema)
-   - Create `apps/api/src/services/ado-adapter.ts` (ADO REST client)
-   - Create `apps/api/src/webhooks/ado.ts` (service hook handler)
-   - Create `apps/api/src/routes/failures.ts` (REST endpoints)
-   - Tests for all above
-2. **S11-002**: Failure Analyzer Agent (Foundry fixer agent)
-3. **S11-003**: Remediation Authorization Gate
-4. **S11-004**: Failure Intelligence Dashboard UI
-5. **S11-005**: Enterprise Upgrade Path Documentation
+1. **Demo recording** — 7 workflows end-to-end demonstration
+2. **Submission package** — hackathon entry materials
+3. **Optional polish**: Integration testing, Playwright E2E, edge case hardening
 
 ## Blockers
 - None
 
-## Key Files to Read Before Starting
-- `packages/shared/src/types/` — all domain types (add failure.ts here)
-- `packages/foundry/src/agents/` — all 5 agents (pattern for fixer agent)
-- `apps/api/src/services/` — orchestrator, authorization (pattern for remediation)
-- `apps/api/src/webhooks/github.ts` — pattern for ADO webhook handler
-- `apps/api/src/routes/` — existing route patterns
-- `Blueflame-Spec-v3-ACAR.md` — section 10 (Failure Intelligence spec)
+## Key Files Reference
+- `Blueflame-Spec-v3-ACAR.md` — Source of truth (24 sections)
+- `packages/shared/src/types/` — All domain types including failure.ts
+- `packages/foundry/src/agents/` — All 5 agents (designer, spec-generator, planner, builder, verifier, fixer)
+- `apps/api/src/services/` — All services (orchestrator, authorization, failure-store, remediation)
+- `apps/api/src/webhooks/` — GitHub + ADO webhook handlers
+- `apps/web/components/failures/` — Failure Intelligence UI
 
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 97 |
-| apps/api | 156 |
-| packages/* | 144 |
-| **Total** | **397** |
+| apps/web | 119 |
+| apps/api | 181 |
+| packages/foundry | 81 |
+| packages/cosmos | 44 |
+| packages/github-app | 24 |
+| packages/shared | 4 |
+| **Total** | **453** |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
-- Run state machine transitions enforced via `RUN_TRANSITIONS` constant — use in RunsRepository
-- PlanLock is immutable — locks repository must NOT have update/delete methods
+- PlanLock is immutable — never modify existing locks
 - Remediation creates NEW plan.lock with `parentLockId` — never modify existing locks
-- Biome auto-fix needed after creating new files (`npm run lint:fix`)
-- ADO webhook handler should follow same HMAC signature verification pattern as GitHub webhooks
-- Failure schema needs TTL field for Cosmos container auto-cleanup
+- Biome auto-fix needed after creating new files (`npx biome check --fix .`)
+- All in-memory stores (failure-store, remediation) have `clearAll*()` for testing
+- ADO webhook follows same HMAC signature pattern as GitHub webhooks
+- Failure schema has TTL field (30 days) for Cosmos container auto-cleanup
+- Dashboard UI components need `afterEach(cleanup)` in tests (jsdom doesn't auto-cleanup)

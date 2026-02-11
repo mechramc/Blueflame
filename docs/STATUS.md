@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S11 Failure Intelligence** (planning complete, implementation next)
+**S11 Failure Intelligence** — COMPLETE
 
 ## Sprint Progress
 
@@ -59,11 +59,11 @@
 ### Week 5 (Mar 10–14) — Failure Intelligence
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
-| S11-001: Failure schema + ADO adapter | S11 | P0 | Not started |
-| S11-002: Failure analyzer agent | S11 | P0 | Not started |
-| S11-003: Remediation auth gate | S11 | P0 | Not started |
-| S11-004: Failure dashboard UI | S11 | P1 | Not started |
-| S11-005: Enterprise upgrade docs | S11 | P1 | Not started |
+| S11-001: Failure schema + ADO adapter | S11 | P0 | **DONE** |
+| S11-002: Failure analyzer agent (Fixer) | S11 | P0 | **DONE** |
+| S11-003: Remediation auth gate | S11 | P0 | **DONE** |
+| S11-004: Failure dashboard UI | S11 | P1 | **DONE** |
+| S11-005: Enterprise upgrade docs | S11 | P1 | **DONE** (in spec §23) |
 
 ### Week 6 (Mar 14–15) — Polish + Demo + Submit
 | Task | Priority | Status |
@@ -72,10 +72,10 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 26/32 complete
-- **P0**: 21/23 | **P1**: 5/7 | **Demo/Submit**: 0/2
-- **Critical path**: S11-001 → S11-002 → S11-003 → S11-004 → Demo
-- **Deferred**: S14-001, S14-002 (Spec Delta Detection — post-S11)
+- **Total**: 31/32 complete
+- **P0**: 24/24 | **P1**: 7/7 | **Demo/Submit**: 0/2 (only non-code tasks remain)
+- **Critical path**: Demo recording → Submission
+- **Deferred**: S14-001, S14-002 (Spec Delta Detection — post-hackathon)
 
 ## Decisions Log
 | Date | Decision | Rationale |
@@ -91,6 +91,7 @@
 | 2026-02-11 | ADO for CI/CD failure intelligence | Strengthens Microsoft platform alignment for hackathon |
 | 2026-02-11 | Fixer as 5th agent role | Follows existing agent patterns; scoped to remediation |
 | 2026-02-11 | Remediation creates NEW plan.lock | Preserves immutability; parentLockId links to original |
+| 2026-02-11 | In-memory stores for MVP failure/remediation | Consistent with existing pattern; Cosmos upgrade path clear |
 
 ## Blockers
 - None currently identified
@@ -100,13 +101,15 @@
 |------|--------|------------|--------|
 | Foundry SDK + Node.js compat | Build failure | Test during S1-001 | Open |
 | Cosmos DB emulator on Windows | Local dev blocked | Use Azure instance or Docker | Open |
-| Hackathon deadline (Mar 15) | Incomplete submission | Prioritize P0 critical path | Monitoring |
-| ADO integration complexity | S11 overrun | Keep adapter thin; mock for demo if needed | Open |
+| Hackathon deadline (Mar 15) | Incomplete submission | All P0+P1 code complete; only demo remains | Low |
 
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 97 |
-| apps/api | 156 |
-| packages/* | 144 |
-| **Total** | **397** |
+| apps/web | 119 |
+| apps/api | 181 |
+| packages/foundry | 81 |
+| packages/cosmos | 44 |
+| packages/github-app | 24 |
+| packages/shared | 4 |
+| **Total** | **453** |
