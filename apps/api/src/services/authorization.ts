@@ -64,7 +64,7 @@ export function authorizePlan(request: AuthorizeRequest): Result<PlanLock> {
 	if (!hasMinimumRole(userRoles, UserRole.Authorizer)) {
 		return {
 			ok: false,
-			error: new Error("Authorization requires Blueflame.Authorizer role or higher"),
+			error: new Error("Authorization requires Blueflame_Authorizer role or higher"),
 		};
 	}
 

@@ -39,10 +39,10 @@ export enum AgentStatus {
 
 /** RBAC tiers (Section 15) */
 export enum UserRole {
-	Viewer = "Blueflame.Viewer",
-	Editor = "Blueflame.Editor",
-	Authorizer = "Blueflame.Authorizer",
-	Admin = "Blueflame.Admin",
+	Viewer = "Blueflame_Viewer",
+	Editor = "Blueflame_Editor",
+	Authorizer = "Blueflame_Authorizer",
+	Admin = "Blueflame_Admin",
 }
 
 /** Constraint scope (Section 14.2) */

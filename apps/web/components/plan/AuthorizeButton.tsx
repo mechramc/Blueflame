@@ -58,7 +58,7 @@ export function AuthorizeButton({
 			</button>
 			{!canAuthorize && (
 				<p className="text-xs text-red-500 mt-1">
-					Requires Blueflame.Authorizer role or higher
+					Requires Blueflame_Authorizer role or higher
 				</p>
 			)}
 			{showModal && (

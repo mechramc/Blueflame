@@ -175,7 +175,7 @@ describe("AuthorizeButton", () => {
 				onAuthorize={vi.fn()}
 			/>,
 		);
-		expect(screen.getByText(/Requires Blueflame.Authorizer/)).toBeDefined();
+		expect(screen.getByText(/Requires Blueflame_Authorizer/)).toBeDefined();
 	});
 
 	it("should open confirmation modal on click", () => {
