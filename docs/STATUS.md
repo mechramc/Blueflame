@@ -14,7 +14,7 @@
 |------|--------|----------|--------|
 | S1-001: Turborepo monorepo init | S1 | P0 | **DONE** |
 | S1-002: Azure Bicep templates | S1 | P0 | Not started |
-| S1-003: CI/CD pipelines | S1 | P0 | Not started |
+| S1-003: CI/CD pipelines | S1 | P0 | **DONE** |
 | S1-004: Dev environment scripts | S1 | P0 | Not started |
 | S1-005: Shared types package | S1 | P0 | **DONE** |
 | S2-001: Entra ID auth | S2 | P0 | Not started |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 2/27 complete
-- **P0**: 2/21 | **P1**: 0/6
+- **Total**: 3/27 complete
+- **P0**: 3/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log

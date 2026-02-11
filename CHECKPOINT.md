@@ -13,8 +13,8 @@
 
 ## Current State
 - **Phase**: S1 Scaffold & Infrastructure
-- **Last completed task**: S1-005 — Shared TypeScript types
-- **Next task**: S1-002 — Azure Bicep templates, S1-003 — CI/CD, S1-004 — SignalR
+- **Last completed task**: S1-003 — CI/CD pipelines
+- **Next task**: S1-002 — Azure Bicep templates, S1-004 — SignalR, S2-001 — Auth
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
