@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import cors from "cors";
 import express from "express";
+import { chatRouter } from "./routes/chat.js";
 import { createHub } from "./signalr/hub.js";
 
 const app = express();
@@ -12,6 +13,8 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
 	res.json({ status: "ok", service: "blueflame-api" });
 });
+
+app.use("/api/chat", chatRouter);
 
 const httpServer = createServer(app);
 

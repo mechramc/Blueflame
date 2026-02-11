@@ -27,7 +27,7 @@
 | S3-002: 7 container repositories | S3 | P0 | **DONE** |
 | S3-003: Cosmos DB change feed processor | S3 | P0 | **DONE** |
 | S4-001: Chat UI | S4 | P0 | **DONE** |
-| S4-002: Designer Agent | S4 | P0 | Not started |
+| S4-002: Designer Agent | S4 | P0 | **DONE** |
 | S5-001: Spec generation | S5 | P0 | Not started |
 | S5-002: Spec editor UI | S5 | P0 | Not started |
 | S5-003: Spec freeze + versioning | S5 | P0 | Not started |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 11/27 complete
-- **P0**: 11/21 | **P1**: 0/6
+- **Total**: 12/27 complete
+- **P0**: 12/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -92,6 +92,6 @@
 | Scope | Count |
 |-------|-------|
 | apps/web | 12 |
-| apps/api | 23 |
-| packages/* | 44 |
-| **Total** | **79** |
+| apps/api | 32 |
+| packages/* | 52 |
+| **Total** | **96** |

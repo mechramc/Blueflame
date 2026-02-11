@@ -5,4 +5,11 @@
  * Apps should never import Foundry SDK directly.
  */
 
-export {};
+export {
+	type DesignerConfig,
+	type StreamCallbacks,
+	streamDesignerResponse,
+	toOpenAIMessages,
+} from "./agents/designer.js";
+
+export { DESIGNER_SYSTEM_PROMPT } from "./agents/prompts/designer-system.js";

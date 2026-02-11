@@ -13,8 +13,8 @@
 
 ## Current State
 - **Phase**: S4 Chat Interface
-- **Last completed task**: S4-001 — Chat UI
-- **Next task**: S4-002 — Designer agent, S5-001 — Spec generation
+- **Last completed task**: S4-002 — Designer agent
+- **Next task**: S5-001 — Spec generation, S5-002 — Spec editor UI
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
@@ -79,10 +79,18 @@
   - `apps/web/app/project/[projectId]/page.tsx` — split-view project page (chat left, spec right placeholder)
   - 12 tests (4 MessageBubble + 6 ChatInput + 2 TypingIndicator)
 
+- **S4-002 COMPLETE**: Designer agent with streaming responses:
+  - `packages/foundry/src/agents/prompts/designer-system.ts` — system prompt (requirement elicitation, ≥2 clarifying questions, progressive structuring)
+  - `packages/foundry/src/agents/designer.ts` — Azure OpenAI streaming client, toOpenAIMessages helper
+  - `apps/api/src/services/conversation.ts` — in-memory conversation store (per-project message history)
+  - `apps/api/src/routes/chat.ts` — POST /api/chat (stores msg, streams via SignalR), GET /api/chat/:projectId
+  - Wired into `apps/api/src/index.ts` via chatRouter
+  - 17 new tests: 8 foundry (prompt + message conversion) + 9 conversation service
+
 ## What To Pick Up Next
-1. **S4-002**: Designer agent with streaming responses
-2. **S5-001**: Spec generation
-3. **S5-002**: Spec editor UI
+1. **S5-001**: Spec generation from conversation context
+2. **S5-002**: Spec editor UI
+3. **S5-003**: Spec freeze + versioning
 
 ## Blockers
 - None
@@ -96,7 +104,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 79 (23 API + 44 Cosmos + 12 Web) |
+| Total | 96 (32 API + 44 Cosmos + 12 Web + 8 Foundry) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
