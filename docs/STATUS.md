@@ -13,7 +13,7 @@
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
 | S1-001: Turborepo monorepo init | S1 | P0 | **DONE** |
-| S1-002: Azure Bicep templates | S1 | P0 | Not started |
+| S1-002: Azure Bicep templates | S1 | P0 | **DONE** |
 | S1-003: CI/CD pipelines | S1 | P0 | **DONE** |
 | S1-004: Dev environment scripts | S1 | P0 | Not started |
 | S1-005: Shared types package | S1 | P0 | **DONE** |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 3/27 complete
-- **P0**: 3/21 | **P1**: 0/6
+- **Total**: 4/27 complete
+- **P0**: 4/21 | **P1**: 0/6
 - **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
 
 ## Decisions Log
@@ -76,7 +76,7 @@
 | 2026-02-11 | --passWithNoTests for vitest | Prevents CI failure on empty packages |
 
 ## Blockers
-- None currently identified
+- **Azure CLI not installed**: `az` CLI not found on dev machine — Bicep templates cannot be validated locally. Install via `winget install -e --id Microsoft.AzureCLI` then `az bicep install`.
 
 ## Risks
 | Risk | Impact | Mitigation | Status |
