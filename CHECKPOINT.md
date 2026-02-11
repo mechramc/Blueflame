@@ -40,7 +40,7 @@
 4. **S3-001**: Cosmos DB repositories (depends on S1-002 + S1-005)
 
 ## Blockers
-- **Azure CLI not installed**: `az` not found on dev machine — Bicep templates not validated locally. Install: `winget install -e --id Microsoft.AzureCLI` then `az bicep install`.
+- None
 
 ## Key Files to Read Before Starting
 - `packages/shared/src/types/` — all domain types (read before implementing repos/services)
@@ -58,4 +58,4 @@
 - Run state machine transitions enforced via `RUN_TRANSITIONS` constant — use in RunsRepository
 - PlanLock is immutable — locks repository must NOT have update/delete methods
 - Biome auto-fix needed after creating new files (`npm run lint:fix`)
-- Bicep templates need `az bicep build` validation once Azure CLI is installed
+- Bicep templates validated with `az bicep build` (az CLI v2.83.0 installed)

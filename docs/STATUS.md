@@ -76,7 +76,8 @@
 | 2026-02-11 | --passWithNoTests for vitest | Prevents CI failure on empty packages |
 
 ## Blockers
-- **Azure CLI not installed**: `az` CLI not found on dev machine — Bicep templates cannot be validated locally. Install via `winget install -e --id Microsoft.AzureCLI` then `az bicep install`.
+- None currently identified
+- ~~**Azure CLI not installed**~~ — RESOLVED 2026-02-11: installed v2.83.0 via winget, Bicep validated
 
 ## Risks
 | Risk | Impact | Mitigation | Status |

@@ -1,4 +1,3 @@
-@description('Blueflame infrastructure — all Azure resources')
 targetScope = 'resourceGroup'
 
 // ─── Parameters ───────────────────────────────────────────────
