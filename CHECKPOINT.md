@@ -12,9 +12,9 @@
 - **Session**: 1
 
 ## Current State
-- **Phase**: S1 Scaffold & Infrastructure
-- **Last completed task**: S3-002 — 7 container repositories
-- **Next task**: S3-003 — Change feed processor, S4-001 — Chat UI
+- **Phase**: S3 Data Layer
+- **Last completed task**: S3-003 — Change feed processor
+- **Next task**: S4-001 — Chat UI, S4-002 — Designer agent
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
@@ -61,10 +61,19 @@
   - `DocumentsRepository` — findByProject
   - 13 new tests: 5 runs (state machine), 5 locks (immutability), 3 specs (freeze/hash)
 
+- **S3-003 COMPLETE**: Cosmos change feed processor + SignalR bridge:
+  - `packages/cosmos/src/change-feed/events.ts` — typed events (RunStatusChanged, AgentStateChanged, CostUpdated)
+  - `packages/cosmos/src/change-feed/processor.ts` — polls runs + agents containers, tracks status diffs, emits events
+  - `packages/cosmos/src/change-feed/index.ts` — barrel exports
+  - `apps/api/src/services/change-feed-bridge.ts` — routes change feed events to SignalR rooms
+  - `packages/cosmos/src/change-feed/processor.test.ts` — 10 tests (start/stop, events, error handling, listener management)
+  - `apps/api/src/services/change-feed-bridge.test.ts` — 5 tests (routing, cleanup)
+  - 15 new tests total (10 processor + 5 bridge)
+
 ## What To Pick Up Next
-1. **S3-003**: Cosmos change feed processor
-2. **S4-001**: Chat UI component with message history
-3. **S4-002**: Designer agent with streaming responses
+1. **S4-001**: Chat UI component with message history
+2. **S4-002**: Designer agent with streaming responses
+3. **S5-001**: Spec generation
 
 ## Blockers
 - None
@@ -78,7 +87,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 51 (5 SignalR + 13 RBAC + 33 Cosmos) |
+| Total | 67 (23 API + 44 Cosmos) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

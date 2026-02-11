@@ -29,6 +29,19 @@ export {
 	Repository,
 } from "./repository.js";
 
+// Change feed
+export {
+	CHANGE_FEED_EVENTS,
+	type AgentStateChangedEvent,
+	type ChangeFeedEvent,
+	type ChangeFeedEventType,
+	type ChangeFeedListener,
+	type CostUpdatedEvent,
+	type RunStatusChangedEvent,
+	ChangeFeedProcessor,
+	type ChangeFeedProcessorOptions,
+} from "./change-feed/index.js";
+
 // Container repositories
 export {
 	AgentsRepository,
