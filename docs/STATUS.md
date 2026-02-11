@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S10 Observability Dashboard** (complete) — S10-001 and S10-002 done
+**S11 Failure Intelligence** (planning complete, implementation next)
 
 ## Sprint Progress
 
@@ -45,42 +45,55 @@
 | S8-001: GitHub branch/PR creation | S8 | P0 | **DONE** |
 | S8-002: GitHub webhook handler | S8 | P0 | **DONE** |
 
-### Week 4 (Mar 3–9) — Budget + Dashboard
+### Week 4 (Mar 3–9) — Budget + Dashboard + Animations
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
 | S9-001: Budget tracking | S9 | P1 | **DONE** |
 | S9-002: Budget UI | S9 | P1 | **DONE** |
 | S10-001: Agent status cards | S10 | P1 | **DONE** |
 | S10-002: DAG progress + dashboard | S10 | P1 | **DONE** |
+| Visual animations (16 keyframes) | S10 | P1 | **DONE** |
+| S14-001: Spec delta detection | S14 | P1 | DEFERRED |
+| S14-002: Delta impact map UI | S14 | P1 | DEFERRED |
 
-### Week 5 (Mar 10–15) — Polish + Demo + Submit
+### Week 5 (Mar 10–14) — Failure Intelligence
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| S11-001: Failure schema + ADO adapter | S11 | P0 | Not started |
+| S11-002: Failure analyzer agent | S11 | P0 | Not started |
+| S11-003: Remediation auth gate | S11 | P0 | Not started |
+| S11-004: Failure dashboard UI | S11 | P1 | Not started |
+| S11-005: Enterprise upgrade docs | S11 | P1 | Not started |
+
+### Week 6 (Mar 14–15) — Polish + Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
-| Demo recording | P0 | Not started |
+| Demo recording (7 workflows) | P0 | Not started |
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 24/27 complete
-- **P0**: 21/21 | **P1**: 4/4 | **Demo/Submit**: 0/2 | S8 (bonus P0): 2/2
-- **Critical path**: COMPLETE (all P0 tasks done)
+- **Total**: 26/32 complete
+- **P0**: 21/23 | **P1**: 5/7 | **Demo/Submit**: 0/2
+- **Critical path**: S11-001 → S11-002 → S11-003 → S11-004 → Demo
+- **Deferred**: S14-001, S14-002 (Spec Delta Detection — post-S11)
 
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-02-11 | AGENTS.md as mandatory execution rules | Enforce multi-agent QA discipline |
 | 2026-02-11 | Biome over ESLint + Prettier | Faster, single tool, less config |
-| 2026-02-11 | Turborepo + npm workspaces | Per spec; proven in Agni |
+| 2026-02-11 | Turborepo + npm workspaces | Per spec; proven pattern |
 | 2026-02-11 | CHECKPOINT.md for cross-tool handoff | Claude Code ↔ Codex continuity |
 | 2026-02-11 | Express for API (not Fastify) | Simpler, more ecosystem support |
-| 2026-02-11 | Socket.IO for real-time (not Azure SignalR SDK) | No server-side Node.js SDK for Azure SignalR; Socket.IO works with Azure Web PubSub adapter for prod |
-| 2026-02-11 | MSAL v2/v3 (not v5) for React auth | MSAL React v5 requires React 19; we use React 18 with Next.js 14 |
-| 2026-02-11 | next.config.mjs (not .ts) | Next.js 14 doesn't support .ts config |
-| 2026-02-11 | --passWithNoTests for vitest | Prevents CI failure on empty packages |
-| 2026-02-11 | Sub-path export for sha256 (`@blueflame/shared/utils/hash`) | Avoid bundling `node:crypto` in Next.js client |
+| 2026-02-11 | Socket.IO for real-time (not Azure SignalR SDK) | No server-side Node.js SDK for Azure SignalR |
+| 2026-02-11 | MSAL v2/v3 (not v5) for React auth | MSAL React v5 requires React 19 |
+| 2026-02-11 | Sub-path export for sha256 | Avoid bundling node:crypto in Next.js client |
+| 2026-02-11 | ADO for CI/CD failure intelligence | Strengthens Microsoft platform alignment for hackathon |
+| 2026-02-11 | Fixer as 5th agent role | Follows existing agent patterns; scoped to remediation |
+| 2026-02-11 | Remediation creates NEW plan.lock | Preserves immutability; parentLockId links to original |
 
 ## Blockers
 - None currently identified
-- ~~**Azure CLI not installed**~~ — RESOLVED 2026-02-11: installed v2.83.0 via winget, Bicep validated
 
 ## Risks
 | Risk | Impact | Mitigation | Status |
@@ -88,11 +101,12 @@
 | Foundry SDK + Node.js compat | Build failure | Test during S1-001 | Open |
 | Cosmos DB emulator on Windows | Local dev blocked | Use Azure instance or Docker | Open |
 | Hackathon deadline (Mar 15) | Incomplete submission | Prioritize P0 critical path | Monitoring |
+| ADO integration complexity | S11 overrun | Keep adapter thin; mock for demo if needed | Open |
 
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 79 |
+| apps/web | 97 |
 | apps/api | 156 |
 | packages/* | 144 |
-| **Total** | **379** |
+| **Total** | **397** |

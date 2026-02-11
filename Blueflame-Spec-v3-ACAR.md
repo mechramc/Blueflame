@@ -33,25 +33,27 @@ February 10 – March 15, 2026
 7. Multi-Agent System Design (ACAR-Informed)
 8. Azure Services Map
 9. GitHub Integration & Agentic DevOps
+10. CI/CD Failure Intelligence (Azure DevOps)
 
 **Part III — Core Experience**
-10. The Six Stages (Core Refinement Loop)
-11. Multi-Entry Architecture
-12. Supported Workflows (6 Scenarios)
+11. The Six Stages (Core Refinement Loop)
+12. Multi-Entry Architecture
+13. Supported Workflows (7 Scenarios)
 
 **Part IV — Data, Governance & Observability**
-13. Artifact Model & Data Architecture
-14. Constraint System (Project-Level Registry)
-15. Enforcement, Safety & Responsible AI
-16. Budget System & Partial Execution
-17. Spec Delta Detection & Controlled Rebuild
-18. Observability & Audit Trail
+14. Artifact Model & Data Architecture
+15. Constraint System (Project-Level Registry)
+16. Enforcement, Safety & Responsible AI
+17. Budget System & Partial Execution
+18. Spec Delta Detection & Controlled Rebuild
+19. Observability & Audit Trail
 
 **Part V — Execution Plan**
-19. Technology Stack Summary
-20. Implementation Roadmap (5-Week Sprint Plan)
-21. Demo Strategy & Scenario
-22. Judging Criteria Alignment
+20. Technology Stack Summary
+21. Implementation Roadmap (6-Week Sprint Plan)
+22. Demo Strategy & Scenario
+23. Enterprise Upgrade Paths
+24. Judging Criteria Alignment
 
 ---
 
@@ -69,7 +71,7 @@ For the Microsoft AI Dev Days Hackathon, Blueflame is built entirely on the Micr
 
 Blueflame is grounded in original research. Its multi-model routing, verification, and attribution architecture is derived from the ACAR framework (Adaptive Complexity & Attribution Routing), a measurement methodology validated across 7,550+ auditable runs on four benchmarks. ACAR's key finding — that self-consistency variance (σ) can route tasks across execution modes while avoiding full ensembling on 54% of tasks — directly informs how Blueflame's Foundry Model Router allocates compute.
 
-The system supports six distinct workflows from greenfield builds to budget-constrained partial execution, all following a consistent model: **Chat → Spec → Approve → Agents Execute → PRs → Review.**
+The system supports seven distinct workflows from greenfield builds to CI/CD failure remediation, all following a consistent model: **Chat → Spec → Approve → Agents Execute → PRs → Review.**
 
 ---
 
@@ -143,15 +145,15 @@ Blueflame is a production-grade AI application that uses Microsoft's AI platform
 
 ### 4.2 Best Multi-Agent System
 
-Blueflame implements a governed multi-agent swarm using Microsoft Agent Framework with four specialized roles (Planner, Builder, Verifier, Explainer) orchestrated via Foundry Agent Service. It uses A2A protocol for inter-agent communication, MCP servers for tool integration, and ACAR-informed σ-based routing for model allocation. The multi-agent architecture is grounded in empirical results from 1,510 tasks across four benchmarks.
+Blueflame implements a governed multi-agent swarm using Microsoft Agent Framework with four specialized roles (Planner, Builder, Verifier, Explainer) orchestrated via Foundry Agent Service. It uses A2A protocol for inter-agent communication, MCP servers for tool integration, and ACAR-informed σ-based routing for model allocation. The fifth agent role (Fixer) extends the swarm to CI/CD failure remediation. The multi-agent architecture is grounded in empirical results from 1,510 tasks across four benchmarks.
 
 ### 4.3 Best Enterprise Solution
 
-Blueflame is built enterprise-first: Azure Entra ID authentication, RBAC-governed agent permissions, Azure Policy enforcement, full audit logging, cost governance with partial execution, a persistent constraint registry, and responsible AI guardrails including Foundry Content Safety and Protected Material Detection for code generation safety.
+Blueflame is built enterprise-first: Azure Entra ID authentication, RBAC-governed agent permissions, Azure Policy enforcement, full audit logging, cost governance with partial execution, a persistent constraint registry, CI/CD failure intelligence with Azure DevOps integration, documented enterprise upgrade paths, and responsible AI guardrails including Foundry Content Safety and Protected Material Detection for code generation safety.
 
 ### 4.4 Best Use of Microsoft Foundry
 
-Foundry is the central nervous system. Model routing, agent orchestration, workflow management, knowledge grounding, content safety, tracing, evaluation, and the control plane all run through Foundry natively. Blueflame uses 10 distinct Foundry services.
+Foundry is the central nervous system. Model routing, agent orchestration, workflow management, knowledge grounding, content safety, tracing, evaluation, failure analysis, and the control plane all run through Foundry natively. Blueflame uses 11 distinct Foundry services.
 
 ### 4.5 Judging Criteria Alignment
 
@@ -203,7 +205,7 @@ Foundry is the central nervous system. Model routing, agent orchestration, workf
 
 Microsoft Foundry is Blueflame's central intelligence platform. Every AI operation flows through Foundry, providing unified model access, agent orchestration, governance, and observability in a single management plane.
 
-### 6.2 Foundry Services Used (10 Services)
+### 6.2 Foundry Services Used (11 Services)
 
 | Foundry Service | Blueflame Usage |
 |---|---|
@@ -217,6 +219,7 @@ Microsoft Foundry is Blueflame's central intelligence platform. Every AI operati
 | Foundry Content Safety | Input filters (prompt injection, PII detection). Output filters (content safety, Protected Material Detection for code — prevents agents from generating unlicensed/copyrighted code snippets). |
 | Foundry Tracing | OpenTelemetry-based tracing of every agent action, model call, tool invocation, and reasoning step. Feeds into Azure Monitor. |
 | Foundry Evaluation | Automated benchmarking against acceptance criteria. Pre-built templates for code quality, test coverage, constraint compliance. Custom evaluators for spec adherence. |
+| Foundry Agent (Failure Analyzer) | CI/CD failure root cause analysis and remediation plan generation. Reads normalized failure schema, pipeline logs, and codebase context. Produces structured remediation DAG. |
 
 ### 6.3 Model Selection Strategy (σ-Informed)
 
@@ -241,9 +244,9 @@ Blueflame's model selection is grounded in ACAR's findings. Rather than using op
 
 ## 7. Multi-Agent System Design (ACAR-Informed)
 
-### 7.1 Agent Architecture (4 Roles)
+### 7.1 Agent Architecture (5 Roles)
 
-Blueflame's agent architecture extends ACAR's execution modes into a governed swarm. Each agent role has a precise responsibility boundary, dedicated toolset, and strict constraints. The Verifier and Explainer roles are direct implementations of ACAR's verification and attribution methodology.
+Blueflame's agent architecture extends ACAR's execution modes into a governed swarm. Each agent role has a precise responsibility boundary, dedicated toolset, and strict constraints. The Verifier and Explainer roles are direct implementations of ACAR's verification and attribution methodology. The Fixer role extends the architecture to handle CI/CD failure remediation (Section 10).
 
 | Role | Responsibility | Model | Tools (via MCP) | ACAR Lineage |
 |---|---|---|---|---|
@@ -251,6 +254,7 @@ Blueflame's agent architecture extends ACAR's execution modes into a governed sw
 | Builder | Code implementation, branch management, PR creation. Bug-fix: reproduce, fix, add regression tests. | Claude Sonnet 4.5 | GitHub API (write), Foundry IQ, MCP Code Server, Runtime/Debug MCP | ACAR execution modes (single/lite/full based on task σ) |
 | Verifier | Test execution, constraint validation, acceptance checking. Uses acceptance criteria as ground truth — not just model agreement. | GPT-4o | GitHub Actions (trigger), Test Runner MCP, Linter MCP, Cosmos DB (constraints, read-only) | ACAR finding: agreement-but-wrong is unrecoverable → Verifier uses criteria, not consensus |
 | Explainer | Root cause analysis, decision rationale, PR descriptions. Uses explicit diffs and test results, not proxy estimation. | GPT-4o | Foundry Tracing (read), Cosmos DB (read), GitHub Diff API, Foundry Evaluation results | ACAR finding: proxy attribution fails → Explainer uses counterfactual diffs |
+| Fixer | CI/CD failure analysis, remediation planning. Reads pipeline logs and test results, produces root cause analysis and remediation task DAG. | GPT-4o + Claude Sonnet 4.5 | ADO REST API (read), GitHub API (read), Foundry IQ, Cosmos DB (failures, read) | ACAR σ-routing applied to remediation task difficulty |
 
 ### 7.2 Verifier Agent: Beyond Agreement (ACAR-Informed)
 
@@ -291,7 +295,7 @@ Each agent receives a scoped Entra Agent ID via Foundry Control Plane. Agent ide
 
 ## 8. Azure Services Map
 
-### 8.1 Complete Azure Service Usage (12 Services)
+### 8.1 Complete Azure Service Usage (13 Services)
 
 | Azure Service | Blueflame Usage | Tier |
 |---|---|---|
@@ -307,6 +311,7 @@ Each agent receives a scoped Entra Agent ID via Foundry Control Plane. Agent ide
 | Azure Container Apps | Backend API hosting (Node.js/Python) | Consumption |
 | Azure Cost Management | Budget alerts, per-run cost tracking, anomaly detection | Included |
 | Azure Policy | Governance: agent constraints, model allowlists, region restrictions, PII filters | Included |
+| Azure DevOps | CI/CD failure intelligence: pipeline failure capture, test results API, service hooks, pipeline re-run | Basic |
 
 ---
 
@@ -349,11 +354,109 @@ Every run creates a run branch. Task branches fork from it. PRs go from task bra
 
 ---
 
+## 10. CI/CD Failure Intelligence (Azure DevOps)
+
+### 10.1 Why Failure Intelligence
+
+CI/CD failures are the most expensive form of developer interruption. A test failure in a 30-minute pipeline blocks the entire team until someone investigates, diagnoses, fixes, and re-runs. Blueflame extends its governed agent architecture to treat CI/CD failures as first-class events: failures are captured, normalized, analyzed by AI agents, and remediated through the same authorization-gated process as any other execution.
+
+Azure DevOps (ADO) serves as the sensor and execution plane. Blueflame is the governance and decision layer. This separation preserves the principle that agents operate on normal engineering surfaces (pipelines, branches, PRs) while governance remains centralized.
+
+> **[THESIS]** CI/CD failures are not interruptions — they are structured inputs to a governed remediation loop.
+
+### 10.2 Azure DevOps as Sensor Plane
+
+| ADO Component | Blueflame Usage |
+|---|---|
+| Azure Pipelines | CI/CD execution with webhook notifications on failure |
+| Service Hooks | Push failure events to Blueflame API endpoint |
+| Pipeline Logs | Structured log extraction for root cause analysis |
+| Work Items | Optional: link remediation runs to ADO work items |
+| Test Results API | Structured test failure data (name, stack trace, duration) |
+| Git Integration | Branch/PR operations for remediation code delivery |
+
+### 10.3 Normalized Failure Schema
+
+All CI/CD failures — whether from Azure DevOps, GitHub Actions, or future providers — are normalized into a provider-agnostic schema before analysis.
+
+| Field | Type | Description |
+|---|---|---|
+| failureId | String | Unique ID (FAIL-{runId}-{seq}) |
+| source | Enum | azure-devops \| github-actions |
+| pipelineId | String | ADO pipeline ID or GitHub workflow name |
+| buildNumber | String | Build/run number from CI provider |
+| failureType | Enum | test \| build \| lint \| deploy \| timeout \| infrastructure |
+| failedSteps[] | Array | Step name, exit code, log excerpt, duration |
+| testResults | Object | Total, passed, failed, skipped; per-test details |
+| environment | Object | OS, runtime version, node version, relevant env vars |
+| branchRef | String | Source branch that triggered the failure |
+| commitSha | String | Commit SHA that triggered the failure |
+| timestamp | ISO 8601 | When the failure occurred |
+| rawLogUrl | String | Link to full pipeline log |
+| ttl | Number | Time-to-live in seconds (default: 30 days) |
+
+### 10.4 Failure Analyzer Agent (5th Agent Role)
+
+The Failure Analyzer extends Blueflame's agent architecture with a new specialized role. It follows the same patterns as existing agents: Foundry-hosted, scoped permissions, governed by plan.lock, observable via tracing.
+
+| Attribute | Detail |
+|---|---|
+| Role | Fixer |
+| Model | GPT-4o (root cause analysis), Claude Sonnet 4.5 (code remediation) |
+| Inputs | Normalized failure record, pipeline logs, source code context (via Foundry IQ), constraint registry |
+| Outputs | Root cause analysis, remediation plan (task DAG), confidence score |
+| Tools (via MCP) | ADO REST API (read logs, test results), GitHub API (read diffs), Foundry IQ (codebase context) |
+| Constraints | Read-only access to ADO; code changes flow through Builder agents under remediation PlanLock |
+
+### 10.5 Remediation Loop
+
+The remediation loop follows the same governance model as standard execution. No agent modifies code without an authorized plan.lock.
+
+```
+ADO Pipeline Fails
+  → Service Hook → Blueflame API
+    → Normalize to Failure Schema
+      → Store in Cosmos (failures container)
+        → Failure Analyzer: root cause + remediation plan
+          → User reviews remediation plan
+            → Authorization Gate (new plan.lock with parentLockId)
+              → Builder agents execute fixes
+                → Verifier validates via ADO pipeline re-run
+                  → Explainer documents what failed and why
+```
+
+| Step | Service | Governance |
+|---|---|---|
+| 1. Capture | ADO Service Hooks → Blueflame API | Webhook signature verification |
+| 2. Normalize | Blueflame API | Provider-agnostic schema |
+| 3. Analyze | Failure Analyzer (Foundry Agent) | Scoped read-only access |
+| 4. Plan | Remediation plan (task DAG) | σ-informed cost estimates |
+| 5. Authorize | New plan.lock (parentLockId links to original) | Requires Blueflame:Authorizer role |
+| 6. Execute | Builder + Verifier agents | Same constraints as standard execution |
+| 7. Validate | ADO pipeline re-run | CI must pass before PR |
+| 8. Document | Explainer agent | Root cause + fix attribution |
+
+> **[ENFORCEMENT]** Remediation creates a NEW plan.lock linked to the original via parentLockId. The original lock is never modified. This preserves immutability while maintaining a complete audit trail.
+
+### 10.6 ADO ↔ GitHub Interplay
+
+Blueflame supports both GitHub Actions and Azure DevOps Pipelines as CI/CD providers. The failure intelligence layer normalizes across both:
+
+| Capability | GitHub Actions | Azure DevOps |
+|---|---|---|
+| Failure capture | Webhook (workflow_run.completed) | Service Hook (build.complete) |
+| Log extraction | REST API (getWorkflowRunLogs) | REST API (timeline + logs) |
+| Test results | Parsed from logs | Test Results API (structured) |
+| Code delivery | PR to GitHub repo | PR to ADO repo or GitHub repo |
+| Pipeline re-run | Actions re-trigger | Pipeline queue API |
+
+---
+
 # PART III — CORE EXPERIENCE
 
 ---
 
-## 10. The Six Stages (Core Refinement Loop)
+## 11. The Six Stages (Core Refinement Loop)
 
 Blueflame is a progressive refinement loop. Each stage is a hard gate. All six workflows follow this structure.
 
@@ -361,7 +464,7 @@ Blueflame is a progressive refinement loop. Each stage is a hard gate. All six w
 
 ### Stage 1 — Intent Capture
 
-Three entry points (Section 11): conversational chat, document upload, or codebase-context. All converge at Stage 2.
+Three entry points (Section 12): conversational chat, document upload, or codebase-context. All converge at Stage 2.
 
 | Component | Service | Details |
 |---|---|---|
@@ -402,23 +505,23 @@ Planner agent derives PRD, task DAG with dependencies, acceptance mappings (task
 
 ### Stage 5 — Governed Agent Execution
 
-Bounded swarm via Foundry Agent Service. σ-routing allocates models per task. Real-time dashboard shows agent status, cost burn-down, task progress. Budget System (Section 16) governs graceful pause.
+Bounded swarm via Foundry Agent Service. σ-routing allocates models per task. Real-time dashboard shows agent status, cost burn-down, task progress. Budget System (Section 17) governs graceful pause.
 
 ### Stage 6 — Review and Iteration
 
-GitHub PRs with Explainer-generated descriptions. Spec changes trigger Delta Detection (Section 17) for surgical re-execution. Foundry Evaluation benchmarks outputs against acceptance criteria.
+GitHub PRs with Explainer-generated descriptions. Spec changes trigger Delta Detection (Section 18) for surgical re-execution. Foundry Evaluation benchmarks outputs against acceptance criteria.
 
 ---
 
-## 11. Multi-Entry Architecture
+## 12. Multi-Entry Architecture
 
 Three entry points, all converging at Stage 2. Critical for enterprise adoption.
 
-### 11.1 Conversational Design
+### 12.1 Conversational Design
 
 User describes intent in chat. Designer agent elicits requirements. Best for: greenfield features, exploratory design, bug reports.
 
-### 11.2 Document Upload
+### 12.2 Document Upload
 
 User uploads PRD, RFC, or ticket. Ingestion agent (o1) parses, extracts Output Spec, flags ambiguities. Foundry IQ indexes for RAG. Best for: PMs handing off requirements, enterprise teams with existing docs.
 
@@ -430,13 +533,13 @@ User uploads PRD, RFC, or ticket. Ingestion agent (o1) parses, extracts Output S
 | 4. Flag | Foundry Agent (GPT-4o) | Ambiguity detection: missing criteria, vague constraints |
 | 5. Present | React UI | Pre-populated Output Spec with flagged items |
 
-### 11.3 Codebase-Context
+### 12.3 Codebase-Context
 
 User connects repo. Foundry IQ indexes codebase. Constraint registry loads. Designer asks questions grounded in actual code structure. Best for: refactoring, bug fixes, feature additions.
 
 ---
 
-## 12. Supported Workflows (6 Scenarios)
+## 13. Supported Workflows (7 Scenarios)
 
 All workflows: **Chat → Spec → Approve → Agents Execute → PRs → Review.**
 
@@ -476,15 +579,21 @@ All workflows: **Chat → Spec → Approve → Agents Execute → PRs → Review
 
 > **Demo priority: #4** — Strongest close. Proves spec-driven, not spec-decorated.
 
+### Workflow 7: CI/CD Failure Intelligence (Azure DevOps)
+
+**Entry:** ADO Service Hook (automatic) or manual failure import. **Flow:** Pipeline fails → Failure captured via webhook → Normalized to failure schema → Failure Analyzer produces root cause + remediation plan → User reviews remediation → Authorize (new plan.lock with parentLockId) → Builder agents fix → Verifier re-runs ADO pipeline → Explainer documents root cause and resolution.
+
+> **Demo priority: #3** — Enterprise differentiator. Shows ADO + Blueflame integration. Governed remediation with full audit trail.
+
 ---
 
 # PART IV — DATA, GOVERNANCE & OBSERVABILITY
 
 ---
 
-## 13. Artifact Model & Data Architecture
+## 14. Artifact Model & Data Architecture
 
-### 13.1 Artifact Hierarchy
+### 14.1 Artifact Hierarchy
 
 | Artifact | Storage | Format | ACAR/TEAMLLM Parallel |
 |---|---|---|---|
@@ -497,7 +606,7 @@ All workflows: **Chat → Spec → Approve → Agents Execute → PRs → Review
 | Agent Traces | Azure Monitor | OpenTelemetry | TEAMLLM decision traces |
 | Generated Code | GitHub | Source files | N/A |
 
-### 13.2 Cosmos DB Data Model (7 Containers)
+### 14.2 Cosmos DB Data Model (8 Containers)
 
 | Container | Partition Key | Purpose |
 |---|---|---|
@@ -508,16 +617,17 @@ All workflows: **Chat → Spec → Approve → Agents Execute → PRs → Review
 | agents | /runId | Agent status, token usage, σ values, cost tracking |
 | constraints | /projectId | Project-level constraint registry (persistent across runs) |
 | documents | /projectId | Uploaded document metadata; references to Blob Storage |
+| failures | /runId | Normalized CI/CD failure records from Azure DevOps; TTL-enabled |
 
 ---
 
-## 14. Constraint System (Project-Level Registry)
+## 15. Constraint System (Project-Level Registry)
 
-### 14.1 Why a Constraint Registry
+### 15.1 Why a Constraint Registry
 
 Without persistent constraints, every new run starts with zero architectural knowledge. The registry stores rules that survive across runs, enabling Workflow 3 (Refactor Under Constraints). The Verifier uses these constraints as ground truth — addressing ACAR's agreement-but-wrong ceiling by evaluating against explicit criteria, not model consensus.
 
-### 14.2 Constraint Schema
+### 15.2 Constraint Schema
 
 | Field | Type | Description |
 |---|---|---|
@@ -529,15 +639,15 @@ Without persistent constraints, every new run starts with zero architectural kno
 | verification_method | String | Test suite, static analysis, AST check, or manual |
 | source | String | user-defined \| extracted-from-codebase \| promoted-from-spec |
 
-### 14.3 Constraint Lifecycle
+### 15.3 Constraint Lifecycle
 
 Created by users (UI), extracted from codebase analysis (Foundry IQ), or promoted from spec-level constraints. Loaded automatically at run start. Frozen into plan.lock at authorization. Evaluated by Verifier against agent outputs. Editable by Blueflame:Admin role only.
 
 ---
 
-## 15. Enforcement, Safety & Responsible AI
+## 16. Enforcement, Safety & Responsible AI
 
-### 15.1 Allowed Agent Actions
+### 16.1 Allowed Agent Actions
 
 | Action | Agent Roles | Enforcement |
 |---|---|---|
@@ -548,7 +658,7 @@ Created by users (UI), extracted from codebase analysis (Foundry IQ), or promote
 | Generate documentation | Explainer | Write to Cosmos DB + PR comments |
 | Read codebase/specs/constraints | All agents | Foundry IQ + Cosmos DB read; project-scoped |
 
-### 15.2 Prohibited Agent Actions
+### 16.2 Prohibited Agent Actions
 
 | Prohibited Action | Enforcement |
 |---|---|
@@ -560,7 +670,7 @@ Created by users (UI), extracted from codebase analysis (Foundry IQ), or promote
 | Accessing other projects | Entra Agent ID project-scoped; Cosmos partition isolation |
 | Modifying CI workflows | GitHub App excludes .github/ write access |
 
-### 15.3 Responsible AI (Foundry Content Safety)
+### 16.3 Responsible AI (Foundry Content Safety)
 
 This section directly addresses the Best Enterprise Solution category's safety requirements.
 
@@ -577,9 +687,9 @@ This section directly addresses the Best Enterprise Solution category's safety r
 
 ---
 
-## 16. Budget System & Partial Execution
+## 17. Budget System & Partial Execution
 
-### 16.1 Budget Configuration
+### 17.1 Budget Configuration
 
 | Parameter | Set By | Scope |
 |---|---|---|
@@ -588,11 +698,11 @@ This section directly addresses the Best Enterprise Solution category's safety r
 | Warning Threshold | Default 80% | Triggers UI warning |
 | Pause Threshold | Default 95% | Triggers graceful execution pause |
 
-### 16.2 State Machine
+### 17.2 State Machine
 
 `AUTHORIZED → EXECUTING → (80%) WARNING → (95%) PAUSED → User: RESUME (top up) | ACCEPT (partial) | ABANDON`
 
-### 16.3 Partial Result Handling
+### 17.3 Partial Result Handling
 
 | Task State at Pause | Result | GitHub Artifact |
 |---|---|---|
@@ -603,9 +713,9 @@ This section directly addresses the Best Enterprise Solution category's safety r
 
 ---
 
-## 17. Spec Delta Detection & Controlled Rebuild
+## 18. Spec Delta Detection & Controlled Rebuild
 
-### 17.1 Delta Detection Process
+### 18.1 Delta Detection Process
 
 | Step | Action | Service |
 |---|---|---|
@@ -615,15 +725,15 @@ This section directly addresses the Best Enterprise Solution category's safety r
 | 4. Decision | PRESERVE (unaffected) \| REBUILD (changed) \| NEW (added) \| REMOVE (deleted) | Planner Agent |
 | 5. Present | Visual impact map: green/amber/blue/red. User confirms before re-authorization. | React UI |
 
-### 17.2 Rebuild Execution
+### 18.2 Rebuild Execution
 
 PRESERVE: branches untouched. REBUILD: branches deleted, re-created, agents re-execute. NEW: new branches. REMOVE: branches deleted, PRs closed with Explainer note. New plan.lock created. Re-authorization required.
 
 ---
 
-## 18. Observability & Audit Trail
+## 19. Observability & Audit Trail
 
-### 18.1 Recorded Data
+### 19.1 Recorded Data
 
 | Data Point | Source | ACAR Parallel |
 |---|---|---|
@@ -635,11 +745,11 @@ PRESERVE: branches untouched. REBUILD: branches deleted, re-created, agents re-e
 | Spec versions + delta maps | Cosmos DB change feed | N/A (Blueflame-native) |
 | Budget events (warnings, pauses, resumes) | Budget System | ACAR cost guards |
 
-### 18.2 Real-Time Dashboard
+### 19.2 Real-Time Dashboard
 
 React + SignalR: agent statuses, cost burn-down, DAG progress, constraint results, budget alerts. Primary interface for Stage 5.
 
-### 18.3 Post-Run Report
+### 19.3 Post-Run Report
 
 Explainer generates: execution summary, per-task breakdown with spec traceability, constraint compliance report, cost analysis (actual vs. σ-estimated), and (for Workflow 4) root cause analysis. Stored in Cosmos DB, linked from GitHub PR.
 
@@ -649,17 +759,18 @@ Explainer generates: execution summary, per-task breakdown with spec traceabilit
 
 ---
 
-## 19. Technology Stack Summary
+## 20. Technology Stack Summary
 
 | Layer | Technology | Purpose |
 |---|---|---|
 | Frontend | React/Next.js + Azure Static Web Apps | Chat, spec editor, dashboard, document upload |
 | Real-time | Azure SignalR Service | Live agent streaming, budget alerts |
 | Backend | Node.js/Python on Azure Container Apps | API gateway, webhooks, budget monitor |
-| AI Platform | Microsoft Foundry (10 services) | Agent factory: models, routing, workflows, safety, tracing, evaluation |
+| AI Platform | Microsoft Foundry (11 services) | Agent factory: models, routing, workflows, safety, tracing, evaluation, failure analysis |
 | Models | GPT-4o, o1, GPT-4o-mini, Claude Sonnet 4.5 | σ-informed selection via Foundry Model Router |
 | Agent Framework | Microsoft Agent Framework + A2A + MCP | Multi-agent orchestration |
-| Database | Azure Cosmos DB (7 containers) | Specs, plans, locks, runs, agents, constraints, documents |
+| Database | Azure Cosmos DB (8 containers) | Specs, plans, locks, runs, agents, constraints, documents, failures |
+| CI/CD Intelligence | Azure DevOps | Pipeline failure capture, test results, service hooks, remediation validation |
 | Storage | Azure Blob Storage | Archives, uploaded documents |
 | Code Execution | GitHub (Repos, Branches, PRs, Actions, Apps) | Agentic DevOps pipeline |
 | Search/RAG | Azure AI Search (Foundry IQ) | ACAR-informed >0.7 threshold grounding |
@@ -670,35 +781,37 @@ Explainer generates: execution summary, per-task breakdown with spec traceabilit
 
 ---
 
-## 20. Implementation Roadmap (5-Week Sprint Plan)
+## 21. Implementation Roadmap (6-Week Sprint Plan)
 
 Hackathon: February 10 – March 15, 2026. Prioritized for demo realism per review recommendations.
 
 | Week | Sprint | Deliverables | Demo-Ready |
 |---|---|---|---|
 | **1** (Feb 10–16) | Foundation | Azure provisioning. GitHub App. Entra ID. React shell + SignalR. Monaco Editor. Foundry project + Designer agent deployed. | Chat + basic spec |
-| **2** (Feb 17–23) | Core Loop | Stages 1–4 end-to-end (Conversational → Spec → Plan → Authorize). Cosmos DB model (7 containers). Spec versioning + freezing. plan.lock creation. Content Safety integration. | Workflow 1 (stages 1–4) |
+| **2** (Feb 17–23) | Core Loop | Stages 1–4 end-to-end (Conversational → Spec → Plan → Authorize). Cosmos DB model (8 containers). Spec versioning + freezing. plan.lock creation. Content Safety integration. | Workflow 1 (stages 1–4) |
 | **3** (Feb 24–Mar 2) | Agent Swarm + DevOps | All 4 agents in Foundry. σ-informed Model Router. Foundry Workflows (sequential + parallel). GitHub branch/PR/Actions loop. A2A handoff. Constraint registry. **PRIORITY: Verifier → GitHub Actions → Swarm feedback loop (agentic DevOps demo).** | Workflow 1 full + Workflow 4 |
-| **4** (Mar 3–9) | Governance + Delta | Budget system with pause/resume. Spec delta detection. Observability dashboard. Foundry Evaluation. Explainer root cause analysis. Protected Material Detection for code. | All 6 workflows |
-| **5** (Mar 10–15) | Demo + Polish | **PRIORITY: Record Workflow 1 + 6 as fully functional. Workflow 4 + 5 as fully functional. Workflow 2 as high-fidelity simulated if needed.** Submission package. | Submission-ready |
+| **4** (Mar 3–9) | Governance + Delta | Budget system with pause/resume. Spec delta detection. Observability dashboard. Visual animations. Explainer root cause analysis. Protected Material Detection for code. | All 6 workflows |
+| **5** (Mar 10–14) | Failure Intelligence | ADO adapter + normalized failure schema. Failure analyzer agent. Remediation authorization gate. Failure intelligence dashboard. | Workflow 7 (CI/CD Failure Intelligence) |
+| **6** (Mar 14–15) | Demo + Polish | **PRIORITY: Record all 7 workflows. Workflow 1 + 6 + 7 fully functional. Workflow 4 + 5 functional. Workflow 2 high-fidelity simulated if needed.** Submission package. | Submission-ready |
 
-> **[PRIORITY]** Risk mitigation: If Week 3 runs long, Workflow 2 (Document Upload) can be a high-fidelity simulated demo while Workflows 1 and 6 are 100% live. Workflow 6 (Spec Change) is the "wow" moment — it must be real.
+> **[PRIORITY]** Risk mitigation: If Week 5 runs long, Workflow 7 (Failure Intelligence) can be a high-fidelity simulated demo. Workflows 1 and 6 must be 100% live. Workflow 7 is the enterprise differentiator — ADO integration strengthens Microsoft platform alignment.
 
 ---
 
-## 21. Demo Strategy & Scenario
+## 22. Demo Strategy & Scenario
 
-### 21.1 Recommended Demo Order (10–12 min)
+### 22.1 Recommended Demo Order (12–15 min)
 
 | Order | Workflow | Duration | Purpose |
 |---|---|---|---|
 | 1 | Greenfield Build (WF1) | 4 min | Core identity. Full 6-stage lifecycle. |
 | 2 | Bug Fix + Root Cause (WF4) | 2.5 min | Depth. Explainer's ACAR-informed attribution. |
-| 3 | Budget-Constrained (WF5) | 2 min | Credibility. Cost governance + partial execution. |
-| 4 | Spec Change Rebuild (WF6) | 2.5 min | Strongest close. Delta detection. Proves spec-driven. |
-| 5 | Mention WF2 + WF3 | 1 min | Document upload + constraint enforcement. |
+| 3 | CI/CD Failure Intelligence (WF7) | 2.5 min | Enterprise. ADO failure → governed remediation. |
+| 4 | Budget-Constrained (WF5) | 2 min | Credibility. Cost governance + partial execution. |
+| 5 | Spec Change Rebuild (WF6) | 2.5 min | Strongest close. Delta detection. Proves spec-driven. |
+| 6 | Mention WF2 + WF3 | 1 min | Document upload + constraint enforcement. |
 
-### 21.2 Primary Demo: REST API Build (Workflow 1)
+### 22.2 Primary Demo: REST API Build (Workflow 1)
 
 **Step 1 (45s):** User: "REST API for task management with CRUD, auth, RBAC." Designer asks about auth provider, database, deployment target.
 
@@ -712,22 +825,87 @@ Hackathon: February 10 – March 15, 2026. Prioritized for demo realism per revi
 
 **Step 6 (30s):** User reviews PRs in GitHub. Explainer descriptions show spec traceability. User merges.
 
-### 21.3 Spec Change Demo (Workflow 6) — The Closer
+### 22.3 Spec Change Demo (Workflow 6) — The Closer
 
 After WF1, user adds criterion: "WebSocket notifications for task updates." Delta Detection: 6/8 tasks green (preserve), 1 amber (modify), 1 blue (new). Re-authorize. Only 2 tasks execute. Existing PRs preserved. Explainer: "Spec v2 adds WebSocket. Tasks 1–6 unaffected. Task 7 updated. Task 9 new."
 
 > **[CLOSER]** This is the moment that wins. A spec change mid-stream, and the system surgically re-executes only what's affected. No other hackathon entry can do this.
 
+### 22.4 Failure Intelligence Demo (Workflow 7) — The Enterprise Moment
+
+After WF1, a CI pipeline fails in ADO. Blueflame captures the failure via service hook. Failure Analyzer: "Test `auth.middleware.test.ts` fails — missing `Authorization` header in request mock. Root cause: Builder generated handler expecting `Bearer` prefix but test sends raw token." Remediation plan: 1 task (fix test mock). User authorizes. Builder fixes. ADO pipeline re-runs. Green. Explainer: "Pipeline PIPE-47 failed due to auth header format mismatch. Remediation updated test to include Bearer prefix. 14 tests now pass."
+
+> **[ENTERPRISE]** This is the moment that wins Best Enterprise Solution. A CI failure triggers governed AI remediation — no human debugging, full audit trail, same authorization gates.
+
 ---
 
-## 22. Judging Criteria Alignment (Final)
+## 23. Enterprise Upgrade Paths
+
+### 23.1 Design Principle
+
+Every Blueflame component is designed with a clear migration path from local-first MVP to enterprise-scale deployment. The MVP uses in-memory stores and single-server architectures for speed of development. Each component maps to an Azure service that provides multi-tenant, horizontally scalable equivalents.
+
+> **[PRINCIPLE]** Every local operation has a clear server-side equivalent. No component is designed as a dead end.
+
+### 23.2 Component Migration Table
+
+| Component | MVP Implementation | Enterprise Upgrade | Azure Service |
+|---|---|---|---|
+| Run state | In-memory Map | Cosmos DB `runs` container | Azure Cosmos DB |
+| Failure store | In-memory Map | Cosmos DB `failures` container with TTL + partition by org | Azure Cosmos DB |
+| Budget tracking | Per-run ceiling | Org-level budget pools, team allocation, chargeback reporting | Azure Cost Management |
+| Agent orchestration | Single-server DAG executor | Multi-instance with KEDA auto-scaling per org | Azure Container Apps |
+| PlanLock storage | Cosmos single document | Cross-partition audit queries, compliance reporting | Azure Cosmos DB |
+| Real-time streaming | Single Socket.IO hub | Room-per-org isolation, horizontal scaling | Azure Web PubSub |
+| ADO adapter | Direct REST API calls | Azure Service Bus queue for webhook ingestion at scale | Azure Service Bus |
+| Failure analyzer | Per-run Foundry call | Shared Foundry deployment with priority queues per tenant | Microsoft Foundry |
+| Remediation plans | Per-run in-memory | Cosmos `remediations` container, linked via parentLockId | Azure Cosmos DB |
+| Constraint enforcement | In-process checks | Azure Policy-backed constraint store with org-level inheritance | Azure Policy |
+| Authentication | Single-tenant Entra ID | Multi-tenant Entra ID with B2B collaboration | Azure Entra ID |
+| Observability | Azure Monitor (single workspace) | Per-org workspaces with cross-org aggregation | Azure Monitor |
+
+### 23.3 Multi-Tenant Architecture (Future)
+
+```
+                    ┌──────────────────────────┐
+                    │   Azure Front Door       │
+                    │   (Global Load Balancer)  │
+                    └─────────┬────────────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+     ┌────────▼──┐    ┌──────▼───┐    ┌──────▼───┐
+     │  Org A    │    │  Org B   │    │  Org C   │
+     │  (tenant) │    │  (tenant)│    │  (tenant)│
+     └────────┬──┘    └──────┬───┘    └──────┬───┘
+              │               │               │
+     ┌────────▼───────────────▼───────────────▼──┐
+     │        Azure Cosmos DB (partitioned)      │
+     │   /orgId partition key across containers  │
+     └───────────────────────────────────────────┘
+```
+
+### 23.4 Scalability Considerations
+
+| Concern | MVP Approach | Enterprise Approach |
+|---|---|---|
+| Concurrent runs | Sequential per server | KEDA scales Container Apps instances per org load |
+| Cost tracking frequency | Per-task updates | Event-driven via Cosmos change feed + Azure Functions |
+| Artifact storage | Cosmos DB (small docs) | Azure Blob for large outputs, Cosmos for metadata |
+| Pipeline log volume | Direct API fetch | Azure Service Bus buffering + background processing |
+| Agent concurrency | In-process parallel | Container Apps with dedicated agent pools per org |
+| Audit retention | Cosmos TTL (30 days) | Azure Blob archival with configurable retention policies |
+
+---
+
+## 24. Judging Criteria Alignment (Final)
 
 | Criterion | Evidence | Differentiator |
 |---|---|---|
-| Innovation | Spec-first SDLC + authorization gates + σ-routing + constraint registry + delta rebuild + budget-governed partial execution | Research-backed: ACAR paper with 7,550+ auditable runs. Documented negative results (retrieval failure, attribution proxy failure) demonstrate intellectual rigor. |
-| Impact | Enterprise trust deficit solved. 6 real-world workflows. Cost governance. Full audit trail. | Not a toy: persistent constraints, budget system with graceful degradation, agentic DevOps loop with real GitHub Actions integration. |
-| Technical Usability | 3 entry points. 6-stage UX. GitHub PRs. Real-time dashboard. Partial execution. | Zero adoption friction: developers use tools they already know (GitHub, PRs). No new review tool to learn. |
-| Platform Alignment | 10 Foundry services. 12 Azure services. Full GitHub integration. Model-agnostic σ-routing. | Deepest Foundry integration in the hackathon: Content Safety, Protected Material Detection, Model Router, Control Plane, Workflows, IQ, Tracing, Evaluation, Memory, Agent Service. |
+| Innovation | Spec-first SDLC + authorization gates + σ-routing + constraint registry + delta rebuild + budget-governed partial execution + CI/CD failure intelligence | Research-backed: ACAR paper with 7,550+ auditable runs. Documented negative results demonstrate intellectual rigor. Failure intelligence closes the CI/CD feedback loop with governed remediation. |
+| Impact | Enterprise trust deficit solved. 7 real-world workflows. Cost governance. Full audit trail. CI/CD failure remediation. | Not a toy: persistent constraints, budget system with graceful degradation, agentic DevOps loop with real GitHub Actions + Azure DevOps integration. Enterprise upgrade paths documented. |
+| Technical Usability | 3 entry points. 6-stage UX. GitHub PRs. Real-time dashboard. Partial execution. ADO pipeline integration. | Zero adoption friction: developers use tools they already know (GitHub, ADO, PRs). No new review tool to learn. |
+| Platform Alignment | 11 Foundry services. 13 Azure services. Full GitHub + Azure DevOps integration. Model-agnostic σ-routing. | Deepest Foundry + Azure integration in the hackathon: Content Safety, Protected Material Detection, Model Router, Control Plane, Workflows, IQ, Tracing, Evaluation, Agent Service, ADO Pipelines. |
 
 ---
 

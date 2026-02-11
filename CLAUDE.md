@@ -16,10 +16,11 @@
 |-----------|-----------|
 | Frontend | Next.js 14 (App Router) + React + Tailwind CSS |
 | Backend API | Node.js + TypeScript (Azure Container Apps) |
-| Database | Azure Cosmos DB (7 containers) |
-| Real-time | Azure SignalR Service |
+| Database | Azure Cosmos DB (8 containers) |
+| Real-time | Socket.IO (Azure Web PubSub adapter for prod) |
 | Auth | Microsoft Entra ID (SSO + 4-tier RBAC) |
-| AI/Agents | Microsoft Foundry (10 services) |
+| AI/Agents | Microsoft Foundry (11 services) |
+| CI/CD | GitHub Actions + Azure DevOps Pipelines |
 | Source Control | GitHub (Actions, agentic DevOps, GitHub App) |
 | Infrastructure | Azure (Bicep IaC) |
 | Monorepo | Turborepo + npm workspaces |
