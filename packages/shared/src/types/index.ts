@@ -36,5 +36,7 @@ export type {
 	SpecConstraints,
 } from "./spec.js";
 
+export type { ChatMessage, MessageRole } from "./message.js";
+
 // State machine helpers
 export { RUN_TRANSITIONS } from "./run.js";

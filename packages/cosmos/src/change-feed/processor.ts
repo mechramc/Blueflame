@@ -31,8 +31,6 @@ export class ChangeFeedProcessor {
 	private readonly pollIntervalMs: number;
 	private readonly maxItemCount: number;
 
-	private runsContinuation: string | undefined;
-	private agentsContinuation: string | undefined;
 	private runsTimer: ReturnType<typeof setInterval> | null = null;
 	private agentsTimer: ReturnType<typeof setInterval> | null = null;
 	private running = false;
@@ -150,10 +148,6 @@ export class ChangeFeedProcessor {
 			});
 			const response = await iterator.fetchNext();
 
-			if (response.continuation) {
-				this.runsContinuation = response.continuation;
-			}
-
 			if (response.result && response.result.length > 0) {
 				for (const doc of response.result as Run[]) {
 					this.processRunDoc(doc);
@@ -172,10 +166,6 @@ export class ChangeFeedProcessor {
 				maxItemCount: this.maxItemCount,
 			});
 			const response = await iterator.fetchNext();
-
-			if (response.continuation) {
-				this.agentsContinuation = response.continuation;
-			}
 
 			if (response.result && response.result.length > 0) {
 				for (const doc of response.result as AgentState[]) {

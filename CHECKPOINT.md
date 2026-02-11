@@ -12,9 +12,9 @@
 - **Session**: 1
 
 ## Current State
-- **Phase**: S3 Data Layer
-- **Last completed task**: S3-003 — Change feed processor
-- **Next task**: S4-001 — Chat UI, S4-002 — Designer agent
+- **Phase**: S4 Chat Interface
+- **Last completed task**: S4-001 — Chat UI
+- **Next task**: S4-002 — Designer agent, S5-001 — Spec generation
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
@@ -70,10 +70,19 @@
   - `apps/api/src/services/change-feed-bridge.test.ts` — 5 tests (routing, cleanup)
   - 15 new tests total (10 processor + 5 bridge)
 
+- **S4-001 COMPLETE**: Chat UI with message history:
+  - `packages/shared/src/types/message.ts` — ChatMessage type (role, content, streaming flag)
+  - `apps/web/components/chat/ChatPanel.tsx` — full chat interface with message list, auto-scroll, typing indicator
+  - `apps/web/components/chat/MessageBubble.tsx` — user/agent message bubbles with markdown rendering
+  - `apps/web/components/chat/ChatInput.tsx` — textarea with Enter-to-send, Shift+Enter for newline
+  - `apps/web/components/chat/TypingIndicator.tsx` — animated dots during agent response
+  - `apps/web/app/project/[projectId]/page.tsx` — split-view project page (chat left, spec right placeholder)
+  - 12 tests (4 MessageBubble + 6 ChatInput + 2 TypingIndicator)
+
 ## What To Pick Up Next
-1. **S4-001**: Chat UI component with message history
-2. **S4-002**: Designer agent with streaming responses
-3. **S5-001**: Spec generation
+1. **S4-002**: Designer agent with streaming responses
+2. **S5-001**: Spec generation
+3. **S5-002**: Spec editor UI
 
 ## Blockers
 - None
@@ -87,7 +96,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 67 (23 API + 44 Cosmos) |
+| Total | 79 (23 API + 44 Cosmos + 12 Web) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
