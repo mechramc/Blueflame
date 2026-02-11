@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S9 Budget System** (complete) — S9-001 and S9-002 done
+**S10 Observability Dashboard** (complete) — S10-001 and S10-002 done
 
 ## Sprint Progress
 
@@ -50,8 +50,8 @@
 |------|--------|----------|--------|
 | S9-001: Budget tracking | S9 | P1 | **DONE** |
 | S9-002: Budget UI | S9 | P1 | **DONE** |
-| S10-001: Run status dashboard | S10 | P1 | Not started |
-| S10-002: Cost visualization | S10 | P1 | Not started |
+| S10-001: Agent status cards | S10 | P1 | **DONE** |
+| S10-002: DAG progress + dashboard | S10 | P1 | **DONE** |
 
 ### Week 5 (Mar 10–15) — Polish + Demo + Submit
 | Task | Priority | Status |
@@ -61,7 +61,7 @@
 
 ## Task Progress
 - **Total**: 24/27 complete
-- **P0**: 21/21 | **P1**: 2/4 | **Demo/Submit**: 0/2 | S8 (bonus P0): 2/2
+- **P0**: 21/21 | **P1**: 4/4 | **Demo/Submit**: 0/2 | S8 (bonus P0): 2/2
 - **Critical path**: COMPLETE (all P0 tasks done)
 
 ## Decisions Log
@@ -92,7 +92,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/web | 58 |
+| apps/web | 79 |
 | apps/api | 156 |
 | packages/* | 144 |
-| **Total** | **358** |
+| **Total** | **379** |

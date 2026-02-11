@@ -12,11 +12,11 @@
 - **Session**: 4
 
 ## Current State
-- **Phase**: S9 Budget System (complete)
-- **Last completed task**: S9-002 — Budget UI with pause decision modal
-- **Next task**: S10-001 — Run status dashboard (P1)
+- **Phase**: S10 Observability Dashboard (complete)
+- **Last completed task**: S10-002 — DAG progress visualization and action stream
+- **Next task**: Demo recording + submission package
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 358 tests)
+- **Repo is green**: YES (build, lint, test all pass — 379 tests)
 
 ## What Just Happened
 - **S1-001 COMPLETE**: Turborepo monorepo fully scaffolded (6 packages)
@@ -180,10 +180,19 @@
   - `apps/web/components/budget/PauseDecisionModal.tsx` — 3-option modal (Resume with top-up, Accept Partial, Abandon)
   - 15 tests (6 CostProgressBar + 4 BudgetWarning + 5 PauseDecisionModal)
 
+- **S10-001 COMPLETE**: Agent status cards + grid:
+  - `apps/web/components/dashboard/AgentStatusCard.tsx` — color-coded cards (green=executing, yellow=idle, blue=completed, red=failed) with role, task, model, token, cost display
+  - `apps/web/components/dashboard/AgentGrid.tsx` — responsive grid layout for agent cards
+
+- **S10-002 COMPLETE**: DAG progress, action stream, dashboard layout:
+  - `apps/web/components/dashboard/DAGProgress.tsx` — SVG DAG with status-based node colors (gray→blue→green→red)
+  - `apps/web/components/dashboard/ActionStream.tsx` — scrolling terminal-style event log with auto-scroll
+  - `apps/web/components/dashboard/DashboardLayout.tsx` — unified layout: cost bar + agents + DAG + action stream
+  - `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — run dashboard page with API polling + pause modal
+  - 21 tests (8 AgentStatusCard + 2 AgentGrid + 5 DAGProgress + 4 ActionStream + 2 DashboardLayout)
+
 ## What To Pick Up Next
-1. **S10-001**: Run status dashboard (P1)
-2. **S10-002**: DAG progress + action stream (P1)
-3. Demo recording + submission package
+1. Demo recording + submission package
 
 ## Blockers
 - None
@@ -199,7 +208,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 358 (156 API + 44 Cosmos + 58 Web + 72 Foundry + 24 GitHub App + 4 Shared) |
+| Total | 379 (156 API + 44 Cosmos + 79 Web + 72 Foundry + 24 GitHub App + 4 Shared) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
