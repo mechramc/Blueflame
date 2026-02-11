@@ -37,6 +37,8 @@ coverage/
 
 # Azure
 .azure/
+infra/*.json
+!infra/parameters.*.json
 
 # Debug logs
 npm-debug.log*
