@@ -65,9 +65,7 @@ export interface ExplainerOutput {
 	summary: string;
 }
 
-export type ExplainerResult =
-	| { ok: true; value: ExplainerOutput }
-	| { ok: false; error: string };
+export type ExplainerResult = { ok: true; value: ExplainerOutput } | { ok: false; error: string };
 
 /**
  * Creates an Azure OpenAI client for the Explainer agent.
@@ -154,9 +152,7 @@ export function parseExplainerOutput(raw: string): ExplainerResult {
 				criterionId: String(m.criterionId ?? ""),
 				status: toStatus(String(m.status ?? "")),
 				evidence: String(m.evidence ?? ""),
-				filesChanged: Array.isArray(m.filesChanged)
-					? (m.filesChanged as string[])
-					: [],
+				filesChanged: Array.isArray(m.filesChanged) ? (m.filesChanged as string[]) : [],
 			}))
 		: [];
 
@@ -175,10 +171,7 @@ export function parseExplainerOutput(raw: string): ExplainerResult {
 			prBody: String(parsed.prBody),
 			acceptanceCriteriaMap: acMap,
 			constraintCompliance: compliance,
-			rootCauseAnalysis:
-				parsed.rootCauseAnalysis != null
-					? String(parsed.rootCauseAnalysis)
-					: null,
+			rootCauseAnalysis: parsed.rootCauseAnalysis != null ? String(parsed.rootCauseAnalysis) : null,
 			summary: String(parsed.summary ?? ""),
 		},
 	};

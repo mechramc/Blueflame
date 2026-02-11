@@ -19,9 +19,7 @@ export interface GitHubClientConfig extends GitHubAppConfig {
 /**
  * Create an authenticated Octokit instance using the installation token.
  */
-export async function createOctokitClient(
-	config: GitHubClientConfig,
-): Promise<Octokit> {
+export async function createOctokitClient(config: GitHubClientConfig): Promise<Octokit> {
 	const token = await getInstallationToken(config);
 	return new Octokit({ auth: token });
 }

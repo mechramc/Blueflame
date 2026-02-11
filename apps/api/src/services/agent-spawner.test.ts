@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { AgentRole, AgentStatus } from "@blueflame/shared";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	clearAllAgents,
 	getAgent,
@@ -102,7 +102,7 @@ describe("getRunTotalCost", () => {
 	it("should sum cost across all agents for a run", () => {
 		const a1 = spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
 		const a2 = spawnAgent("run-1", AgentRole.Verifier, "TASK-001", "gpt-4o");
-		recordAgentUsage(a1.agentId, 1000, 0.10);
+		recordAgentUsage(a1.agentId, 1000, 0.1);
 		recordAgentUsage(a2.agentId, 500, 0.05);
 
 		expect(getRunTotalCost("run-1")).toBeCloseTo(0.15);

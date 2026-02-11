@@ -19,17 +19,13 @@ describe("verifyWebhookSignature", () => {
 
 	it("should return false for invalid signature", () => {
 		const payload = '{"action":"completed"}';
-		expect(
-			verifyWebhookSignature(payload, "sha256=invalid", secret),
-		).toBe(false);
+		expect(verifyWebhookSignature(payload, "sha256=invalid", secret)).toBe(false);
 	});
 
 	it("should return false for tampered payload", () => {
 		const payload = '{"action":"completed"}';
 		const signature = sign(payload, secret);
-		expect(
-			verifyWebhookSignature('{"action":"hacked"}', signature, secret),
-		).toBe(false);
+		expect(verifyWebhookSignature('{"action":"hacked"}', signature, secret)).toBe(false);
 	});
 
 	it("should return false for empty signature", () => {

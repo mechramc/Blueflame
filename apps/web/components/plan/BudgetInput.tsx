@@ -50,9 +50,7 @@ export function BudgetInput({ estimatedCost, onBudgetSet, disabled = false }: Bu
 			>
 				Set Budget
 			</button>
-			<span className="text-xs text-gray-500">
-				Estimated: ${estimatedCost.toFixed(2)}
-			</span>
+			<span className="text-xs text-gray-500">Estimated: ${estimatedCost.toFixed(2)}</span>
 		</div>
 	);
 }

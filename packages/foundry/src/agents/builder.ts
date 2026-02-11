@@ -56,9 +56,7 @@ export interface BuilderError {
 	suggestions: string[];
 }
 
-export type BuilderResult =
-	| { ok: true; value: BuilderOutput }
-	| { ok: false; error: BuilderError };
+export type BuilderResult = { ok: true; value: BuilderOutput } | { ok: false; error: BuilderError };
 
 /**
  * Creates an Azure OpenAI client for the Builder agent.
@@ -139,9 +137,7 @@ export function parseBuilderOutput(raw: string): BuilderResult {
 			ok: false,
 			error: {
 				error: parsed.error,
-				suggestions: Array.isArray(parsed.suggestions)
-					? (parsed.suggestions as string[])
-					: [],
+				suggestions: Array.isArray(parsed.suggestions) ? (parsed.suggestions as string[]) : [],
 			},
 		};
 	}

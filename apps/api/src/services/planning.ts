@@ -5,11 +5,11 @@
  * and stores the resulting TaskPlan. For MVP, uses in-memory store.
  */
 
+import type { RawPlanOutput, RawPlanTask } from "@blueflame/foundry";
+import { validateDAG } from "@blueflame/foundry";
 import type { PlanTask, TaskPlan } from "@blueflame/shared";
 import { AgentRole, SpecStatus, TaskStatus } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
-import type { RawPlanOutput, RawPlanTask } from "@blueflame/foundry";
-import { validateDAG } from "@blueflame/foundry";
 import { getSpec } from "./spec-generation.js";
 
 /** In-memory plan store for MVP */

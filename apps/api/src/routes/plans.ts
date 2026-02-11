@@ -5,8 +5,8 @@
 import type { PlannerConfig, RawPlanOutput } from "@blueflame/foundry";
 import { generatePlan } from "@blueflame/foundry";
 import { Router } from "express";
-import { getSpec } from "../services/spec-generation.js";
 import { createPlanFromRaw, getPlanByRunId } from "../services/planning.js";
+import { getSpec } from "../services/spec-generation.js";
 
 const router = Router();
 

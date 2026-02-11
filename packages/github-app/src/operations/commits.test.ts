@@ -38,9 +38,7 @@ describe("commitFiles", () => {
 			repo: "repo",
 			branch: "feature/test",
 			message: "test commit",
-			files: [
-				{ path: "src/hello.ts", content: 'console.log("hello")' },
-			],
+			files: [{ path: "src/hello.ts", content: 'console.log("hello")' }],
 		});
 
 		expect(result.sha).toBe("new-commit-sha-123");

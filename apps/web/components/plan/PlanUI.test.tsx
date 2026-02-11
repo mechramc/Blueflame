@@ -1,12 +1,12 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlanTask } from "@blueflame/shared";
 import { AgentRole, TaskStatus, UserRole } from "@blueflame/shared";
-import { TaskTable } from "./TaskTable.js";
-import { TaskDAG } from "./TaskDAG.js";
-import { BudgetInput } from "./BudgetInput.js";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthorizeButton } from "./AuthorizeButton.js";
 import { AuthorizeModal } from "./AuthorizeModal.js";
+import { BudgetInput } from "./BudgetInput.js";
+import { TaskDAG } from "./TaskDAG.js";
+import { TaskTable } from "./TaskTable.js";
 
 afterEach(() => {
 	cleanup();
@@ -194,27 +194,21 @@ describe("AuthorizeButton", () => {
 
 describe("AuthorizeModal", () => {
 	it("should display budget and task count", () => {
-		render(
-			<AuthorizeModal budget={5.5} taskCount={7} onConfirm={vi.fn()} onCancel={vi.fn()} />,
-		);
+		render(<AuthorizeModal budget={5.5} taskCount={7} onConfirm={vi.fn()} onCancel={vi.fn()} />);
 		expect(screen.getByText("$5.50")).toBeDefined();
 		expect(screen.getByText("7")).toBeDefined();
 	});
 
 	it("should call onConfirm when Authorize clicked", () => {
 		const onConfirm = vi.fn();
-		render(
-			<AuthorizeModal budget={5} taskCount={3} onConfirm={onConfirm} onCancel={vi.fn()} />,
-		);
+		render(<AuthorizeModal budget={5} taskCount={3} onConfirm={onConfirm} onCancel={vi.fn()} />);
 		fireEvent.click(screen.getByText("Authorize"));
 		expect(onConfirm).toHaveBeenCalled();
 	});
 
 	it("should call onCancel when Cancel clicked", () => {
 		const onCancel = vi.fn();
-		render(
-			<AuthorizeModal budget={5} taskCount={3} onConfirm={vi.fn()} onCancel={onCancel} />,
-		);
+		render(<AuthorizeModal budget={5} taskCount={3} onConfirm={vi.fn()} onCancel={onCancel} />);
 		fireEvent.click(screen.getByText("Cancel"));
 		expect(onCancel).toHaveBeenCalled();
 	});

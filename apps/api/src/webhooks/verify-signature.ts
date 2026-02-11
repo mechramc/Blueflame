@@ -35,10 +35,7 @@ export function verifyWebhookSignature(
 
 	// Use timing-safe comparison to prevent timing attacks
 	try {
-		return timingSafeEqual(
-			Buffer.from(signature, "utf-8"),
-			Buffer.from(computed, "utf-8"),
-		);
+		return timingSafeEqual(Buffer.from(signature, "utf-8"), Buffer.from(computed, "utf-8"));
 	} catch {
 		// Buffers have different lengths → signatures don't match
 		return false;

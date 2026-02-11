@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlanLock, PlanTask, TaskPlan } from "@blueflame/shared";
 import { AgentRole, RunStatus, TaskStatus } from "@blueflame/shared";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearAllAgents, recordAgentUsage, spawnAgent } from "./agent-spawner.js";
 import {
 	clearAllRuns,
@@ -139,10 +139,7 @@ describe("executeNextWave", () => {
 	});
 
 	it("should spawn parallel tasks in same wave", () => {
-		const plan = makePlan([
-			{ id: "TASK-001" },
-			{ id: "TASK-002" },
-		]);
+		const plan = makePlan([{ id: "TASK-001" }, { id: "TASK-002" }]);
 		startExecution(plan, makeLock());
 
 		const result = executeNextWave("run-1");
@@ -173,7 +170,9 @@ describe("completeTask", () => {
 	});
 
 	it("should mark task completed on verifier completion", () => {
-		const plan = makePlan([{ id: "TASK-001", agentRole: AgentRole.Verifier, status: TaskStatus.Running }]);
+		const plan = makePlan([
+			{ id: "TASK-001", agentRole: AgentRole.Verifier, status: TaskStatus.Running },
+		]);
 		startExecution(plan, makeLock());
 
 		const agent = spawnAgent("run-1", AgentRole.Verifier, "TASK-001", "gpt-4o");
@@ -270,10 +269,7 @@ describe("budget enforcement", () => {
 	it("should defer pending tasks on budget pause", () => {
 		const lock = makeLock();
 		lock.budgetCeiling = 1.0;
-		const plan = makePlan([
-			{ id: "TASK-001" },
-			{ id: "TASK-002", dependencies: ["TASK-001"] },
-		]);
+		const plan = makePlan([{ id: "TASK-001" }, { id: "TASK-002", dependencies: ["TASK-001"] }]);
 		startExecution(plan, lock);
 
 		const agent = spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");

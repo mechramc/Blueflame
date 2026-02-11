@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { PlanTask } from "@blueflame/shared";
 import { AgentRole, TaskStatus } from "@blueflame/shared";
+import { describe, expect, it } from "vitest";
 import {
 	allTasksTerminal,
 	computeExecutionWaves,
@@ -25,11 +25,7 @@ function makeTask(overrides: Partial<PlanTask> & { id: string }): PlanTask {
 
 describe("computeExecutionWaves", () => {
 	it("should put independent tasks in wave 0", () => {
-		const tasks = [
-			makeTask({ id: "T1" }),
-			makeTask({ id: "T2" }),
-			makeTask({ id: "T3" }),
-		];
+		const tasks = [makeTask({ id: "T1" }), makeTask({ id: "T2" }), makeTask({ id: "T3" })];
 
 		const waves = computeExecutionWaves(tasks);
 		expect(waves).toHaveLength(1);
@@ -84,10 +80,7 @@ describe("computeExecutionWaves", () => {
 
 describe("getReadyTasks", () => {
 	it("should return tasks with no dependencies when all pending", () => {
-		const tasks = [
-			makeTask({ id: "T1" }),
-			makeTask({ id: "T2", dependencies: ["T1"] }),
-		];
+		const tasks = [makeTask({ id: "T1" }), makeTask({ id: "T2", dependencies: ["T1"] })];
 
 		const ready = getReadyTasks(tasks);
 		expect(ready).toHaveLength(1);
@@ -106,9 +99,7 @@ describe("getReadyTasks", () => {
 	});
 
 	it("should not return tasks that are already running", () => {
-		const tasks = [
-			makeTask({ id: "T1", status: TaskStatus.Running }),
-		];
+		const tasks = [makeTask({ id: "T1", status: TaskStatus.Running })];
 
 		const ready = getReadyTasks(tasks);
 		expect(ready).toHaveLength(0);
@@ -163,9 +154,7 @@ describe("allTasksTerminal", () => {
 	});
 
 	it("should return false when any task is running", () => {
-		const tasks = [
-			makeTask({ id: "T1", status: TaskStatus.Running }),
-		];
+		const tasks = [makeTask({ id: "T1", status: TaskStatus.Running })];
 		expect(allTasksTerminal(tasks)).toBe(false);
 	});
 });

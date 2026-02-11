@@ -4,7 +4,6 @@
 
 import { Router } from "express";
 import { getLockByRunId } from "../services/authorization.js";
-import { getPlanByRunId } from "../services/planning.js";
 import {
 	completeTask,
 	executeNextWave,
@@ -13,6 +12,7 @@ import {
 	requestInterrupt,
 	startExecution,
 } from "../services/orchestrator.js";
+import { getPlanByRunId } from "../services/planning.js";
 
 export const executionRouter = Router();
 
@@ -104,7 +104,14 @@ executionRouter.post("/:runId/complete-task", (req, res) => {
 		return;
 	}
 
-	const result = completeTask(runId, taskId, agentId, tokensUsed ?? 0, costIncurred ?? 0, sigmaValue);
+	const result = completeTask(
+		runId,
+		taskId,
+		agentId,
+		tokensUsed ?? 0,
+		costIncurred ?? 0,
+		sigmaValue,
+	);
 	if (!result.ok) {
 		res.status(400).json({ error: result.error.message });
 		return;

@@ -58,13 +58,7 @@ describe("getPRDiff", () => {
 describe("compareCommits", () => {
 	it("should return diff between two commits", async () => {
 		const octokit = mockOctokit();
-		const result = await compareCommits(
-			octokit,
-			"test",
-			"repo",
-			"main",
-			"feature/test",
-		);
+		const result = await compareCommits(octokit, "test", "repo", "main", "feature/test");
 
 		expect(result.files).toHaveLength(2);
 		expect(octokit.rest.repos.compareCommits).toHaveBeenCalledWith({
@@ -106,7 +100,14 @@ describe("formatDiff", () => {
 		const diff: DiffResult = {
 			files: [
 				{ filename: "a.ts", status: "added", additions: 5, deletions: 0, changes: 5, patch: "+a" },
-				{ filename: "b.ts", status: "modified", additions: 3, deletions: 2, changes: 5, patch: "-b\n+c" },
+				{
+					filename: "b.ts",
+					status: "modified",
+					additions: 3,
+					deletions: 2,
+					changes: 5,
+					patch: "-b\n+c",
+				},
 			],
 			totalAdditions: 8,
 			totalDeletions: 2,

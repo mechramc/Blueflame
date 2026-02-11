@@ -41,10 +41,7 @@ export interface CommitResult {
  * 4. Create a commit pointing to the tree
  * 5. Update the branch ref to the new commit
  */
-export async function commitFiles(
-	octokit: Octokit,
-	params: CommitParams,
-): Promise<CommitResult> {
+export async function commitFiles(octokit: Octokit, params: CommitParams): Promise<CommitResult> {
 	const { owner, repo, branch, message, files } = params;
 
 	// 1. Get the current commit SHA for the branch

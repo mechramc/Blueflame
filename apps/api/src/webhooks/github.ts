@@ -15,11 +15,7 @@ import { verifyWebhookSignature } from "./verify-signature.js";
 export const webhookRouter = Router();
 
 /** Webhook event types we handle */
-export type WebhookEventType =
-	| "workflow_run"
-	| "check_run"
-	| "pull_request_review"
-	| "ping";
+export type WebhookEventType = "workflow_run" | "check_run" | "pull_request_review" | "ping";
 
 export interface WebhookEvent {
 	type: WebhookEventType;
@@ -75,7 +71,7 @@ webhookRouter.post("/github", (req, res) => {
 		return;
 	}
 
-	const action = (req.body as Record<string, unknown>).action as string ?? "";
+	const action = ((req.body as Record<string, unknown>).action as string) ?? "";
 
 	const event: WebhookEvent = {
 		type: eventType as WebhookEventType,
@@ -111,9 +107,7 @@ function handleWorkflowRunCompleted(payload: Record<string, unknown>): void {
 	const runId = workflowRun.id as number;
 
 	// Log for now — orchestrator integration in production
-	console.log(
-		`[Webhook] workflow_run completed: #${runId} on ${headBranch} → ${conclusion}`,
-	);
+	console.log(`[Webhook] workflow_run completed: #${runId} on ${headBranch} → ${conclusion}`);
 }
 
 function handleCheckRunCompleted(payload: Record<string, unknown>): void {

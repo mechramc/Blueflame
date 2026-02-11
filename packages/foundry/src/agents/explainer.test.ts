@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	type ExplainerInput,
-	buildExplainerPrompt,
-	parseExplainerOutput,
-} from "./explainer.js";
+import { type ExplainerInput, buildExplainerPrompt, parseExplainerOutput } from "./explainer.js";
 
 const SAMPLE_INPUT: ExplainerInput = {
 	runId: "run-123",
@@ -114,7 +110,8 @@ describe("parseExplainerOutput", () => {
 	});
 
 	it("should handle markdown-fenced JSON", () => {
-		const raw = '```json\n{"prTitle":"T","prBody":"B","acceptanceCriteriaMap":[],"constraintCompliance":[],"rootCauseAnalysis":null,"summary":"ok"}\n```';
+		const raw =
+			'```json\n{"prTitle":"T","prBody":"B","acceptanceCriteriaMap":[],"constraintCompliance":[],"rootCauseAnalysis":null,"summary":"ok"}\n```';
 		const result = parseExplainerOutput(raw);
 		expect(result.ok).toBe(true);
 	});

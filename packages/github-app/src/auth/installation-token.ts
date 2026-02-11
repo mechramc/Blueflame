@@ -27,9 +27,7 @@ let cachedToken: CachedToken | null = null;
  * Get an installation token, refreshing if expired or about to expire.
  * Tokens are refreshed 5 minutes before expiry.
  */
-export async function getInstallationToken(
-	config: GitHubAppConfig,
-): Promise<string> {
+export async function getInstallationToken(config: GitHubAppConfig): Promise<string> {
 	const now = new Date();
 	const bufferMs = 5 * 60 * 1000; // 5 minutes before expiry
 

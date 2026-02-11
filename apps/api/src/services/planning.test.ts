@@ -1,9 +1,9 @@
 import type { RawPlanOutput } from "@blueflame/foundry";
 import { TaskStatus } from "@blueflame/shared";
 import { afterEach, describe, expect, it } from "vitest";
-import { acceptSpec, clearAllSpecs, createSpecFromYaml } from "./spec-generation.js";
-import { freezeSpec } from "./spec-freeze.js";
 import { clearAllPlans, createPlanFromRaw, getPlan, getPlanByRunId } from "./planning.js";
+import { freezeSpec } from "./spec-freeze.js";
+import { acceptSpec, clearAllSpecs, createSpecFromYaml } from "./spec-generation.js";
 
 const SAMPLE_YAML = `title: "Plan Test"
 description: "Testing planning functionality"

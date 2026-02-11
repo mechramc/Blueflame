@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import express from "express";
 import request from "supertest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearWebhookHandlers, onWebhookEvent, webhookRouter } from "./github.js";
 
 function createApp() {
@@ -28,9 +28,7 @@ describe("GitHub Webhook Handler", () => {
 
 	it("should reject requests without X-GitHub-Event header", async () => {
 		const app = createApp();
-		const res = await request(app)
-			.post("/api/webhooks/github")
-			.send({ action: "completed" });
+		const res = await request(app).post("/api/webhooks/github").send({ action: "completed" });
 
 		expect(res.status).toBe(400);
 		expect(res.body.error).toContain("Missing X-GitHub-Event");

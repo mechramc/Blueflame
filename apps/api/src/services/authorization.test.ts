@@ -1,9 +1,6 @@
 import type { RawPlanOutput } from "@blueflame/foundry";
 import { UserRole } from "@blueflame/shared";
 import { afterEach, describe, expect, it } from "vitest";
-import { acceptSpec, clearAllSpecs, createSpecFromYaml } from "./spec-generation.js";
-import { freezeSpec } from "./spec-freeze.js";
-import { clearAllPlans, createPlanFromRaw } from "./planning.js";
 import {
 	type AuthorizeRequest,
 	authorizePlan,
@@ -11,6 +8,9 @@ import {
 	getLock,
 	getLockByRunId,
 } from "./authorization.js";
+import { clearAllPlans, createPlanFromRaw } from "./planning.js";
+import { freezeSpec } from "./spec-freeze.js";
+import { acceptSpec, clearAllSpecs, createSpecFromYaml } from "./spec-generation.js";
 
 const SAMPLE_YAML = `title: "Auth Test"
 description: "Testing authorization"

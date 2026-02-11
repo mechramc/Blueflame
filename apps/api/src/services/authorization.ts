@@ -23,13 +23,13 @@ const DEFAULT_AGENT_PERMISSIONS: AgentPermissions[] = [
 	{
 		role: AgentRole.Builder,
 		maxTokens: 50000,
-		maxCost: 0.50,
+		maxCost: 0.5,
 		allowedActions: ["code:write", "branch:create", "pr:create"],
 	},
 	{
 		role: AgentRole.Verifier,
 		maxTokens: 10000,
-		maxCost: 0.10,
+		maxCost: 0.1,
 		allowedActions: ["test:run", "lint:check", "constraint:validate"],
 	},
 	{

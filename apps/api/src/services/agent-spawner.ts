@@ -6,7 +6,7 @@
  */
 
 import type { AgentState } from "@blueflame/shared";
-import { AgentRole, AgentStatus } from "@blueflame/shared";
+import { type AgentRole, AgentStatus } from "@blueflame/shared";
 
 /** In-memory agent store for MVP */
 const agents = new Map<string, AgentState>();
@@ -60,10 +60,7 @@ export function spawnAgent(
 /**
  * Update an agent's status.
  */
-export function updateAgentStatus(
-	agentId: string,
-	status: AgentStatus,
-): AgentState | undefined {
+export function updateAgentStatus(agentId: string, status: AgentStatus): AgentState | undefined {
 	const agent = agents.get(agentId);
 	if (!agent) return undefined;
 

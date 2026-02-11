@@ -81,11 +81,7 @@ function createClient(config: VerifierConfig): OpenAI {
  * Builds the user prompt for verification.
  */
 export function buildVerifierPrompt(input: VerifierInput): string {
-	const parts: string[] = [
-		`## Task: ${input.taskId}`,
-		"",
-		"## Acceptance Criteria",
-	];
+	const parts: string[] = [`## Task: ${input.taskId}`, "", "## Acceptance Criteria"];
 
 	for (const ac of input.acceptanceCriteria) {
 		parts.push(`- **${ac.id}**: ${ac.description}`);

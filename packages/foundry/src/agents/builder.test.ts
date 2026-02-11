@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	type BuilderTaskInput,
-	buildBuilderPrompt,
-	parseBuilderOutput,
-} from "./builder.js";
+import { type BuilderTaskInput, buildBuilderPrompt, parseBuilderOutput } from "./builder.js";
 
 const SAMPLE_INPUT: BuilderTaskInput = {
 	taskId: "TASK-001",
@@ -11,9 +7,7 @@ const SAMPLE_INPUT: BuilderTaskInput = {
 	acceptanceCriteriaIds: ["AC-001", "AC-002"],
 	specContext: "The system requires JWT-based authentication.",
 	constraints: ["No third-party auth libraries", "Use bcrypt for hashing"],
-	existingFiles: [
-		{ path: "src/types/user.ts", content: "export interface User { id: string; }" },
-	],
+	existingFiles: [{ path: "src/types/user.ts", content: "export interface User { id: string; }" }],
 };
 
 describe("buildBuilderPrompt", () => {
@@ -67,9 +61,7 @@ describe("buildBuilderPrompt", () => {
 describe("parseBuilderOutput", () => {
 	it("should parse a valid success response", () => {
 		const raw = JSON.stringify({
-			files: [
-				{ path: "src/auth.ts", content: "export function login() {}", action: "create" },
-			],
+			files: [{ path: "src/auth.ts", content: "export function login() {}", action: "create" }],
 			commit_message: "feat(auth): add login function",
 			pr_title: "Add authentication",
 			pr_body: "## Summary\n- Added login",
@@ -87,7 +79,8 @@ describe("parseBuilderOutput", () => {
 	});
 
 	it("should parse a response wrapped in markdown fences", () => {
-		const raw = '```json\n{"files":[{"path":"a.ts","content":"x","action":"create"}],"commit_message":"m","pr_title":"t","pr_body":"b","notes":"n"}\n```';
+		const raw =
+			'```json\n{"files":[{"path":"a.ts","content":"x","action":"create"}],"commit_message":"m","pr_title":"t","pr_body":"b","notes":"n"}\n```';
 		const result = parseBuilderOutput(raw);
 		expect(result.ok).toBe(true);
 	});

@@ -3,8 +3,8 @@
  */
 
 import { Router } from "express";
-import { getPlanByRunId } from "../services/planning.js";
 import { authorizePlan, getLockByRunId } from "../services/authorization.js";
+import { getPlanByRunId } from "../services/planning.js";
 
 const router = Router();
 

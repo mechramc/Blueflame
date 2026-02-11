@@ -64,10 +64,7 @@ export function onBudgetAlert(callback: BudgetAlertCallback): void {
 /**
  * Start execution of an authorized plan.
  */
-export function startExecution(
-	plan: TaskPlan,
-	lock: PlanLock,
-): Result<RunState> {
+export function startExecution(plan: TaskPlan, lock: PlanLock): Result<RunState> {
 	if (runs.has(plan.runId)) {
 		return { ok: false, error: new Error(`Run ${plan.runId} already exists`) };
 	}

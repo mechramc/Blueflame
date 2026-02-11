@@ -34,10 +34,7 @@ export interface PRResult {
 /**
  * Create a pull request.
  */
-export async function createPR(
-	octokit: Octokit,
-	params: CreatePRParams,
-): Promise<PRResult> {
+export async function createPR(octokit: Octokit, params: CreatePRParams): Promise<PRResult> {
 	const { owner, repo, title, body, head, base = "main", draft = false } = params;
 
 	const { data: pr } = await octokit.rest.pulls.create({

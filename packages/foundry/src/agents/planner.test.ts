@@ -67,7 +67,11 @@ describe("Planner Agent", () => {
 		});
 
 		it("should throw on empty tasks array", () => {
-			const empty = JSON.stringify({ tasks: [], total_estimated_cost: 0, total_estimated_tokens: 0 });
+			const empty = JSON.stringify({
+				tasks: [],
+				total_estimated_cost: 0,
+				total_estimated_tokens: 0,
+			});
 			expect(() => parsePlanOutput(empty)).toThrow("at least one task");
 		});
 
@@ -87,9 +91,7 @@ describe("Planner Agent", () => {
 		});
 
 		it("should detect unknown dependencies", () => {
-			const tasks: RawPlanTask[] = [
-				makePlanTask("TASK-001", ["TASK-999"]),
-			];
+			const tasks: RawPlanTask[] = [makePlanTask("TASK-001", ["TASK-999"])];
 			const errors = validateDAG(tasks);
 			expect(errors.some((e) => e.includes("unknown task TASK-999"))).toBe(true);
 		});
@@ -114,10 +116,7 @@ describe("Planner Agent", () => {
 		});
 
 		it("should accept tasks with no dependencies", () => {
-			const tasks: RawPlanTask[] = [
-				makePlanTask("TASK-001", []),
-				makePlanTask("TASK-002", []),
-			];
+			const tasks: RawPlanTask[] = [makePlanTask("TASK-001", []), makePlanTask("TASK-002", [])];
 			expect(validateDAG(tasks)).toEqual([]);
 		});
 

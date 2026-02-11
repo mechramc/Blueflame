@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	type VerifierInput,
-	buildVerifierPrompt,
-	parseVerifierOutput,
-} from "./verifier.js";
+import { type VerifierInput, buildVerifierPrompt, parseVerifierOutput } from "./verifier.js";
 
 const SAMPLE_INPUT: VerifierInput = {
 	taskId: "TASK-001",
@@ -127,7 +123,8 @@ describe("parseVerifierOutput", () => {
 	});
 
 	it("should handle markdown-fenced JSON", () => {
-		const raw = '```json\n{"taskId":"T","overallResult":"PASS","criteria":[],"buildPassed":true,"testsPassed":0,"testsFailed":0,"lintErrors":0,"summary":"ok"}\n```';
+		const raw =
+			'```json\n{"taskId":"T","overallResult":"PASS","criteria":[],"buildPassed":true,"testsPassed":0,"testsFailed":0,"lintErrors":0,"summary":"ok"}\n```';
 		const result = parseVerifierOutput(raw);
 		expect(result.ok).toBe(true);
 	});
@@ -147,9 +144,7 @@ describe("parseVerifierOutput", () => {
 		const raw = JSON.stringify({
 			taskId: "TASK-001",
 			overallResult: "FAIL",
-			criteria: [
-				{ id: "AC-001", result: "MAYBE", evidence: "unclear", notes: "" },
-			],
+			criteria: [{ id: "AC-001", result: "MAYBE", evidence: "unclear", notes: "" }],
 			buildPassed: false,
 			testsPassed: 0,
 			testsFailed: 1,
