@@ -1,0 +1,805 @@
+# Blueflame — Atomic Task Plan
+# Canonical task breakdown for Claude Code execution
+# Each task ≈ 1 PR of work, independently verifiable
+#
+# Derived from: Blueflame-Spec-v3-ACAR.md + Blueflame-PRD.md
+# Stack: TypeScript / Next.js / Azure / Foundry
+# Agent: Claude Code
+#
+# Priority: P0 = must ship for demo, P1 = should ship, P2 = nice to have
+# Sprint: W1–W5 (Week 1 through Week 5)
+
+meta:
+  project: blueflame
+  spec: Blueflame-Spec-v3-ACAR.md
+  prd: Blueflame-PRD.md
+  stack: typescript-nextjs
+  agent: claude-code
+  hackathon_deadline: "2026-03-15"
+
+# ═══════════════════════════════════════════════════════════════
+# S1: PROJECT SCAFFOLD & INFRASTRUCTURE
+# ═══════════════════════════════════════════════════════════════
+
+tasks:
+  - id: S1-001
+    system: S1-scaffold
+    title: "Initialize Turborepo monorepo with app and package structure"
+    sprint: W1
+    priority: P0
+    description: |
+      Create the monorepo skeleton using Turborepo. Set up apps/web (Next.js 14+),
+      apps/api (Express or Fastify with TypeScript), and packages (shared, cosmos,
+      foundry, github-app). Configure turbo.json, tsconfig.base.json, and workspace
+      package.json. Add Biome for linting/formatting. Add Vitest config.
+    spec_sections: [5, 19]
+    files_to_create:
+      - package.json
+      - turbo.json
+      - tsconfig.base.json
+      - biome.json
+      - apps/web/package.json
+      - apps/web/tsconfig.json
+      - apps/web/next.config.ts
+      - apps/web/app/layout.tsx
+      - apps/web/app/page.tsx
+      - apps/api/package.json
+      - apps/api/tsconfig.json
+      - apps/api/src/index.ts
+      - packages/shared/package.json
+      - packages/shared/tsconfig.json
+      - packages/shared/src/index.ts
+      - packages/cosmos/package.json
+      - packages/cosmos/tsconfig.json
+      - packages/cosmos/src/index.ts
+      - packages/foundry/package.json
+      - packages/foundry/tsconfig.json
+      - packages/foundry/src/index.ts
+      - packages/github-app/package.json
+      - packages/github-app/tsconfig.json
+      - packages/github-app/src/index.ts
+    dependencies: []
+    acceptance_criteria:
+      - "`npm install` succeeds from root"
+      - "`npm run dev` starts web on :3000 and api on :4000"
+      - "`npm run lint` runs Biome on all packages"
+      - "`npm run test` runs Vitest (passes with 0 tests)"
+      - "TypeScript strict mode enabled in all tsconfigs"
+    verify_command: "npm install && npm run build && npm run lint"
+
+  - id: S1-002
+    system: S1-scaffold
+    title: "Create Azure Bicep templates for all infrastructure"
+    sprint: W1
+    priority: P0
+    description: |
+      Write Bicep templates that provision: Cosmos DB (NoSQL, serverless) with 7
+      containers and correct partition keys, Azure Blob Storage (hot), Azure SignalR
+      Service, Azure Key Vault, Azure Container Apps environment, Azure Static Web
+      Apps, and Log Analytics workspace. Include parameter file for dev/prod.
+    spec_sections: [8, 13.2]
+    files_to_create:
+      - infra/main.bicep
+      - infra/modules/cosmos.bicep
+      - infra/modules/storage.bicep
+      - infra/modules/signalr.bicep
+      - infra/modules/keyvault.bicep
+      - infra/modules/container-apps.bicep
+      - infra/modules/static-web-app.bicep
+      - infra/modules/log-analytics.bicep
+      - infra/parameters.dev.json
+      - infra/parameters.prod.json
+    dependencies: []
+    acceptance_criteria:
+      - "Bicep validates: `az bicep build --file infra/main.bicep`"
+      - "7 Cosmos containers defined: specs, plans, locks, runs, agents, constraints, documents"
+      - "Partition keys match spec Section 13.2"
+      - "All resources tagged with `project: blueflame`"
+    verify_command: "az bicep build --file infra/main.bicep"
+
+  - id: S1-003
+    system: S1-scaffold
+    title: "Set up GitHub Actions CI pipeline"
+    sprint: W1
+    priority: P0
+    description: |
+      Create GitHub Actions workflow that runs on PR: install, lint, type-check,
+      test. Add deployment workflow for main branch that deploys to Azure.
+    spec_sections: [9]
+    files_to_create:
+      - .github/workflows/ci.yml
+      - .github/workflows/deploy.yml
+    dependencies: [S1-001]
+    acceptance_criteria:
+      - "CI runs on every PR: install → lint → type-check → test"
+      - "Deploy workflow triggers on push to main"
+      - "Both workflows use Node.js 20"
+    verify_command: "cat .github/workflows/ci.yml"
+
+  - id: S1-004
+    system: S1-scaffold
+    title: "Configure SignalR connection between web and api"
+    sprint: W1
+    priority: P0
+    description: |
+      Set up Azure SignalR Service integration. API acts as SignalR hub using
+      @microsoft/signalr on the server. Web connects as client. Create a test
+      channel that echoes messages to verify the connection.
+    spec_sections: [8, 18.2]
+    files_to_create:
+      - apps/api/src/signalr/hub.ts
+      - apps/api/src/signalr/channels.ts
+      - apps/web/lib/signalr-client.ts
+      - apps/web/hooks/useSignalR.ts
+    dependencies: [S1-001]
+    acceptance_criteria:
+      - "Web connects to API via SignalR (WebSocket transport)"
+      - "Test echo channel works: send message → receive message"
+      - "Connection auto-reconnects on disconnect"
+      - "Hook `useSignalR` provides typed channel subscriptions"
+    verify_command: "npm run test -- --grep signalr"
+
+  - id: S1-005
+    system: S1-scaffold
+    title: "Create shared TypeScript types for all domain models"
+    sprint: W1
+    priority: P0
+    description: |
+      Define all TypeScript interfaces in packages/shared matching spec schemas:
+      OutputSpec, TaskPlan, Task, PlanLock, Run, AgentState, Constraint,
+      UploadedDocument, AcceptanceCriterion, Deliverable, Risk. Include enums for
+      RunStatus, AgentRole, ConstraintScope, ConstraintType, SpecStatus.
+    spec_sections: [10, 13, 14]
+    files_to_create:
+      - packages/shared/src/types/spec.ts
+      - packages/shared/src/types/plan.ts
+      - packages/shared/src/types/lock.ts
+      - packages/shared/src/types/run.ts
+      - packages/shared/src/types/agent.ts
+      - packages/shared/src/types/constraint.ts
+      - packages/shared/src/types/document.ts
+      - packages/shared/src/types/enums.ts
+      - packages/shared/src/types/index.ts
+    dependencies: [S1-001]
+    acceptance_criteria:
+      - "All interfaces match spec Section 13–14 schemas"
+      - "Enums cover all state machine values"
+      - "Types exported from packages/shared"
+      - "No `any` types"
+    verify_command: "npx tsc --noEmit -p packages/shared/tsconfig.json"
+
+# ═══════════════════════════════════════════════════════════════
+# S2: AUTHENTICATION & RBAC
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S2-001
+    system: S2-auth
+    title: "Implement Entra ID SSO with MSAL in Next.js"
+    sprint: W1
+    priority: P0
+    description: |
+      Set up Azure Entra ID authentication in the Next.js app using @azure/msal-react
+      and @azure/msal-node. Configure App Registration with redirect URIs. Create
+      auth provider wrapper, sign-in/sign-out buttons, and protected route middleware.
+    spec_sections: [8, 15]
+    files_to_create:
+      - apps/web/lib/msal-config.ts
+      - apps/web/components/auth/AuthProvider.tsx
+      - apps/web/components/auth/SignInButton.tsx
+      - apps/web/components/auth/UserMenu.tsx
+      - apps/web/middleware.ts
+    dependencies: [S1-001]
+    acceptance_criteria:
+      - "User can sign in via Microsoft SSO"
+      - "User can sign out"
+      - "Unauthenticated users redirected to sign-in"
+      - "User profile (name, email, avatar) displayed in UI"
+    verify_command: "npm run build -w apps/web"
+
+  - id: S2-002
+    system: S2-auth
+    title: "Implement RBAC middleware and role-based UI gating"
+    sprint: W1
+    priority: P0
+    description: |
+      Create API middleware that extracts Entra ID role claims from JWT and enforces
+      role requirements per endpoint. Define 4 roles: Viewer, Editor, Authorizer,
+      Admin. Create React hook `useRole()` and component `<RoleGate>` for UI gating.
+    spec_sections: [2, 10, 15]
+    files_to_create:
+      - apps/api/src/middleware/auth.ts
+      - apps/api/src/middleware/rbac.ts
+      - apps/web/hooks/useRole.ts
+      - apps/web/components/auth/RoleGate.tsx
+      - packages/shared/src/types/roles.ts
+    dependencies: [S2-001]
+    acceptance_criteria:
+      - "API middleware validates JWT and extracts role claims"
+      - "Endpoints can require specific roles via decorator/middleware"
+      - "403 returned for insufficient role"
+      - "`useRole()` returns current user's role"
+      - "`<RoleGate role='Authorizer'>` hides children for lesser roles"
+    verify_command: "npm run test -- --grep rbac"
+
+# ═══════════════════════════════════════════════════════════════
+# S3: COSMOS DB DATA LAYER
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S3-001
+    system: S3-cosmos
+    title: "Implement Cosmos DB client and base repository"
+    sprint: W1
+    priority: P0
+    description: |
+      Create Cosmos DB client wrapper using @azure/cosmos SDK. Implement base
+      repository class with typed CRUD operations, query builder, and error handling.
+      Support both real Cosmos DB and local emulator.
+    spec_sections: [13]
+    files_to_create:
+      - packages/cosmos/src/client.ts
+      - packages/cosmos/src/repository.ts
+      - packages/cosmos/src/errors.ts
+      - packages/cosmos/src/config.ts
+    dependencies: [S1-001, S1-005]
+    acceptance_criteria:
+      - "Client connects to Cosmos DB (or emulator)"
+      - "Base repository provides: create, read, update, delete, query"
+      - "Typed generics: `Repository<T>` ensures type safety"
+      - "Retry with exponential backoff on transient errors"
+    verify_command: "npm run test -w packages/cosmos"
+
+  - id: S3-002
+    system: S3-cosmos
+    title: "Implement all 7 container repositories"
+    sprint: W1-W2
+    priority: P0
+    description: |
+      Create specific repository classes for all 7 containers: SpecsRepository,
+      PlansRepository, LocksRepository (create-only), RunsRepository (with state
+      machine), AgentsRepository, ConstraintsRepository, DocumentsRepository.
+      LocksRepository must NOT have update/delete methods. RunsRepository must
+      enforce state machine transitions.
+    spec_sections: [13.2, 14]
+    files_to_create:
+      - packages/cosmos/src/repositories/specs.ts
+      - packages/cosmos/src/repositories/plans.ts
+      - packages/cosmos/src/repositories/locks.ts
+      - packages/cosmos/src/repositories/runs.ts
+      - packages/cosmos/src/repositories/agents.ts
+      - packages/cosmos/src/repositories/constraints.ts
+      - packages/cosmos/src/repositories/documents.ts
+      - packages/cosmos/src/repositories/index.ts
+    dependencies: [S3-001]
+    acceptance_criteria:
+      - "All 7 repositories implemented with correct partition keys"
+      - "LocksRepository has create() and read() only — no update or delete"
+      - "RunsRepository rejects invalid state transitions"
+      - "SpecsRepository.freeze() computes SHA-256 hash"
+      - "Unit tests for all repositories (≥80% coverage)"
+    verify_command: "npm run test -w packages/cosmos -- --coverage"
+
+  - id: S3-003
+    system: S3-cosmos
+    title: "Implement Cosmos change feed processor"
+    sprint: W2
+    priority: P0
+    description: |
+      Create change feed processor for runs and agents containers. On document
+      change, emit typed events to SignalR hub. This is the backbone of real-time
+      dashboard updates.
+    spec_sections: [7.5, 18.2]
+    files_to_create:
+      - packages/cosmos/src/change-feed/processor.ts
+      - packages/cosmos/src/change-feed/events.ts
+      - apps/api/src/services/change-feed-bridge.ts
+    dependencies: [S3-002, S1-004]
+    acceptance_criteria:
+      - "Change feed detects new/updated documents in runs and agents containers"
+      - "Events emitted to SignalR with < 1s latency"
+      - "Events are typed (RunStatusChanged, AgentStateChanged, etc.)"
+      - "Processor handles reconnection gracefully"
+    verify_command: "npm run test -- --grep change-feed"
+
+# ═══════════════════════════════════════════════════════════════
+# S4: CHAT INTERFACE & DESIGNER AGENT
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S4-001
+    system: S4-chat
+    title: "Build chat UI component with message history"
+    sprint: W2
+    priority: P0
+    description: |
+      Create the chat panel UI: message list with user/agent message bubbles,
+      text input with send button, typing indicator, auto-scroll to bottom,
+      markdown rendering for agent responses. Left side of the split-view layout.
+    spec_sections: [10]
+    files_to_create:
+      - apps/web/components/chat/ChatPanel.tsx
+      - apps/web/components/chat/MessageBubble.tsx
+      - apps/web/components/chat/ChatInput.tsx
+      - apps/web/components/chat/TypingIndicator.tsx
+      - apps/web/app/project/[projectId]/page.tsx
+    dependencies: [S1-001, S2-001]
+    acceptance_criteria:
+      - "Messages render with user/agent distinction"
+      - "Markdown in agent messages renders correctly"
+      - "Auto-scrolls to latest message"
+      - "Input supports Enter to send, Shift+Enter for newline"
+      - "Typing indicator shows during agent response"
+    verify_command: "npm run build -w apps/web"
+
+  - id: S4-002
+    system: S4-chat
+    title: "Implement Designer agent with streaming responses"
+    sprint: W2
+    priority: P0
+    description: |
+      Create the Designer agent using Foundry Agent Service SDK. System prompt
+      engineered for requirement elicitation: ask clarifying questions, identify
+      ambiguities, progressively structure intent. Stream responses to frontend
+      via SignalR. Store conversation history in Cosmos DB.
+    spec_sections: [6.2, 10]
+    files_to_create:
+      - packages/foundry/src/agents/designer.ts
+      - packages/foundry/src/agents/prompts/designer-system.ts
+      - apps/api/src/routes/chat.ts
+      - apps/api/src/services/conversation.ts
+    dependencies: [S4-001, S1-004, S3-001]
+    acceptance_criteria:
+      - "Agent responds to user messages via streaming"
+      - "Agent asks ≥2 clarifying questions before suggesting spec generation"
+      - "Conversation stored in Cosmos DB"
+      - "Responses stream token-by-token via SignalR"
+      - "System prompt follows spec Section 10 Stage 1"
+    verify_command: "npm run test -- --grep designer"
+
+# ═══════════════════════════════════════════════════════════════
+# S5: SPEC ENGINE
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S5-001
+    system: S5-spec
+    title: "Build spec editor with Monaco and split-view layout"
+    sprint: W2
+    priority: P0
+    description: |
+      Create the split-view layout: chat panel (left) + spec editor (right).
+      Spec editor uses Monaco Editor with YAML language support. Spec status
+      badge (DRAFT/ACCEPTED/FROZEN). Accept and Freeze buttons.
+    spec_sections: [10]
+    files_to_create:
+      - apps/web/components/spec/SpecEditor.tsx
+      - apps/web/components/spec/SpecStatusBadge.tsx
+      - apps/web/components/spec/SpecActions.tsx
+      - apps/web/components/layout/SplitView.tsx
+    dependencies: [S4-001]
+    acceptance_criteria:
+      - "Split view renders chat (left) and spec editor (right)"
+      - "Monaco editor loads with YAML syntax highlighting"
+      - "Status badge shows current spec status"
+      - "Accept button transitions DRAFT → ACCEPTED"
+      - "Split view is resizable"
+    verify_command: "npm run build -w apps/web"
+
+  - id: S5-002
+    system: S5-spec
+    title: "Implement spec generation from conversation context"
+    sprint: W2
+    priority: P0
+    description: |
+      Create the spec generation service: takes conversation history, calls Foundry
+      agent (o1) with a prompt that outputs structured YAML matching OutputSpec
+      schema. Populates spec editor with result. User can then edit before accepting.
+    spec_sections: [10, 6.3]
+    files_to_create:
+      - packages/foundry/src/agents/spec-generator.ts
+      - packages/foundry/src/agents/prompts/spec-generation-system.ts
+      - apps/api/src/routes/specs.ts
+      - apps/api/src/services/spec-generation.ts
+    dependencies: [S4-002, S3-002, S1-005]
+    acceptance_criteria:
+      - "Spec generated from conversation context in valid YAML"
+      - "Generated spec matches OutputSpec interface"
+      - "All required fields populated (deliverables, criteria, constraints)"
+      - "Acceptance criteria have unique IDs (AC-001, AC-002, ...)"
+      - "Spec stored in Cosmos DB specs container as DRAFT"
+    verify_command: "npm run test -- --grep spec-gen"
+
+  - id: S5-003
+    system: S5-spec
+    title: "Implement spec freeze with SHA-256 hash"
+    sprint: W2
+    priority: P0
+    description: |
+      Add freeze endpoint: computes SHA-256 of the spec YAML content, sets status
+      to FROZEN, increments version number, and prevents further edits to this
+      version. New edits create a new version (v+1) with DRAFT status.
+    spec_sections: [10, 13]
+    files_to_create:
+      - apps/api/src/services/spec-freeze.ts
+      - packages/shared/src/utils/hash.ts
+    dependencies: [S5-002, S3-002]
+    acceptance_criteria:
+      - "Freeze computes deterministic SHA-256 hash"
+      - "Frozen spec cannot be updated (API returns 409)"
+      - "Editing a frozen spec creates new version (v+1) as DRAFT"
+      - "Version history queryable"
+      - "Hash is stored in spec document"
+    verify_command: "npm run test -- --grep freeze"
+
+# ═══════════════════════════════════════════════════════════════
+# S6: PLANNING ENGINE
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S6-001
+    system: S6-planning
+    title: "Implement Planner agent for task decomposition"
+    sprint: W2-W3
+    priority: P0
+    description: |
+      Create the Planner agent using Foundry Agent Service. Takes a frozen OutputSpec
+      and produces a TaskPlan with dependency DAG. Each task gets: description,
+      acceptance_criteria_ids linking back to spec, dependencies, agent_role,
+      estimated_tokens, estimated_cost, sigma estimate, parallelizable flag.
+    spec_sections: [7.1, 7.4, 10]
+    files_to_create:
+      - packages/foundry/src/agents/planner.ts
+      - packages/foundry/src/agents/prompts/planner-system.ts
+      - apps/api/src/services/planning.ts
+      - apps/api/src/routes/plans.ts
+    dependencies: [S5-003, S3-002]
+    acceptance_criteria:
+      - "Planner generates TaskPlan from frozen spec"
+      - "Each task has unique ID (TASK-001, TASK-002, ...)"
+      - "Dependencies form valid DAG (no cycles)"
+      - "acceptance_criteria_ids reference valid spec criteria"
+      - "Cost estimates present for each task"
+      - "TaskPlan stored in Cosmos DB plans container"
+    verify_command: "npm run test -- --grep planner"
+
+  - id: S6-002
+    system: S6-planning
+    title: "Build task plan UI with DAG visualization"
+    sprint: W3
+    priority: P0
+    description: |
+      Create the task plan view in the frontend: table showing all tasks with
+      dependencies, estimated cost, and agent role. DAG visualization using dagre
+      or elkjs for layout. Budget input field. Authorize button (role-gated).
+    spec_sections: [10]
+    files_to_create:
+      - apps/web/components/plan/TaskTable.tsx
+      - apps/web/components/plan/TaskDAG.tsx
+      - apps/web/components/plan/BudgetInput.tsx
+      - apps/web/components/plan/AuthorizeButton.tsx
+      - apps/web/components/plan/AuthorizeModal.tsx
+    dependencies: [S6-001, S2-002]
+    acceptance_criteria:
+      - "Task table displays all tasks with columns: ID, description, deps, cost, role"
+      - "DAG renders correct dependency graph"
+      - "Budget input accepts USD value"
+      - "Authorize button disabled for non-Authorizer roles"
+      - "Confirmation modal before authorization"
+    verify_command: "npm run build -w apps/web"
+
+  - id: S6-003
+    system: S6-planning
+    title: "Implement authorization gate (plan.lock creation)"
+    sprint: W3
+    priority: P0
+    description: |
+      Create the authorization endpoint: validates user role (Authorizer+), creates
+      immutable PlanLock document in Cosmos DB with: frozen spec hash, approved tasks,
+      budget ceiling, per-agent limits, constraint snapshot, authorized_by, timestamp.
+      Updates Run status to AUTHORIZED.
+    spec_sections: [10, 13]
+    files_to_create:
+      - apps/api/src/services/authorization.ts
+      - apps/api/src/routes/authorize.ts
+    dependencies: [S6-001, S3-002, S2-002]
+    acceptance_criteria:
+      - "PlanLock created with correct spec hash"
+      - "PlanLock is immutable (no update/delete in repository)"
+      - "Authorization requires Blueflame.Authorizer role"
+      - "Run status transitions to AUTHORIZED"
+      - "Budget ceiling and per-agent limits stored"
+      - "Constraint snapshot included"
+    verify_command: "npm run test -- --grep authorize"
+
+# ═══════════════════════════════════════════════════════════════
+# S7: AGENT SWARM
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S7-001
+    system: S7-agents
+    title: "Implement Builder agent with GitHub code generation"
+    sprint: W3
+    priority: P0
+    description: |
+      Create the Builder agent: receives a task from the PlanLock, creates a Git
+      branch, generates code files, commits them, and opens a PR. Uses Claude
+      Sonnet 4.5 via Foundry. Code generation guided by task description and
+      acceptance criteria. PR body includes task ID and spec hash.
+    spec_sections: [7.1, 9]
+    files_to_create:
+      - packages/foundry/src/agents/builder.ts
+      - packages/foundry/src/agents/prompts/builder-system.ts
+    dependencies: [S6-003, S8-001]
+    acceptance_criteria:
+      - "Builder creates branch: blueflame/run-{id}/task-{n}"
+      - "Builder generates code files appropriate to the task"
+      - "Builder opens PR with task ID and spec hash in body"
+      - "Builder agent state tracked in Cosmos DB agents container"
+      - "Builder uses Claude Sonnet 4.5 via Foundry"
+    verify_command: "npm run test -- --grep builder"
+
+  - id: S7-002
+    system: S7-agents
+    title: "Implement Verifier agent with GitHub Actions integration"
+    sprint: W3
+    priority: P0
+    description: |
+      Create the Verifier agent: receives branch ref from Builder (A2A handoff),
+      triggers GitHub Action to run tests, receives CI results via webhook,
+      evaluates results against acceptance criteria from PlanLock. Reports
+      pass/fail per criterion. This is the agentic DevOps "money shot".
+    spec_sections: [7.1, 7.2, 9.2]
+    files_to_create:
+      - packages/foundry/src/agents/verifier.ts
+      - packages/foundry/src/agents/prompts/verifier-system.ts
+    dependencies: [S7-001, S8-002]
+    acceptance_criteria:
+      - "Verifier triggers GitHub Action on Builder's branch"
+      - "Verifier receives CI results via webhook"
+      - "Verifier evaluates results against acceptance criteria"
+      - "Pass/fail logged per criterion in Cosmos DB"
+      - "Verifier uses acceptance criteria as ground truth (not model agreement)"
+    verify_command: "npm run test -- --grep verifier"
+
+  - id: S7-003
+    system: S7-agents
+    title: "Implement Explainer agent with PR description generation"
+    sprint: W3
+    priority: P0
+    description: |
+      Create the Explainer agent: reads Builder diffs (GitHub Diff API), Verifier
+      results, and original spec. Generates PR description with: which acceptance
+      criteria are satisfied, constraint compliance summary, and (for bug fixes)
+      root cause analysis. Uses explicit diffs, not proxy estimation (per ACAR).
+    spec_sections: [7.1, 7.3]
+    files_to_create:
+      - packages/foundry/src/agents/explainer.ts
+      - packages/foundry/src/agents/prompts/explainer-system.ts
+    dependencies: [S7-002, S8-001]
+    acceptance_criteria:
+      - "Explainer reads diffs from GitHub Diff API"
+      - "PR description links to acceptance criteria IDs"
+      - "Constraint compliance summary included"
+      - "Root cause analysis generated for bug-fix workflows"
+      - "Attribution based on explicit diffs (ACAR-informed)"
+    verify_command: "npm run test -- --grep explainer"
+
+  - id: S7-004
+    system: S7-agents
+    title: "Build orchestrator engine (DAG execution + A2A handoff)"
+    sprint: W3
+    priority: P0
+    description: |
+      Create the orchestrator: receives authorized PlanLock, executes tasks
+      respecting dependency DAG. Spawns Builders in parallel for independent tasks.
+      A2A handoff: Builder completion → Verifier start. Tracks state in Cosmos DB.
+      Emits events to SignalR for dashboard. Supports interrupt (user stop).
+    spec_sections: [7.4, 7.5]
+    files_to_create:
+      - apps/api/src/services/orchestrator.ts
+      - apps/api/src/services/dag-executor.ts
+      - apps/api/src/services/agent-spawner.ts
+      - apps/api/src/routes/execution.ts
+    dependencies: [S7-001, S7-002, S7-003, S3-003]
+    acceptance_criteria:
+      - "Orchestrator respects DAG dependencies"
+      - "Independent tasks spawn in parallel"
+      - "Builder → Verifier handoff works (branch ref passed)"
+      - "Explainer runs after all tasks verified"
+      - "Agent states tracked in Cosmos DB and emitted via SignalR"
+      - "User can interrupt execution (EXECUTING → PAUSED)"
+      - "Run status updated at each phase transition"
+    verify_command: "npm run test -- --grep orchestrator"
+
+# ═══════════════════════════════════════════════════════════════
+# S8: GITHUB INTEGRATION
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S8-001
+    system: S8-github
+    title: "Implement GitHub App client with branch/PR operations"
+    sprint: W3
+    priority: P0
+    description: |
+      Create GitHub App wrapper using Octokit. Implement: createBranch, commitFiles,
+      createPR, getDiff, getWorkflowRuns. Handle installation token management.
+      Branch naming: blueflame/run-{id}/task-{n}.
+    spec_sections: [9]
+    files_to_create:
+      - packages/github-app/src/client.ts
+      - packages/github-app/src/operations/branches.ts
+      - packages/github-app/src/operations/pull-requests.ts
+      - packages/github-app/src/operations/actions.ts
+      - packages/github-app/src/operations/diffs.ts
+      - packages/github-app/src/auth/installation-token.ts
+    dependencies: [S1-001]
+    acceptance_criteria:
+      - "Can create branch from base branch"
+      - "Can commit files to branch"
+      - "Can create PR with title, body, labels"
+      - "Can trigger workflow dispatch"
+      - "Can read diff for a PR"
+      - "Installation token auto-refreshes"
+    verify_command: "npm run test -w packages/github-app"
+
+  - id: S8-002
+    system: S8-github
+    title: "Implement GitHub webhook handler for CI feedback loop"
+    sprint: W3
+    priority: P0
+    description: |
+      Create webhook handler for: workflow_run.completed, check_run.completed,
+      pull_request.reviewed. Route events to orchestrator service. Verify webhook
+      signatures. This closes the agentic DevOps feedback loop.
+    spec_sections: [9.2]
+    files_to_create:
+      - apps/api/src/webhooks/github.ts
+      - apps/api/src/webhooks/verify-signature.ts
+    dependencies: [S8-001]
+    acceptance_criteria:
+      - "Webhook receives GitHub events"
+      - "Signature verification passes"
+      - "workflow_run.completed routed to Verifier agent"
+      - "Events logged in Azure Monitor"
+    verify_command: "npm run test -- --grep webhook"
+
+# ═══════════════════════════════════════════════════════════════
+# S9: BUDGET SYSTEM
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S9-001
+    system: S9-budget
+    title: "Implement budget monitor with warning and pause thresholds"
+    sprint: W4
+    priority: P1
+    description: |
+      Create budget monitoring service: tracks cumulative cost per run based on
+      token usage. Emits WARNING at 80% and PAUSE at 95%. On PAUSE: orchestrator
+      stops spawning new agents, in-progress agents complete current task, partial
+      results preserved.
+    spec_sections: [16]
+    files_to_create:
+      - apps/api/src/services/budget-monitor.ts
+      - apps/api/src/services/cost-tracker.ts
+    dependencies: [S7-004]
+    acceptance_criteria:
+      - "Cost tracked per agent based on token usage"
+      - "WARNING emitted at 80% threshold via SignalR"
+      - "PAUSE triggers at 95%: orchestrator stops new agent spawns"
+      - "In-progress tasks complete; not-started tasks marked DEFERRED"
+      - "Run status: EXECUTING → PAUSED"
+    verify_command: "npm run test -- --grep budget"
+
+  - id: S9-002
+    system: S9-budget
+    title: "Build budget UI with pause decision modal"
+    sprint: W4
+    priority: P1
+    description: |
+      Create budget UI components: cost burn-down progress bar, warning alert
+      overlay, pause decision modal with 3 options (Resume/Accept Partial/Abandon).
+    spec_sections: [16]
+    files_to_create:
+      - apps/web/components/budget/CostProgressBar.tsx
+      - apps/web/components/budget/BudgetWarning.tsx
+      - apps/web/components/budget/PauseDecisionModal.tsx
+    dependencies: [S9-001, S1-004]
+    acceptance_criteria:
+      - "Progress bar shows current spend vs. ceiling"
+      - "Color transitions: green → yellow (80%) → red (95%)"
+      - "Warning alert appears at 80%"
+      - "Pause modal appears at 95% with 3 action buttons"
+      - "Resume sends top-up budget to API"
+    verify_command: "npm run build -w apps/web"
+
+# ═══════════════════════════════════════════════════════════════
+# S10: OBSERVABILITY DASHBOARD
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S10-001
+    system: S10-dashboard
+    title: "Build real-time agent status cards"
+    sprint: W4
+    priority: P1
+    description: |
+      Create agent status cards showing each active agent's role, current task,
+      status (running/blocked/complete/failed), model being used, and token count.
+      Powered by SignalR events from Cosmos change feed.
+    spec_sections: [18.2]
+    files_to_create:
+      - apps/web/components/dashboard/AgentStatusCard.tsx
+      - apps/web/components/dashboard/AgentGrid.tsx
+    dependencies: [S3-003, S7-004]
+    acceptance_criteria:
+      - "Cards update in real-time via SignalR"
+      - "Status color-coded: green (running), yellow (blocked), blue (complete), red (failed)"
+      - "Shows agent role, task ID, model, token count"
+    verify_command: "npm run build -w apps/web"
+
+  - id: S10-002
+    system: S10-dashboard
+    title: "Build DAG progress visualization and action stream"
+    sprint: W4
+    priority: P1
+    description: |
+      Create DAG progress view where nodes light up as tasks complete. Add live
+      action stream (scrolling log of agent tool calls). Combine with agent cards
+      and cost bar into unified dashboard layout.
+    spec_sections: [18.2]
+    files_to_create:
+      - apps/web/components/dashboard/DAGProgress.tsx
+      - apps/web/components/dashboard/ActionStream.tsx
+      - apps/web/components/dashboard/DashboardLayout.tsx
+      - apps/web/app/project/[projectId]/run/[runId]/page.tsx
+    dependencies: [S10-001, S6-002, S9-002]
+    acceptance_criteria:
+      - "DAG nodes transition: gray (pending) → blue (running) → green (complete) → red (failed)"
+      - "Action stream shows timestamped agent events"
+      - "Dashboard combines: agent cards + DAG + cost bar + action stream"
+      - "Updates < 1s latency"
+      - "Works cleanly during screen recording (no flicker)"
+    verify_command: "npm run build -w apps/web"
+
+# ═══════════════════════════════════════════════════════════════
+# S14: SPEC DELTA DETECTION (P2 but demo-critical)
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S14-001
+    system: S14-delta
+    title: "Implement spec delta detection engine"
+    sprint: W4
+    priority: P1
+    description: |
+      Create delta detection service: compares two spec versions (YAML diff +
+      semantic analysis via GPT-4o). Classifies each change, maps to affected
+      tasks via acceptance_criteria_ids, and produces impact map: PRESERVE /
+      REBUILD / NEW / REMOVE per task.
+    spec_sections: [17]
+    files_to_create:
+      - apps/api/src/services/delta-detection.ts
+      - apps/api/src/routes/delta.ts
+      - packages/foundry/src/agents/prompts/delta-system.ts
+    dependencies: [S5-003, S6-001]
+    acceptance_criteria:
+      - "Detects field-level diff between spec versions"
+      - "Classifies changes by type (criterion, constraint, deliverable, no-impact)"
+      - "Maps changes to affected tasks via criteria IDs"
+      - "Produces PRESERVE/REBUILD/NEW/REMOVE per task"
+      - "Returns structured impact map"
+    verify_command: "npm run test -- --grep delta"
+
+  - id: S14-002
+    system: S14-delta
+    title: "Build spec delta impact map UI"
+    sprint: W4
+    priority: P1
+    description: |
+      Create the visual impact map component showing tasks color-coded:
+      green (PRESERVE), amber (REBUILD), blue (NEW), red (REMOVE).
+      Re-authorize button to trigger controlled rebuild.
+    spec_sections: [17]
+    files_to_create:
+      - apps/web/components/delta/ImpactMap.tsx
+      - apps/web/components/delta/DeltaSummary.tsx
+    dependencies: [S14-001, S6-002]
+    acceptance_criteria:
+      - "Impact map shows tasks with correct color coding"
+      - "Summary shows count of preserve/rebuild/new/remove"
+      - "Re-authorize button creates new PlanLock for affected tasks"
+    verify_command: "npm run build -w apps/web"
