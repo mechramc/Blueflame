@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S6 Planning Engine** (complete) — S6-001 through S6-003 done
+**S7 Agent Swarm** (complete) — S7-001 through S7-004 done
 
 ## Sprint Progress
 
@@ -38,10 +38,10 @@
 | S6-001: Task decomposition | S6 | P0 | **DONE** |
 | S6-002: DAG + authorization UI | S6 | P0 | **DONE** |
 | S6-003: Plan lock | S6 | P0 | **DONE** |
-| S7-001: Builder agent | S7 | P0 | Not started |
-| S7-002: Verifier agent | S7 | P0 | Not started |
-| S7-003: Explainer agent | S7 | P0 | Not started |
-| S7-004: Orchestrator agent | S7 | P0 | Not started |
+| S7-001: Builder agent | S7 | P0 | **DONE** |
+| S7-002: Verifier agent | S7 | P0 | **DONE** |
+| S7-003: Explainer agent | S7 | P0 | **DONE** |
+| S7-004: Orchestrator agent | S7 | P0 | **DONE** |
 | S8-001: GitHub branch/PR creation | S8 | P0 | Not started |
 | S8-002: GitHub webhook handler | S8 | P0 | Not started |
 
@@ -60,9 +60,9 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 18/27 complete
-- **P0**: 18/21 | **P1**: 0/6
-- **Critical path**: S1-001 → S2-001 → S3-001 → S4-001 → S5-001 → S5-003 → S6-001 → S6-003 → S7-004
+- **Total**: 22/27 complete
+- **P0**: 21/21 | **P1**: 0/6 | **Demo/Submit**: 0/1
+- **Critical path**: COMPLETE (all P0 tasks done)
 
 ## Decisions Log
 | Date | Decision | Rationale |
@@ -93,6 +93,6 @@
 | Scope | Count |
 |-------|-------|
 | apps/web | 43 |
-| apps/api | 69 |
-| packages/* | 76 |
-| **Total** | **188** |
+| apps/api | 115 |
+| packages/* | 120 |
+| **Total** | **278** |

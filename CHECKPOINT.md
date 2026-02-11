@@ -9,14 +9,14 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-11
-- **Session**: 1
+- **Session**: 2
 
 ## Current State
-- **Phase**: S6 Planning Engine (complete)
-- **Last completed task**: S6-003 — Authorization gate (plan.lock creation)
-- **Next task**: S7-001 — Builder agent
+- **Phase**: S7 Agent Swarm (complete)
+- **Last completed task**: S7-004 — Orchestrator engine (DAG execution + A2A handoff)
+- **Next task**: S8-001 — GitHub App client with branch/PR operations
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 188 tests)
+- **Repo is green**: YES (build, lint, test all pass — 278 tests)
 
 ## What Just Happened
 - **S1-001 COMPLETE**: Turborepo monorepo fully scaffolded (6 packages)
@@ -129,27 +129,49 @@
   - Constraint snapshot included in lock
   - 10 authorization tests (role checks, budget validation, constraint snapshot, lock retrieval)
 
+- **S7-001 COMPLETE**: Builder agent (code generation via Foundry):
+  - `packages/foundry/src/agents/prompts/builder-system.ts` — system prompt: JSON output with files, commit msg, PR metadata
+  - `packages/foundry/src/agents/builder.ts` — generateCode(), buildBuilderPrompt(), parseBuilderOutput()
+  - 15 tests (7 prompt builder + 8 output parser)
+
+- **S7-002 COMPLETE**: Verifier agent (CI evaluation against acceptance criteria):
+  - `packages/foundry/src/agents/prompts/verifier-system.ts` — ground truth = acceptance criteria, not model agreement
+  - `packages/foundry/src/agents/verifier.ts` — verifyCIResults(), buildVerifierPrompt(), parseVerifierOutput()
+  - 15 tests (8 prompt builder + 7 output parser)
+
+- **S7-003 COMPLETE**: Explainer agent (PR description + attribution via explicit diffs):
+  - `packages/foundry/src/agents/prompts/explainer-system.ts` — ACAR-informed attribution, constraint compliance, root cause analysis
+  - `packages/foundry/src/agents/explainer.ts` — generateExplanation(), buildExplainerPrompt(), parseExplainerOutput()
+  - 14 tests (7 prompt builder + 7 output parser)
+
+- **S7-004 COMPLETE**: Orchestrator engine (DAG execution + A2A handoff):
+  - `apps/api/src/services/dag-executor.ts` — computeExecutionWaves(), getReadyTasks(), allTasksTerminal()
+  - `apps/api/src/services/agent-spawner.ts` — spawnAgent(), updateAgentStatus(), recordAgentUsage(), state change callbacks
+  - `apps/api/src/services/orchestrator.ts` — startExecution(), executeNextWave(), completeTask() with A2A handoff, requestInterrupt(), budget enforcement (80% warning, 95% pause)
+  - `apps/api/src/routes/execution.ts` — POST /start, /advance, /complete-task, /fail-task, /interrupt; GET /:runId
+  - 46 tests (17 DAG executor + 14 agent spawner + 15 orchestrator)
+
 ## What To Pick Up Next
-1. **S7-001**: Builder agent (code implementation, branch management)
-2. **S7-002**: Verifier agent (test execution, acceptance criteria checking)
-3. **S7-003**: Explainer agent (root cause analysis, PR descriptions)
-4. **S7-004**: Orchestrator agent (DAG execution, agent spawning)
+1. **S8-001**: GitHub App client with branch/PR operations (Octokit wrapper)
+2. **S8-002**: GitHub webhook handler (CI result ingestion)
+3. **S9-001**: Budget tracking service
+4. **S9-002**: Budget UI (cost progress bar, warning, pause modal)
 
 ## Blockers
 - None
 
 ## Key Files to Read Before Starting
 - `packages/shared/src/types/` — all domain types (read before implementing repos/services)
-- `packages/foundry/src/agents/` — agent prompts + streaming clients (designer, spec-generator)
-- `apps/api/src/services/` — spec-generation, spec-freeze, conversation, change-feed-bridge
-- `apps/api/src/routes/` — chat.ts, specs.ts (API routes)
-- `Blueflame-Spec-v3-ACAR.md` — sections 8 (plan engine), 9 (agents), 10 (GitHub)
+- `packages/foundry/src/agents/` — all 5 agents (designer, spec-generator, planner, builder, verifier, explainer)
+- `apps/api/src/services/` — orchestrator, dag-executor, agent-spawner, planning, authorization, spec-generation, spec-freeze, conversation
+- `apps/api/src/routes/` — execution.ts, plans.ts, authorize.ts, specs.ts, chat.ts
+- `Blueflame-Spec-v3-ACAR.md` — section 9 (GitHub integration) for S8
 - `tasks.yaml` — acceptance criteria for each task
 
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 188 (69 API + 44 Cosmos + 43 Web + 28 Foundry + 4 Shared) |
+| Total | 278 (115 API + 44 Cosmos + 43 Web + 72 Foundry + 4 Shared) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

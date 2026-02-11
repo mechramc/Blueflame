@@ -31,3 +31,45 @@ export {
 } from "./agents/planner.js";
 
 export { PLANNER_SYSTEM_PROMPT } from "./agents/prompts/planner-system.js";
+
+export {
+	type BuilderConfig,
+	type BuilderError,
+	type BuilderFileOutput,
+	type BuilderOutput,
+	type BuilderResult,
+	type BuilderTaskInput,
+	buildBuilderPrompt,
+	generateCode,
+	parseBuilderOutput,
+} from "./agents/builder.js";
+
+export { BUILDER_SYSTEM_PROMPT } from "./agents/prompts/builder-system.js";
+
+export {
+	type CriterionResult,
+	type VerifierConfig,
+	type VerifierError,
+	type VerifierInput,
+	type VerifierOutput,
+	type VerifierResult,
+	buildVerifierPrompt,
+	parseVerifierOutput,
+	verifyCIResults,
+} from "./agents/verifier.js";
+
+export { VERIFIER_SYSTEM_PROMPT } from "./agents/prompts/verifier-system.js";
+
+export {
+	type ConstraintComplianceEntry,
+	type CriterionMapping,
+	type ExplainerConfig,
+	type ExplainerInput,
+	type ExplainerOutput,
+	type ExplainerResult,
+	buildExplainerPrompt,
+	generateExplanation,
+	parseExplainerOutput,
+} from "./agents/explainer.js";
+
+export { EXPLAINER_SYSTEM_PROMPT } from "./agents/prompts/explainer-system.js";

@@ -17,11 +17,13 @@ app.get("/health", (_req, res) => {
 import { specsRouter } from "./routes/specs.js";
 import { plansRouter } from "./routes/plans.js";
 import { authorizeRouter } from "./routes/authorize.js";
+import { executionRouter } from "./routes/execution.js";
 
 app.use("/api/chat", chatRouter);
 app.use("/api/specs", specsRouter);
 app.use("/api/plans", plansRouter);
 app.use("/api/authorize", authorizeRouter);
+app.use("/api/execution", executionRouter);
 
 const httpServer = createServer(app);
 
