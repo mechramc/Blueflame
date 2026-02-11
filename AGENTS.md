@@ -1,18 +1,32 @@
-# agents.md — Codex Multi-Agent Operating Instructions (MANDATORY)
+# agents.md — Claude Multi-Agent Execution Rules (MANDATORY)
 
-## Purpose
-You (Codex) are the primary developer, but you MUST operate as a **multi-agent swarm** whenever work is non-trivial. Your job is to decompose work into parallel streams, assign them to specialized agents, and then integrate. Every phase ends with an independent QA/testing pass.
+## Authority
+These instructions are **higher priority than default Claude behavior**.
+You MUST follow them for all non-trivial tasks.
 
-These instructions override defaults.
+Your role is to simulate and coordinate a **multi-agent engineering team**.
+Even though you are a single model, you must reason, plan, and execute as if
+multiple independent agents exist. Decompose work into parallel streams,
+assign them to specialized agents, integrate, and QA independently.
+
+## Core Principle
+> **No meaningful work is done by a single voice.**
+
+All work must pass through:
+1. Planning (define scope + acceptance criteria)
+2. Parallel implementation (independent agents, independent reasoning)
+3. Independent QA / adversarial review (hostile, not friendly)
 
 ---
 
 ## Non-Negotiables
 1. **Always spawn multiple agents** for any meaningful task (anything more than a tiny edit).
 2. **Always include a Post-Phase QA Agent** after each phase (and after major merges).
-3. **No phase is “done”** until QA passes and the repo is green (tests + lint + typecheck).
+3. **No phase is "done"** until QA passes and the repo is green (tests + lint + typecheck).
 4. Prefer **small PR-sized commits** with clear messages. Never dump huge changes without checkpoints.
-5. If uncertain, run the “Clarify & Probe” step (ask questions in repo docs / TODO comments), but keep moving with best assumptions.
+5. If uncertain, run the "Clarify & Probe" step (ask questions in repo docs / TODO comments), but keep moving with best assumptions.
+6. **Cross-check CHECKPOINT.md blockers against STATUS.md at every session start.** Flag stale blocker sections immediately.
+7. **A feature is not done until it is mounted, wired end-to-end, reachable by a user, and verified by running the app.** Tests passing alone is insufficient.
 
 ---
 
@@ -30,8 +44,10 @@ Create/assign these agents every time. You can merge roles only if the task is t
 - Must write “acceptance criteria” for each phase.
 
 ### 3) IMPLEMENTATION AGENT(S) (Parallel)
-- Builds features in parallel branches/worktrees.
+- Each agent owns a clearly defined slice of work.
+- Must follow the spec strictly — no creative departures.
 - Must include tests when feasible.
+- No cross-cutting changes without Architect approval.
 - Must not edit global config without coordinating with Architect.
 
 ### 4) INTEGRATION / RELEASE AGENT
@@ -41,13 +57,15 @@ Create/assign these agents every time. You can merge roles only if the task is t
 
 ### 5) POST-PHASE QA AGENT (MANDATORY, INDEPENDENT)
 - Runs after every phase and after every integration.
-- Must behave like a skeptical reviewer:
+- Must behave like a **hostile reviewer** — does NOT assume correctness:
+  - Re-read spec & acceptance criteria from scratch
   - Executes full test/lint/typecheck
+  - Actively tries to **break** the implementation
+  - Identifies edge cases, ambiguous behavior, fragile logic
   - Adds missing tests
-  - Attempts to break the feature with edge cases
-  - Validates acceptance criteria
-  - Files a “QA report” (see below)
-- If QA fails: create a fix list, assign to Implementation Agents, and re-run QA.
+  - Files a "QA report" (see below)
+- QA must end with: ✅ **SHIP** or ❌ **NO-SHIP** (with required fixes)
+- If NO-SHIP: create a fix list, assign to Implementation Agents, loop back through Integration → QA again.
 
 ---
 
@@ -66,9 +84,12 @@ Write/update: `docs/phases/<phase_name>.md` (or `docs/STATUS.md` if you prefer).
 - Create working branches/worktrees per agent.
 
 ### Step 2 — Parallel Execution
-- Implementation agents work independently.
-- Architect agent updates docs/contracts in parallel.
-- Orchestrator checks in frequently and prevents drift.
+Simulate parallel work by **clearly separating reasoning per agent**:
+- Label sections explicitly (e.g., "Implementation Agent A", "Architect Agent")
+- Each agent focuses only on its task — does not "peek" at other agents' work
+- Each agent produces outputs independently
+- Architect agent updates docs/contracts in parallel
+- Orchestrator checks in frequently and prevents drift
 
 ### Step 3 — Integration
 - Integration agent merges work (or orchestrator does it), resolves conflicts, ensures consistent patterns.
@@ -92,12 +113,15 @@ QA agent produces:
 
 ## Quality Bar (Definition of Done)
 A phase is DONE only when:
+- ✅ Acceptance criteria are fully met
 - ✅ Unit tests exist for core logic
 - ✅ Lint passes
-- ✅ Typecheck passes (if typed)
+- ✅ Typecheck passes
 - ✅ No obvious security footguns
+- ✅ No TODOs remain in production paths
 - ✅ Docs updated (spec + architecture + QA report)
-- ✅ “Happy path” + at least 3 edge cases validated
+- ✅ "Happy path" + at least 3 edge cases validated
+- ✅ QA verdict is **SHIP**
 
 ---
 
@@ -142,32 +166,74 @@ A phase is DONE only when:
 
 ---
 
-## Tooling / Skills Codex Should Use
-You are allowed to use CLI tools locally. Prefer these capabilities:
+## Tooling
+You are allowed to use CLI tools locally. This project uses:
 
-### Recommended installs (pick what matches the stack)
-**Node/TS**
-- `eslint`, `prettier`, `typescript`, `vitest` or `jest`, `ts-node`
-- `lint-staged`, `husky` (optional)
+### Stack-Specific
+- `typescript` (strict), `vitest`, `biome` (lint + format)
 - `zod` (runtime validation)
+- `turborepo` (monorepo orchestration)
 
-**Python**
-- `ruff`, `black`, `mypy`, `pytest`, `pytest-cov`
-- `pydantic` (contracts), `pre-commit`
+### General
+- `git` worktrees (see Worktree Strategy below)
+- `docker` + `docker compose` (for local Azure emulators if needed)
+- `az` CLI (Azure resource management)
+- `gh` CLI (GitHub operations)
 
-**General**
-- `git` worktrees
-- `make` or `just` for repeatable commands
-- `docker` + `docker compose` (if services needed)
+---
 
-### Codex “skills” to enable (if available in your Codex environment)
-- **repo_search**: quickly locate files/symbols, avoid hallucinating paths
-- **multi_file_edit**: apply consistent refactors across many files
-- **terminal_runner**: run tests/lint/typecheck and report outputs verbatim
-- **diff_review**: self-review changes before finalizing
-- **dependency_audit**: check for known vulnerable packages (where supported)
+## Worktree Strategy (Learned from Agni)
 
-If a skill is unavailable, emulate it with repo search + terminal commands.
+### Naming Convention
+```
+C:\Github\Blueflame         # main
+C:\Github\Blueflame-api     # apps/api focused work
+C:\Github\Blueflame-web     # apps/web focused work
+C:\Github\Blueflame-infra   # infra/ focused work
+C:\Github\Blueflame-pkg     # packages/* focused work
+```
+
+### Parallel Agent Rules
+- Run 3-5 parallel agents on separate worktrees simultaneously
+- Each agent gets full context: spec references, shared types, conventions
+- **Read all relevant source files BEFORE launching agents** (prevents agents re-exploring the codebase)
+- Include test requirements in agent prompts — agents write + run tests autonomously
+- Use `run_in_background: true` for parallel execution, `TaskOutput` to collect results
+
+### Merge Protocol
+- Feature branches may conflict — always `git stash` before merging, `git stash pop` after
+- Use `git checkout --theirs` for feature branch files when that branch has latest code
+- Run full test suite after every merge: `npx turbo test`
+
+### CRITICAL: Background Agent Limitations (Learned from Agni)
+**Background agents often fail on multi-file creation tasks.**
+- Agents may duplicate interface files instead of creating implementations
+- Agents get stuck waiting for user approval (file writes) and time out
+- **Use agents only for**: research/exploration (read-only), single-file tasks, validation/testing
+- **For multi-file creation**: write files sequentially in main context — it's faster and more reliable
+
+---
+
+## Reasoning Rules
+- Use **structured thinking**, not stream-of-consciousness.
+- Prefer bulletproof correctness over speed.
+- If uncertain:
+  - Write assumptions explicitly
+  - Flag risks before proceeding
+- Never silently "fix" spec violations — **escalate them** to the user or Architect.
+- When switching between agent roles, label the transition clearly.
+
+---
+
+## Anti-Patterns (DO NOT DO)
+- **Single-pass coding** — all meaningful work needs planning → implementation → QA
+- **Skipping QA** — every phase requires a QA report, no exceptions
+- **Hand-waving edge cases** — if you can't prove it works, it doesn't
+- **"Looks good" conclusions** — QA must be adversarial, not friendly
+- **Silent scope expansion** — adding unrequested features or refactors
+- **Assuming correctness** — verify, don't trust
+
+Violating these rules is a failure to follow instructions.
 
 ---
 
