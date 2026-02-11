@@ -13,8 +13,8 @@
 
 ## Current State
 - **Phase**: S1 Scaffold & Infrastructure
-- **Last completed task**: S3-001 — Cosmos DB client + base repository
-- **Next task**: S3-002 — 7 container repositories, S3-003 — Change feed
+- **Last completed task**: S3-002 — 7 container repositories
+- **Next task**: S3-003 — Change feed processor, S4-001 — Chat UI
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass)
 
@@ -51,10 +51,20 @@
   - `packages/cosmos/src/repository.ts` — generic Repository<T> with create/read/update/delete/query/queryAll + retry with exponential backoff
   - 20 tests (10 errors + 10 repository CRUD/query)
 
+- **S3-002 COMPLETE**: All 7 container repositories:
+  - `SpecsRepository` — findByProject, freeze() with SHA-256 hash
+  - `PlansRepository` — findByRun
+  - `LocksRepository` — CREATE + READ ONLY (no update/delete), findByRun
+  - `RunsRepository` — findByProject, transition() with state machine enforcement
+  - `AgentsRepository` — findByRun
+  - `ConstraintsRepository` — findByProject
+  - `DocumentsRepository` — findByProject
+  - 13 new tests: 5 runs (state machine), 5 locks (immutability), 3 specs (freeze/hash)
+
 ## What To Pick Up Next
-1. **S3-002**: All 7 container repositories (specs, plans, locks, runs, agents, constraints, documents)
-2. **S3-003**: Cosmos change feed processor
-3. **S4-001**: Chat UI component
+1. **S3-003**: Cosmos change feed processor
+2. **S4-001**: Chat UI component with message history
+3. **S4-002**: Designer agent with streaming responses
 
 ## Blockers
 - None
@@ -68,7 +78,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 38 (5 SignalR + 13 RBAC + 20 Cosmos) |
+| Total | 51 (5 SignalR + 13 RBAC + 33 Cosmos) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

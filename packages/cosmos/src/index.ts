@@ -28,3 +28,14 @@ export {
 	type QueryOptions,
 	Repository,
 } from "./repository.js";
+
+// Container repositories
+export {
+	AgentsRepository,
+	ConstraintsRepository,
+	DocumentsRepository,
+	LocksRepository,
+	PlansRepository,
+	RunsRepository,
+	SpecsRepository,
+} from "./repositories/index.js";
