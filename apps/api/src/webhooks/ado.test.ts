@@ -1,10 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { FailureSource, FailureType } from "@blueflame/shared";
-import {
-	clearAdoHandlers,
-	normalizeBuildComplete,
-	onAdoFailure,
-} from "./ado.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearAdoHandlers, normalizeBuildComplete, onAdoFailure } from "./ado.js";
 
 describe("ADO webhook — normalizeBuildComplete", () => {
 	it("should return null when resource is missing", () => {

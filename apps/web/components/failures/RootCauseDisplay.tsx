@@ -49,14 +49,21 @@ export function RootCauseDisplay({ rootCause }: RootCauseDisplayProps) {
 			<div>
 				<div className="flex items-center justify-between mb-1">
 					<h4 className="text-xs font-semibold uppercase text-gray-500">Confidence</h4>
-					<span className={`text-sm font-semibold ${confidenceColor(rootCause.confidence)}`} data-testid="rca-confidence">
+					<span
+						className={`text-sm font-semibold ${confidenceColor(rootCause.confidence)}`}
+						data-testid="rca-confidence"
+					>
 						{confPercent}% — {confidenceLabel(rootCause.confidence)}
 					</span>
 				</div>
 				<div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
 					<div
 						className={`h-full rounded-full transition-all duration-500 ${
-							rootCause.confidence >= 0.7 ? "bg-green-500" : rootCause.confidence >= 0.5 ? "bg-yellow-500" : "bg-red-500"
+							rootCause.confidence >= 0.7
+								? "bg-green-500"
+								: rootCause.confidence >= 0.5
+									? "bg-yellow-500"
+									: "bg-red-500"
 						}`}
 						style={{ width: `${confPercent}%` }}
 					/>
@@ -66,7 +73,10 @@ export function RootCauseDisplay({ rootCause }: RootCauseDisplayProps) {
 			{/* Root Cause Detail */}
 			<div>
 				<h4 className="text-xs font-semibold uppercase text-gray-500 mb-1">Root Cause</h4>
-				<div className="text-sm text-gray-700 bg-gray-50 rounded-md p-3 border" data-testid="rca-detail">
+				<div
+					className="text-sm text-gray-700 bg-gray-50 rounded-md p-3 border"
+					data-testid="rca-detail"
+				>
 					{rootCause.rootCause}
 				</div>
 			</div>

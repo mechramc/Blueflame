@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { RemediationStatus } from "@blueflame/shared";
 import type { RootCauseAnalysis } from "@blueflame/shared";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	attachRootCause,
 	authorizeRemediation,

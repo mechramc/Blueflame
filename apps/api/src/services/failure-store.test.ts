@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { FailureSource, FailureType } from "@blueflame/shared";
 import type { NormalizedFailure } from "@blueflame/shared";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	clearAllFailures,
 	getAllFailures,

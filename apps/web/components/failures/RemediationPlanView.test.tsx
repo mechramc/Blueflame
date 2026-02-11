@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RemediationPlanView, type RemediationViewData } from "./RemediationPlanView";
 
 const mockRemediation: RemediationViewData = {
@@ -35,9 +35,7 @@ describe("RemediationPlanView", () => {
 
 	it("should show authorize button in PLAN_READY state", () => {
 		const onAuthorize = vi.fn();
-		render(
-			<RemediationPlanView remediation={mockRemediation} onAuthorize={onAuthorize} />,
-		);
+		render(<RemediationPlanView remediation={mockRemediation} onAuthorize={onAuthorize} />);
 		const btn = screen.getByTestId("authorize-remediation-btn");
 		expect(btn).toBeInTheDocument();
 		fireEvent.click(btn);
@@ -68,11 +66,7 @@ describe("RemediationPlanView", () => {
 	});
 
 	it("should show Completed status style", () => {
-		render(
-			<RemediationPlanView
-				remediation={{ ...mockRemediation, status: "COMPLETED" }}
-			/>,
-		);
+		render(<RemediationPlanView remediation={{ ...mockRemediation, status: "COMPLETED" }} />);
 		expect(screen.getByTestId("remediation-status")).toHaveTextContent("Completed");
 	});
 });

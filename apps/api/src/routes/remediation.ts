@@ -4,8 +4,8 @@
  * Source: Blueflame-Spec-v3-ACAR.md Section 10.5
  */
 
-import { Router } from "express";
 import type { RootCauseAnalysis } from "@blueflame/shared";
+import { Router } from "express";
 import {
 	attachRootCause,
 	authorizeRemediation,

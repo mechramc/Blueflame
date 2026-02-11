@@ -16,6 +16,7 @@ app.get("/health", (_req, res) => {
 
 import { authorizeRouter } from "./routes/authorize.js";
 import { budgetRouter } from "./routes/budget.js";
+import { demoSeedRouter } from "./routes/demo-seed.js";
 import { executionRouter } from "./routes/execution.js";
 import { failuresRouter } from "./routes/failures.js";
 import { plansRouter } from "./routes/plans.js";
@@ -34,6 +35,7 @@ app.use("/api/webhooks", adoWebhookRouter);
 app.use("/api/failures", failuresRouter);
 app.use("/api/budget", budgetRouter);
 app.use("/api/remediation", remediationRouter);
+app.use("/api/demo", demoSeedRouter);
 
 const httpServer = createServer(app);
 

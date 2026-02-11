@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { FailureSource, FailureType } from "@blueflame/shared";
 import type { NormalizedFailure } from "@blueflame/shared";
+import { describe, expect, it } from "vitest";
 import { buildFixerPrompt, parseFixerOutput } from "./fixer.js";
 
 function makeFailure(overrides: Partial<NormalizedFailure> = {}): NormalizedFailure {
@@ -57,7 +57,13 @@ describe("Fixer Agent — buildFixerPrompt", () => {
 				passed: 45,
 				failed: 5,
 				skipped: 0,
-				details: [{ testName: "auth.test.ts > login", errorMessage: "Expected 200 got 401", durationMs: 100 }],
+				details: [
+					{
+						testName: "auth.test.ts > login",
+						errorMessage: "Expected 200 got 401",
+						durationMs: 100,
+					},
+				],
 			},
 		});
 		const prompt = buildFixerPrompt(failure);

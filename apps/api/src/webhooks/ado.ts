@@ -8,11 +8,11 @@
  * Source: Blueflame-Spec-v3-ACAR.md Section 10.2
  */
 
-import { Router } from "express";
 import { FailureSource, FailureType } from "@blueflame/shared";
 import type { FailedStep, NormalizedFailure, TestResults } from "@blueflame/shared";
-import { verifyWebhookSignature } from "./verify-signature.js";
+import { Router } from "express";
 import { storeFailure } from "../services/failure-store.js";
+import { verifyWebhookSignature } from "./verify-signature.js";
 
 export const adoWebhookRouter = Router();
 
@@ -86,9 +86,7 @@ adoWebhookRouter.post("/ado", (req, res) => {
  * Normalize an ADO build.complete event into a NormalizedFailure.
  * Returns null if the build succeeded.
  */
-export function normalizeBuildComplete(
-	payload: Record<string, unknown>,
-): NormalizedFailure | null {
+export function normalizeBuildComplete(payload: Record<string, unknown>): NormalizedFailure | null {
 	const resource = payload.resource as Record<string, unknown> | undefined;
 	if (!resource) return null;
 

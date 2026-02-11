@@ -7,8 +7,8 @@
  * Source: Blueflame-Spec-v3-ACAR.md Section 10.4
  */
 
+import type { NormalizedFailure, RemediationTask, RootCauseAnalysis } from "@blueflame/shared";
 import OpenAI from "openai";
-import type { NormalizedFailure, RootCauseAnalysis, RemediationTask } from "@blueflame/shared";
 import { FIXER_SYSTEM_PROMPT } from "./prompts/fixer-system.js";
 
 export interface FixerConfig {
@@ -32,9 +32,7 @@ export interface FixerError {
 	error: string;
 }
 
-export type FixerResult =
-	| { ok: true; value: FixerOutput }
-	| { ok: false; error: FixerError };
+export type FixerResult = { ok: true; value: FixerOutput } | { ok: false; error: FixerError };
 
 /**
  * Creates an Azure OpenAI client for the Fixer agent.

@@ -53,7 +53,9 @@ export function FailureTimeline({ failures, onSelect, selectedId }: FailureTimel
 						type="button"
 						onClick={() => onSelect(f.failureId)}
 						className={`w-full text-left flex gap-3 p-3 transition-colors rounded-r-md ${
-							isSelected ? "bg-blue-50 border-l-2 border-blue-500" : "hover:bg-gray-50 border-l-2 border-transparent"
+							isSelected
+								? "bg-blue-50 border-l-2 border-blue-500"
+								: "hover:bg-gray-50 border-l-2 border-transparent"
 						}`}
 						data-testid={`failure-entry-${f.failureId}`}
 					>
@@ -66,10 +68,10 @@ export function FailureTimeline({ failures, onSelect, selectedId }: FailureTimel
 						{/* Content */}
 						<div className="flex-1 min-w-0">
 							<div className="flex items-center justify-between">
-								<span className="text-sm font-medium text-gray-900">
-									Build #{f.buildNumber}
-								</span>
-								<span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded text-white ${dotColor}`}>
+								<span className="text-sm font-medium text-gray-900">Build #{f.buildNumber}</span>
+								<span
+									className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded text-white ${dotColor}`}
+								>
 									{f.failureType}
 								</span>
 							</div>
@@ -81,7 +83,10 @@ export function FailureTimeline({ failures, onSelect, selectedId }: FailureTimel
 									{new Date(f.timestamp).toLocaleString()}
 								</span>
 								{f.hasRemediation && (
-									<span className="text-[10px] text-green-600 font-medium" data-testid="remediation-badge">
+									<span
+										className="text-[10px] text-green-600 font-medium"
+										data-testid="remediation-badge"
+									>
 										Remediated
 									</span>
 								)}

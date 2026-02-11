@@ -81,10 +81,7 @@ export function attachRootCause(
 /**
  * Authorize the remediation plan — attaches the new lock ID.
  */
-export function authorizeRemediation(
-	remediationId: string,
-	lockId: string,
-): Remediation | null {
+export function authorizeRemediation(remediationId: string, lockId: string): Remediation | null {
 	const rem = remediations.get(remediationId);
 	if (!rem || rem.status !== RemediationStatus.PlanReady) return null;
 

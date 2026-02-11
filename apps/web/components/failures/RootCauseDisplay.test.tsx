@@ -1,7 +1,7 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
-import { RootCauseDisplay } from "./RootCauseDisplay";
 import type { RootCauseAnalysis } from "@blueflame/shared";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { RootCauseDisplay } from "./RootCauseDisplay";
 
 const mockRootCause: RootCauseAnalysis = {
 	summary: "TypeScript compilation error in auth module",
@@ -63,20 +63,12 @@ describe("RootCauseDisplay", () => {
 	});
 
 	it("should show High confidence for >= 0.9", () => {
-		render(
-			<RootCauseDisplay
-				rootCause={{ ...mockRootCause, confidence: 0.95 }}
-			/>,
-		);
+		render(<RootCauseDisplay rootCause={{ ...mockRootCause, confidence: 0.95 }} />);
 		expect(screen.getByTestId("rca-confidence")).toHaveTextContent("High");
 	});
 
 	it("should show Low confidence for 0.5-0.69", () => {
-		render(
-			<RootCauseDisplay
-				rootCause={{ ...mockRootCause, confidence: 0.55 }}
-			/>,
-		);
+		render(<RootCauseDisplay rootCause={{ ...mockRootCause, confidence: 0.55 }} />);
 		expect(screen.getByTestId("rca-confidence")).toHaveTextContent("Low");
 	});
 });

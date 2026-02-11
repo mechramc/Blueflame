@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FailureTimeline, type FailureTimelineEntry } from "./FailureTimeline";
 
 const mockFailures: FailureTimelineEntry[] = [
@@ -59,9 +59,7 @@ describe("FailureTimeline", () => {
 	});
 
 	it("should highlight selected entry", () => {
-		render(
-			<FailureTimeline failures={mockFailures} onSelect={vi.fn()} selectedId="FAIL-2" />,
-		);
+		render(<FailureTimeline failures={mockFailures} onSelect={vi.fn()} selectedId="FAIL-2" />);
 		const selected = screen.getByTestId("failure-entry-FAIL-2");
 		expect(selected.className).toContain("bg-blue-50");
 	});
