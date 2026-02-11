@@ -9,14 +9,14 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-11
-- **Session**: 2
+- **Session**: 3
 
 ## Current State
-- **Phase**: S7 Agent Swarm (complete)
-- **Last completed task**: S7-004 — Orchestrator engine (DAG execution + A2A handoff)
-- **Next task**: S8-001 — GitHub App client with branch/PR operations
+- **Phase**: S8 GitHub Integration (complete)
+- **Last completed task**: S8-002 — GitHub webhook handler for CI feedback loop
+- **Next task**: S9-001 — Budget monitor (P1)
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 278 tests)
+- **Repo is green**: YES (build, lint, test all pass — 317 tests)
 
 ## What Just Happened
 - **S1-001 COMPLETE**: Turborepo monorepo fully scaffolded (6 packages)
@@ -151,11 +151,29 @@
   - `apps/api/src/routes/execution.ts` — POST /start, /advance, /complete-task, /fail-task, /interrupt; GET /:runId
   - 46 tests (17 DAG executor + 14 agent spawner + 15 orchestrator)
 
+- **S8-001 COMPLETE**: GitHub App client with Octokit:
+  - `packages/github-app/src/auth/installation-token.ts` — GitHub App JWT auth, token caching with auto-refresh
+  - `packages/github-app/src/client.ts` — createOctokitClient(), branchName() helper
+  - `packages/github-app/src/operations/branches.ts` — createBranch, deleteBranch, branchExists
+  - `packages/github-app/src/operations/commits.ts` — commitFiles via Git Data API (blob → tree → commit → updateRef)
+  - `packages/github-app/src/operations/pull-requests.ts` — createPR, updatePRBody, getPR (with labels)
+  - `packages/github-app/src/operations/actions.ts` — triggerWorkflow, getWorkflowRuns, getWorkflowRun, getWorkflowRunLogs
+  - `packages/github-app/src/operations/diffs.ts` — getPRDiff, compareCommits, formatDiff
+  - 24 tests (2 client + 5 branches + 6 PRs + 2 commits + 5 actions + 4 diffs)
+
+- **S8-002 COMPLETE**: GitHub webhook handler for CI feedback:
+  - `apps/api/src/webhooks/verify-signature.ts` — HMAC-SHA256 signature verification (timing-safe)
+  - `apps/api/src/webhooks/github.ts` — webhook router handling workflow_run, check_run, pull_request_review events
+  - Event routing via onWebhookEvent() callback registration
+  - Wired to POST /api/webhooks/github in API entry point
+  - 15 tests (7 signature verification + 8 webhook handler)
+
 ## What To Pick Up Next
-1. **S8-001**: GitHub App client with branch/PR operations (Octokit wrapper)
-2. **S8-002**: GitHub webhook handler (CI result ingestion)
-3. **S9-001**: Budget tracking service
-4. **S9-002**: Budget UI (cost progress bar, warning, pause modal)
+1. **S9-001**: Budget tracking service (P1)
+2. **S9-002**: Budget UI (P1)
+3. **S10-001**: Run status dashboard (P1)
+4. **S10-002**: DAG progress + action stream (P1)
+5. Demo recording + submission package
 
 ## Blockers
 - None
@@ -171,7 +189,7 @@
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| Total | 278 (115 API + 44 Cosmos + 43 Web + 72 Foundry + 4 Shared) |
+| Total | 317 (130 API + 44 Cosmos + 43 Web + 72 Foundry + 24 GitHub App + 4 Shared) |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)

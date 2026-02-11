@@ -18,7 +18,9 @@
 		"clean": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
-		"@blueflame/shared": "*"
+		"@blueflame/shared": "*",
+		"@octokit/auth-app": "^8.2.0",
+		"octokit": "^5.0.5"
 	},
 	"devDependencies": {
 		"typescript": "^5.7.0",

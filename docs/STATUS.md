@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**S7 Agent Swarm** (complete) — S7-001 through S7-004 done
+**S8 GitHub Integration** (complete) — S8-001 and S8-002 done
 
 ## Sprint Progress
 
@@ -42,8 +42,8 @@
 | S7-002: Verifier agent | S7 | P0 | **DONE** |
 | S7-003: Explainer agent | S7 | P0 | **DONE** |
 | S7-004: Orchestrator agent | S7 | P0 | **DONE** |
-| S8-001: GitHub branch/PR creation | S8 | P0 | Not started |
-| S8-002: GitHub webhook handler | S8 | P0 | Not started |
+| S8-001: GitHub branch/PR creation | S8 | P0 | **DONE** |
+| S8-002: GitHub webhook handler | S8 | P0 | **DONE** |
 
 ### Week 4 (Mar 3–9) — Budget + Dashboard
 | Task | System | Priority | Status |
@@ -60,8 +60,8 @@
 | Submission package | P0 | Not started |
 
 ## Task Progress
-- **Total**: 22/27 complete
-- **P0**: 21/21 | **P1**: 0/6 | **Demo/Submit**: 0/1
+- **Total**: 24/27 complete
+- **P0**: 21/21 | **P1**: 0/4 | **Demo/Submit**: 0/2 | S8 (bonus P0): 2/2
 - **Critical path**: COMPLETE (all P0 tasks done)
 
 ## Decisions Log
@@ -93,6 +93,6 @@
 | Scope | Count |
 |-------|-------|
 | apps/web | 43 |
-| apps/api | 115 |
-| packages/* | 120 |
-| **Total** | **278** |
+| apps/api | 130 |
+| packages/* | 144 |
+| **Total** | **317** |

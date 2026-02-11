@@ -18,12 +18,14 @@ import { specsRouter } from "./routes/specs.js";
 import { plansRouter } from "./routes/plans.js";
 import { authorizeRouter } from "./routes/authorize.js";
 import { executionRouter } from "./routes/execution.js";
+import { webhookRouter } from "./webhooks/github.js";
 
 app.use("/api/chat", chatRouter);
 app.use("/api/specs", specsRouter);
 app.use("/api/plans", plansRouter);
 app.use("/api/authorize", authorizeRouter);
 app.use("/api/execution", executionRouter);
+app.use("/api/webhooks", webhookRouter);
 
 const httpServer = createServer(app);
 
