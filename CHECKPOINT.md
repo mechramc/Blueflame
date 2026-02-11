@@ -1,32 +1,50 @@
-# Blueflame — Session Checkpoints
+# Blueflame — Checkpoint (Cross-Tool Handoff)
 
-> Updated at the end of every Claude Code session. This is the handoff document.
+> **Purpose**: This is the handoff document between Claude Code and Codex.
+> Whichever tool picks up work next MUST read this file first.
+> Updated by whichever tool finishes a work session.
 
 ---
 
-## CP-001 — Session 1 (2026-02-11)
+## Last Updated By
+- **Tool**: Claude Code
+- **Date**: 2026-02-11
+- **Session**: 1
 
-### What Was Done
-- Project readiness audit against Boris's 10 principles
-- Created `CLAUDE.md` with full project conventions, commands, and Agni learnings
-- Created `CHECKPOINT.md` (this file) for session continuity
-- Created `.gitignore` for monorepo
-- Created `.env.example` with all required environment variables
-- Updated `AGENTS.md` with worktree strategy and background agent lessons
-- Restructured `docs/STATUS.md` with proper blocker tracking
+## Current State
+- **Phase**: pre-start-audit (complete)
+- **Next task**: S1-001 — Initialize Turborepo monorepo
+- **Branch**: `main`
+- **Repo is green**: N/A (no code/tests yet)
 
-### What's Next
-- S1-001: Initialize Turborepo monorepo (root package.json, turbo.json, tsconfig.base.json, biome.json)
-- S1-001: Scaffold apps/web, apps/api, packages/* with package.json files
-- Create GitHub issues from `github-issues.md`
-- Set up Azure resources (Cosmos DB, Entra ID app registration)
+## What Just Happened
+- Created `CLAUDE.md` (project conventions for Claude Code sessions)
+- Created `.gitignore`, `.env.example`
+- Rewrote `AGENTS.md` with multi-agent execution rules, worktree strategy, Agni learnings
+- Restructured `docs/STATUS.md` as project dashboard
 
-### Blockers
-- None currently identified
+## What To Pick Up Next
+1. **S1-001**: Initialize Turborepo monorepo — create root `package.json`, `turbo.json`, `tsconfig.base.json`, `biome.json`, scaffold all `apps/` and `packages/` with their own `package.json` + `tsconfig.json`
+2. **S1-002**: Azure resource provisioning — write Bicep templates in `infra/`
+3. **S1-003**: CI/CD — create `.github/workflows/ci.yml` and `deploy.yml`
+4. Create GitHub issues from `github-issues.md` (27 issues)
 
-### Test Counts
-- No tests yet (pre-implementation phase)
+## Blockers
+- None
 
-### Session Stats
-- Files created: 4 (CLAUDE.md, CHECKPOINT.md, .gitignore, .env.example)
-- Files modified: 2 (AGENTS.md, docs/STATUS.md)
+## Key Files to Read Before Starting
+- `Blueflame-Spec-v3-ACAR.md` — source of truth for architecture
+- `Blueflame-PRD.md` — system breakdown and sprint plan
+- `tasks.yaml` — canonical task list with dependencies and acceptance criteria
+- `AGENTS.md` — mandatory execution rules
+- `CLAUDE.md` — conventions (Claude Code) / reference (Codex)
+
+## Test Counts
+| Scope | Count |
+|-------|-------|
+| Total | 0 |
+
+## Warnings for Next Tool
+- No `package.json` exists yet — `npm` commands will fail until S1-001 is done
+- Empty directories exist under `apps/` and `packages/` — they need scaffolding
+- Agent prompts (`prompts/`) are empty — populate during S4/S7
