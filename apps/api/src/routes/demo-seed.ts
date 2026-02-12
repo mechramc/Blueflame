@@ -40,27 +40,39 @@ demoSeedRouter.use((_req, res, next) => {
  * Populates all stores with demo data.
  */
 demoSeedRouter.post("/seed", async (_req, res) => {
-	// 1. Seed conversation history
-	seedConversation();
+	try {
+		// 1. Seed conversation history
+		seedConversation();
 
-	// 2. Seed spec
-	await seedSpec();
+		// 2. Seed spec
+		await seedSpec();
 
-	// 3. Seed failures
-	await seedFailures();
+		// 3. Seed failures
+		await seedFailures();
 
-	// 4. Seed remediations (with root cause analysis)
-	seedRemediations();
+		// 4. Seed remediations (with root cause analysis)
+		seedRemediations();
 
-	res.json({
-		seeded: true,
-		data: {
-			conversations: 4,
-			specs: 1,
-			failures: 3,
-			remediations: 2,
-		},
-	});
+		res.json({
+			seeded: true,
+			data: {
+				conversations: 4,
+				specs: 1,
+				failures: 3,
+				remediations: 2,
+			},
+		});
+	} catch (err: unknown) {
+		const errObj = err as Record<string, unknown>;
+		console.error("[demo-seed] Error:", JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2));
+		res.status(500).json({
+			error: "Seed failed",
+			message: errObj?.message ?? String(err),
+			code: errObj?.code ?? errObj?.statusCode ?? "unknown",
+			body: errObj?.body ?? null,
+			stack: errObj?.stack ?? null,
+		});
+	}
 });
 
 /**

@@ -1,10 +1,11 @@
 /**
- * Database singleton — instantiates all 8 Cosmos DB repositories.
+ * Database singleton — lazily instantiates all 8 Cosmos DB repositories.
  *
  * Import `db` from this module in services that need persistence.
  * In tests, mock this module with `vi.mock("../db.js")`.
  *
- * When COSMOS_ENDPOINT is not set, falls back to the Cosmos emulator.
+ * Repositories are created lazily (on first access) to ensure
+ * environment variables from dotenv are loaded before Cosmos client init.
  */
 
 import {
@@ -19,15 +20,40 @@ import {
 	getContainer,
 } from "@blueflame/cosmos";
 
+let _specs: SpecsRepository | null = null;
+let _plans: PlansRepository | null = null;
+let _locks: LocksRepository | null = null;
+let _runs: RunsRepository | null = null;
+let _agents: AgentsRepository | null = null;
+let _constraints: ConstraintsRepository | null = null;
+let _documents: DocumentsRepository | null = null;
+let _failures: FailuresRepository | null = null;
+
 export const db = {
-	specs: new SpecsRepository(getContainer("specs")),
-	plans: new PlansRepository(getContainer("plans")),
-	locks: new LocksRepository(getContainer("locks")),
-	runs: new RunsRepository(getContainer("runs")),
-	agents: new AgentsRepository(getContainer("agents")),
-	constraints: new ConstraintsRepository(getContainer("constraints")),
-	documents: new DocumentsRepository(getContainer("documents")),
-	failures: new FailuresRepository(getContainer("failures")),
+	get specs() {
+		return (_specs ??= new SpecsRepository(getContainer("specs")));
+	},
+	get plans() {
+		return (_plans ??= new PlansRepository(getContainer("plans")));
+	},
+	get locks() {
+		return (_locks ??= new LocksRepository(getContainer("locks")));
+	},
+	get runs() {
+		return (_runs ??= new RunsRepository(getContainer("runs")));
+	},
+	get agents() {
+		return (_agents ??= new AgentsRepository(getContainer("agents")));
+	},
+	get constraints() {
+		return (_constraints ??= new ConstraintsRepository(getContainer("constraints")));
+	},
+	get documents() {
+		return (_documents ??= new DocumentsRepository(getContainer("documents")));
+	},
+	get failures() {
+		return (_failures ??= new FailuresRepository(getContainer("failures")));
+	},
 };
 
 export type Db = typeof db;
