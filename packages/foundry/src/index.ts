@@ -103,3 +103,21 @@ export {
 export { getProviderConfig, resetRegistry, setProviderConfig } from "./routing/model-registry.js";
 export { SigmaRouter, sigmaToTier } from "./routing/sigma-router.js";
 export { createModelClient } from "./routing/provider-client.js";
+
+// ─── Tracing (OpenTelemetry-style spans) ─────────────────────
+
+export {
+	type AgentSpanAttributes,
+	type SpanEvent,
+	type SpanTreeNode,
+	type TraceSpan,
+	SpanStatus,
+	addSpanEvent,
+	clearSpanStore,
+	endSpan,
+	getRunSpans,
+	getSpanCount,
+	getSpanTree,
+	startAgentSpan,
+	startRunTrace,
+} from "./tracing/index.js";

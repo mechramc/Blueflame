@@ -1,0 +1,15 @@
+export {
+	type AgentSpanAttributes,
+	type SpanEvent,
+	type SpanTreeNode,
+	type TraceSpan,
+	SpanStatus,
+	addSpanEvent,
+	clearSpanStore,
+	endSpan,
+	getRunSpans,
+	getSpanCount,
+	getSpanTree,
+	startAgentSpan,
+	startRunTrace,
+} from "./telemetry.js";
