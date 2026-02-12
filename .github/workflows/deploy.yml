@@ -75,12 +75,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Configure GHCR registry on Container App
+        run: |
+          az containerapp registry set \
+            --name blueflame-api-dev \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --server ${{ env.REGISTRY }} \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy to Azure Container Apps
-        uses: azure/container-apps-deploy-action@v1
-        with:
-          resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
-          containerAppName: blueflame-api-dev
-          imageToDeploy: ${{ env.API_IMAGE }}:${{ github.sha }}
-          registryUrl: ${{ env.REGISTRY }}
-          registryUsername: ${{ github.actor }}
-          registryPassword: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          az containerapp update \
+            --name blueflame-api-dev \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.API_IMAGE }}:${{ github.sha }}
