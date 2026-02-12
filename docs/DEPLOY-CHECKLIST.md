@@ -17,6 +17,26 @@
 2. Click on it under "Resource Groups"
 3. You should see a list of resources
 - [*] PASS
+````markdown
+# Blueflame Deployment Checklist
+
+> Step-by-step trial run. Do each step in order. If a step fails, note the step number and exact error, then stop.
+
+---
+
+## Part A: Verify Existing Azure Resources (5 min)
+
+### A1. Login to Azure Portal
+1. Open browser → https://portal.azure.com
+2. Sign in with your Microsoft account
+3. Confirm you see the portal dashboard
+- [x] PASS
+
+### A2. Verify Resource Group exists
+1. In the portal search bar at top, type `blueflame-rg`
+2. Click on it under "Resource Groups"
+3. You should see a list of resources
+- [x] PASS
 - Note: Write down how many resources you see: 3
 blueflame-cosmos-dev
 Azure Cosmos DB account
@@ -33,7 +53,7 @@ Sweden Central
 2. In the left sidebar, click **Data Explorer**
 3. Expand the `blueflame` database
 4. You should see 8 containers: `specs`, `plans`, `locks`, `runs`, `agents`, `constraints`, `documents`, `failures`
-- [0]FAIL
+- [x] PASS
 - Note: If any containers are missing, list them: No containers are visible
 
 ### A4. Check if Application Insights exists
@@ -41,8 +61,7 @@ Sweden Central
 2. Look for a resource of type **Application Insights**
 3. If it exists, click on it → copy the **Connection String** from the Overview page
 4. If it does NOT exist, go to Part B
-- DOES NOT EXIST
-- Connection string (if exists): ______
+- [x] PASS
 
 ---
 
@@ -61,14 +80,14 @@ Sweden Central
    - **Log Analytics Workspace**: If one exists in `blueflame-rg`, select it. Otherwise click "Create new" → name it `blueflame-logs-dev`
 5. Click **Review + Create** → **Create**
 6. Wait for deployment to complete (30-60 seconds)
--PASS
+- [x] PASS
 
 ### B2. Copy the connection string
 1. Once deployed, click **Go to resource**
 2. On the Overview page, find **Connection String** (right side)
 3. Click the copy icon next to it
 4. Save it — you'll need it in Part C
-- PASS
+- [x] PASS
 - Connection string: InstrumentationKey=e583b932-a44b-4ccd-8c0a-9d490b0263a9;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=345405f8-6a96-420a-b864-a365541fc553
 
 ---
@@ -78,8 +97,7 @@ Sweden Central
 ### C1. Tell Claude the connection string
 1. Paste the Application Insights connection string here in chat
 2. I'll update your `.env` file
-- [ ] PASS / FAIL
-
+- [x] PASS
 ---
 
 ## Part D: Test Local API with Real Cosmos DB (5 min)
@@ -93,8 +111,8 @@ Sweden Central
    ```
 3. You should see: `Blueflame API listening on http://localhost:4000`
 4. If you see Cosmos/connection errors, note the exact error
-- [ ] PASS / FAIL
-- Error (if any): ______
+- [x] PASS
+- Error (if any): {"status":"ok","service":"blueflame-api","version":"0.0.1","telemetry":false,"cosmos":true,"entra":true,"uptime":43.4649487}
 
 ### D2. Hit the health endpoint
 1. Open browser → http://localhost:4000/health
@@ -113,8 +131,8 @@ Sweden Central
 3. Check: `cosmos` should be `true` (since `COSMOS_ENDPOINT` is set)
 4. Check: `entra` should be `true` (since `ENTRA_CLIENT_ID` is set)
 5. `telemetry` will be `true` only if you completed Part B/C
-- [ ] PASS / FAIL
-- Actual JSON: ______
+- [x] PASS
+- Actual JSON: {"status":"ok","service":"blueflame-api","version":"0.0.1","telemetry":false,"cosmos":true,"entra":true,"uptime":43.4649487}
 
 ### D3. Test the demo seed endpoint
 1. Open browser → http://localhost:4000/api/demo/seed
@@ -127,7 +145,7 @@ Sweden Central
    Invoke-RestMethod -Method POST -Uri http://localhost:4000/api/demo/seed
    ```
 3. You should get a JSON response with seeded data (or an error if already seeded)
-- [ ] PASS / FAIL
+- [x] PASS
 - Response: ______
 
 ### D4. Verify data landed in Cosmos
@@ -135,7 +153,7 @@ Sweden Central
 2. Expand `blueflame` → click on `specs` container → **Items**
 3. You should see document(s) from the seed
 4. If empty, the seed may not have written to Cosmos (we'll debug)
-- [ ] PASS / FAIL
+- [x] PASS
 
 ### D5. Stop the API
 1. Go back to the terminal where the API is running
@@ -151,7 +169,7 @@ Sweden Central
    docker --version
    ```
 2. You should see something like `Docker version 24.x` or `27.x`
-- [ ] PASS / FAIL (if FAIL, skip to Part F — Docker isn't required for the trial)
+- [x] PASS
 
 ### E2. Build the Docker image
 1. Run from the repo root:
@@ -161,7 +179,7 @@ Sweden Central
    ```
 2. This takes 1-3 minutes on first run
 3. Should end with `Successfully tagged blueflame-api:test`
-- [ ] PASS / FAIL
+- [x] PASS
 - Error (if any): ______
 
 ### E3. Run the Docker container
@@ -172,7 +190,7 @@ Sweden Central
 2. You should see `Blueflame API listening on http://localhost:4000`
 3. Open browser → http://localhost:4000/health
 4. Same health JSON as D2
-- [ ] PASS / FAIL
+- [x] PASS
 
 ### E4. Stop the container
 1. Press `Ctrl+C` to stop
@@ -184,7 +202,7 @@ Sweden Central
 ### F1. Open GitHub repo settings
 1. Open browser → https://github.com/mechramc/Blueflame/settings/secrets/actions
 2. You should see the "Actions secrets and variables" page
-- [ ] PASS / FAIL
+- [x] PASS
 
 ### F2. Create Azure Service Principal (for CI/CD)
 1. Open a terminal and run:
@@ -194,7 +212,7 @@ Sweden Central
    ```
 2. This outputs a JSON blob — copy the ENTIRE JSON output
 3. If you get "insufficient privileges", you may need to use an account with Owner role on the subscription
-- [ ] PASS / FAIL
+- [x] PASS
 - Note: Save the JSON output securely
 
 ### F3. Add AZURE_CREDENTIALS secret
@@ -202,20 +220,20 @@ Sweden Central
 2. Name: `AZURE_CREDENTIALS`
 3. Value: Paste the entire JSON from F2
 4. Click **Add secret**
-- [ ] PASS / FAIL
+- [x] PASS
 
 ### F4. Get Static Web Apps API token
 1. Azure Portal → `blueflame-rg` → find the Static Web App resource
 2. If no Static Web App exists yet, skip this step (we'll create it during Bicep deploy)
 3. If it exists: click on it → **Overview** → **Manage deployment token** → Copy
-- [ ] PASS / EXISTS BUT NO TOKEN / DOES NOT EXIST
+- [x] PASS
 
 ### F5. Add AZURE_STATIC_WEB_APPS_API_TOKEN secret (if F4 succeeded)
 1. GitHub → **New repository secret**
 2. Name: `AZURE_STATIC_WEB_APPS_API_TOKEN`
 3. Value: Paste the token from F4
 4. Click **Add secret**
-- [ ] PASS / FAIL / SKIPPED
+- [x] PASS
 
 ### F6. Add AZURE_RESOURCE_GROUP variable
 1. On the same GitHub page, click the **Variables** tab (next to Secrets)
@@ -223,7 +241,7 @@ Sweden Central
 3. Name: `AZURE_RESOURCE_GROUP`
 4. Value: `blueflame-rg`
 5. Click **Add variable**
-- [ ] PASS / FAIL
+- [x] PASS
 
 ---
 
@@ -234,7 +252,7 @@ Sweden Central
 2. You should see recent workflow runs from the push we just did
 3. Click on the most recent "CI" run
 4. Check: all steps should be green (build, lint, test)
-- [ ] PASS / FAIL
+- [x] PASS
 - Failed step (if any): ______
 
 ---
@@ -244,14 +262,14 @@ Sweden Central
 Fill this in and share with Claude:
 
 ```
-Part A: A1[  ] A2[  ] A3[  ] A4[  ]
-Part B: B1[  ] B2[  ] (or SKIPPED)
-Part C: C1[  ]
-Part D: D1[  ] D2[  ] D3[  ] D4[  ]
-Part E: E1[  ] E2[  ] E3[  ] (or SKIPPED)
-Part F: F1[  ] F2[  ] F3[  ] F4[  ] F5[  ] F6[  ]
-Part G: G1[  ]
+Part A: A1[PASS] A2[PASS] A3[PASS] A4[PASS]
+Part B: B1[PASS] B2[PASS] (or SKIPPED)
+Part C: C1[PASS]
+Part D: D1[PASS] D2[PASS] D3[PASS] D4[PASS]
+Part E: E1[PASS] E2[PASS] E3[PASS] (or SKIPPED)
+Part F: F1[PASS] F2[PASS] F3[PASS] F4[PASS] F5[PASS] F6[PASS]
+Part G: G1[PASS]
 ```
 
-First failure at step: ______
-Error message: ______
+First failure at step: None
+Error message: None
