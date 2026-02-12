@@ -13,12 +13,14 @@
 
 ## Current State
 - **Phase**: Production-Ready — Fully deployed to Azure
-- **Last completed task**: Full CI/CD pipeline green, API live on Azure Container Apps
-- **Next task**: BSL 1.1 license, Static Web App for frontend, demo recording
+- **Last completed task**: Full stack deployed — API + Web on Azure Container Apps
+- **Next task**: Paste BSL license text, demo recording, submission package
 - **Branch**: `main`
 - **Repo is green**: YES (build, lint, test all pass — 613 tests)
-- **Last commit**: `3b4de98` — fix(deploy): switch from GHCR to Azure Container Registry
+- **CI/CD**: Fully green — 3 parallel jobs (Build & Test, Deploy API, Deploy Web)
+- **Last commit**: `70f89c6` — feat(deploy): deploy web frontend as Container App
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
+- **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Health**: `cosmos:true, entra:true, telemetry:false`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
@@ -57,15 +59,22 @@ Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real A
 - Created Azure infrastructure via CLI:
   - 8 Cosmos DB containers (specs, plans, locks, runs, agents, constraints, documents, failures)
   - Container Apps Environment (`blueflame-cae-dev`) with Log Analytics
-  - Container App (`blueflame-api-dev`) with env vars + secrets
+  - Container App (`blueflame-api-dev`) — API with Cosmos, Entra, App Insights
+  - Container App (`blueflame-web-dev`) — Next.js SSR frontend
   - Azure Container Registry (`blueflamecr`) with admin credentials
   - Service Principal granted AcrPush + AcrPull roles
   - Application Insights connected
-- CI/CD pipeline: push to main → build/test → Docker build → ACR push → Container Apps update
+- CI/CD pipeline: push to main → build/test → Docker build API + Web in parallel → ACR → Container Apps
+- Tried Azure Static Web Apps first (SSR warm-up timeout) → switched to Container Apps
 - Fixed multiple Docker build issues (workspace package.json resolution, .dockerignore, turbo filter)
 - Switched from GHCR (ephemeral tokens) to ACR (persistent credentials)
 - Fixed Biome lint errors (noAssignInExpressions, noNonNullAssertion across 6 files)
 - Fixed Dashboard test type errors (missing PlanTask fields, AgentRole enum)
+
+#### BSL 1.1 Licensing
+- Created `LICENSE` with Murai Labs parameters (change date 2030-02-12, Apache 2.0)
+- Created `COMMERCIAL_LICENSE.md` for enterprise licensing funnel
+- User to paste full BSL 1.1 legal text into LICENSE
 
 ### Session 9 Metrics
 - **Tests**: 540 → 613 (+73)
@@ -93,9 +102,9 @@ Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real A
 ## What To Pick Up Next
 
 ### Immediate (Session 10)
-1. **BSL 1.1 LICENSE file** — Licensor: Murai Labs, non-production use only, change date 3-5 years
-2. **COMMERCIAL_LICENSE.md** — Enterprise licensing funnel
-3. **Static Web App** for frontend deployment
+1. **Paste BSL 1.1 license text** into `LICENSE` (user action — template at https://spdx.org/licenses/BUSL-1.1.html)
+2. **Add CORS** on API for web frontend origin (if needed)
+3. **Configure Entra ID redirect URIs** for production web URL
 4. **Demo recording** — 7 workflow demonstrations
 5. **Submission package** — README, architecture diagram, demo video, ACAR paper
 
@@ -112,7 +121,8 @@ Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real A
 | Resource Group | `blueflame-rg` | Active |
 | Cosmos DB | `blueflame-cosmos-dev` (8 containers) | Active |
 | Container Apps Env | `blueflame-cae-dev` | Active |
-| Container App | `blueflame-api-dev` | Running |
+| Container App (API) | `blueflame-api-dev` | Running |
+| Container App (Web) | `blueflame-web-dev` | Running |
 | Container Registry | `blueflamecr.azurecr.io` | Active |
 | Log Analytics | `blueflame-logs-dev` | Active |
 | App Insights | Connected (InstrumentationKey: e583b932...) | Active |
@@ -127,7 +137,8 @@ Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real A
 - **Routing**: `packages/foundry/src/routing/` (sigma-router, model-registry, 4 providers)
 - **Tracing**: `packages/foundry/src/tracing/telemetry.ts` (spans + App Insights export)
 - **Dockerfile**: `apps/api/Dockerfile` (multi-stage node:20-alpine)
-- **Deploy**: `.github/workflows/deploy.yml` (Docker → ACR → Container Apps)
+- **Deploy**: `.github/workflows/deploy.yml` (Docker → ACR → Container Apps, API + Web parallel)
+- **Web Dockerfile**: `apps/web/Dockerfile` (standalone Next.js output)
 - **Infra**: `infra/main.bicep` + `infra/modules/*.bicep` (7 Azure modules)
 - **ADO Client**: `apps/api/src/services/ado-client.ts` (simulated + real SDK)
 - **Demo Seed**: `apps/api/src/routes/demo-seed.ts` (gated behind NODE_ENV !== 'production')
