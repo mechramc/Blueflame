@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { AgentStatus, TaskStatus } from "@blueflame/shared";
+import { AgentRole, AgentStatus, TaskStatus } from "@blueflame/shared";
 
 import type { ActionEvent } from "./ActionStream";
 import { ActionStream } from "./ActionStream";
@@ -137,9 +137,12 @@ const mockTasks = [
 		id: "T-001",
 		description: "Build auth module",
 		dependencies: [],
-		agentRole: "BUILDER" as const,
+		agentRole: AgentRole.Builder,
 		estimatedSigma: 0.2,
 		estimatedCost: 0.5,
+		estimatedTokens: 1000,
+		sigmaEstimate: 0.2,
+		parallelizable: false,
 		acceptanceCriteriaIds: ["AC-1"],
 		status: TaskStatus.Completed,
 	},
@@ -147,9 +150,12 @@ const mockTasks = [
 		id: "T-002",
 		description: "Verify auth module",
 		dependencies: ["T-001"],
-		agentRole: "VERIFIER" as const,
+		agentRole: AgentRole.Verifier,
 		estimatedSigma: 0.1,
 		estimatedCost: 0.3,
+		estimatedTokens: 500,
+		sigmaEstimate: 0.1,
+		parallelizable: false,
 		acceptanceCriteriaIds: ["AC-1"],
 		status: TaskStatus.Running,
 	},
@@ -157,9 +163,12 @@ const mockTasks = [
 		id: "T-003",
 		description: "Explain PR",
 		dependencies: ["T-002"],
-		agentRole: "EXPLAINER" as const,
+		agentRole: AgentRole.Explainer,
 		estimatedSigma: 0.1,
 		estimatedCost: 0.2,
+		estimatedTokens: 300,
+		sigmaEstimate: 0.1,
+		parallelizable: true,
 		acceptanceCriteriaIds: ["AC-1"],
 		status: TaskStatus.Pending,
 	},
