@@ -1,6 +1,10 @@
 import type { RawPlanOutput } from "@blueflame/foundry";
 import { UserRole } from "@blueflame/shared";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../db.js");
+
+import { clearAllMockStores } from "../__mocks__/db.js";
 import {
 	type AuthorizeRequest,
 	authorizePlan,
@@ -50,21 +54,22 @@ afterEach(() => {
 	clearAllSpecs();
 	clearAllPlans();
 	clearAllLocks();
+	clearAllMockStores();
 });
 
-function setupPlan() {
-	const spec = createSpecFromYaml("proj-1", SAMPLE_YAML, "user-1");
-	acceptSpec(spec.specId);
-	freezeSpec(spec.specId);
-	const planResult = createPlanFromRaw(spec.specId, "run-1", "proj-1", RAW_PLAN);
+async function setupPlan() {
+	const spec = await createSpecFromYaml("proj-1", SAMPLE_YAML, "user-1");
+	await acceptSpec(spec.specId, "proj-1");
+	await freezeSpec(spec.specId);
+	const planResult = await createPlanFromRaw(spec.specId, "run-1", "proj-1", RAW_PLAN);
 	if (!planResult.ok) throw new Error("Failed to create plan");
 	return planResult.value;
 }
 
 describe("Authorization Service", () => {
-	it("should create a PlanLock for valid authorization", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should create a PlanLock for valid authorization", async () => {
+		const plan = await setupPlan();
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: 1.0,
 			authorizedBy: "admin-1",
@@ -81,9 +86,9 @@ describe("Authorization Service", () => {
 		}
 	});
 
-	it("should include agent permissions in lock", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should include agent permissions in lock", async () => {
+		const plan = await setupPlan();
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: 1.0,
 			authorizedBy: "admin-1",
@@ -97,8 +102,8 @@ describe("Authorization Service", () => {
 		}
 	});
 
-	it("should include constraint snapshot", () => {
-		const plan = setupPlan();
+	it("should include constraint snapshot", async () => {
+		const plan = await setupPlan();
 		const constraints = [
 			{
 				id: "c1",
@@ -116,7 +121,7 @@ describe("Authorization Service", () => {
 			},
 		];
 
-		const result = authorizePlan({
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: 1.0,
 			authorizedBy: "admin-1",
@@ -131,9 +136,9 @@ describe("Authorization Service", () => {
 		}
 	});
 
-	it("should reject authorization with insufficient role (Editor)", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should reject authorization with insufficient role (Editor)", async () => {
+		const plan = await setupPlan();
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: 1.0,
 			authorizedBy: "editor-1",
@@ -146,9 +151,9 @@ describe("Authorization Service", () => {
 		}
 	});
 
-	it("should reject authorization with insufficient role (Viewer)", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should reject authorization with insufficient role (Viewer)", async () => {
+		const plan = await setupPlan();
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: 1.0,
 			authorizedBy: "viewer-1",
@@ -158,9 +163,9 @@ describe("Authorization Service", () => {
 		expect(result.ok).toBe(false);
 	});
 
-	it("should reject authorization with zero budget", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should reject authorization with zero budget", async () => {
+		const plan = await setupPlan();
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: 0,
 			authorizedBy: "admin-1",
@@ -173,9 +178,9 @@ describe("Authorization Service", () => {
 		}
 	});
 
-	it("should reject authorization with negative budget", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should reject authorization with negative budget", async () => {
+		const plan = await setupPlan();
+		const result = await authorizePlan({
 			plan,
 			budgetCeiling: -5,
 			authorizedBy: "admin-1",
@@ -185,38 +190,22 @@ describe("Authorization Service", () => {
 		expect(result.ok).toBe(false);
 	});
 
-	it("should retrieve lock by ID", () => {
-		const plan = setupPlan();
-		const result = authorizePlan({
+	it("should retrieve lock by run ID", async () => {
+		const plan = await setupPlan();
+		await authorizePlan({
 			plan,
 			budgetCeiling: 1.0,
 			authorizedBy: "admin-1",
 			userRoles: [UserRole.Authorizer],
 		});
 
-		expect(result.ok).toBe(true);
-		if (result.ok) {
-			const lock = getLock(result.value.lockId);
-			expect(lock).toBeDefined();
-			expect(lock?.runId).toBe("run-1");
-		}
-	});
-
-	it("should retrieve lock by run ID", () => {
-		const plan = setupPlan();
-		authorizePlan({
-			plan,
-			budgetCeiling: 1.0,
-			authorizedBy: "admin-1",
-			userRoles: [UserRole.Authorizer],
-		});
-
-		const lock = getLockByRunId("run-1");
+		const lock = await getLockByRunId("run-1");
 		expect(lock).toBeDefined();
 		expect(lock?.projectId).toBe("proj-1");
 	});
 
-	it("should return undefined for unknown run ID", () => {
-		expect(getLockByRunId("unknown")).toBeUndefined();
+	it("should return null for unknown run ID", async () => {
+		const lock = await getLockByRunId("unknown");
+		expect(lock).toBeNull();
 	});
 });

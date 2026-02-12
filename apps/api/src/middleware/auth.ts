@@ -11,6 +11,7 @@ import jwksClient from "jwks-rsa";
 
 const tenantId = process.env.ENTRA_TENANT_ID ?? "";
 const clientId = process.env.ENTRA_CLIENT_ID ?? "";
+const apiUri = process.env.ENTRA_API_URI ?? `api://${clientId}`;
 
 const client = jwksClient({
 	jwksUri: `https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`,
@@ -73,7 +74,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 		token,
 		getSigningKey,
 		{
-			audience: clientId,
+			audience: apiUri,
 			issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`,
 			algorithms: ["RS256"],
 		},

@@ -1,19 +1,21 @@
 /**
  * Spec freeze service — computes SHA-256 hash, sets status to FROZEN,
  * increments version, and prevents further edits.
+ *
+ * Uses Cosmos DB specs container via db singleton.
  */
 
 import { SpecStatus } from "@blueflame/shared";
 import type { OutputSpec, Result } from "@blueflame/shared";
-import { sha256 } from "@blueflame/shared/utils/hash";
+import { db } from "../db.js";
 import { createSpecFromYaml, getSpec } from "./spec-generation.js";
 
 /**
  * Freeze a spec: compute hash, set FROZEN, increment version.
  * Returns error if spec is not in ACCEPTED status.
  */
-export function freezeSpec(specId: string): Result<OutputSpec> {
-	const spec = getSpec(specId);
+export async function freezeSpec(specId: string): Promise<Result<OutputSpec>> {
+	const spec = await getSpec(specId);
 	if (!spec) {
 		return { ok: false, error: new Error(`Spec not found: ${specId}`) };
 	}
@@ -29,24 +31,25 @@ export function freezeSpec(specId: string): Result<OutputSpec> {
 		};
 	}
 
-	spec.specHash = sha256(spec.content);
-	spec.status = SpecStatus.Frozen;
-	spec.version += 1;
-	spec.updatedAt = new Date().toISOString();
+	// Use the Cosmos repository's freeze method which handles hash + update atomically
+	const result = await db.specs.freeze(specId, spec.projectId);
+	if (!result.ok) {
+		return { ok: false, error: new Error(result.error.message) };
+	}
 
-	return { ok: true, value: spec };
+	return { ok: true, value: result.value };
 }
 
 /**
  * Edit a frozen spec — creates a new version (v+1) as DRAFT.
  * The original frozen spec is not modified.
  */
-export function editFrozenSpec(
+export async function editFrozenSpec(
 	specId: string,
 	newContent: string,
 	editedBy: string,
-): Result<OutputSpec> {
-	const original = getSpec(specId);
+): Promise<Result<OutputSpec>> {
+	const original = await getSpec(specId);
 	if (!original) {
 		return { ok: false, error: new Error(`Spec not found: ${specId}`) };
 	}
@@ -58,8 +61,14 @@ export function editFrozenSpec(
 		};
 	}
 
-	const newSpec = createSpecFromYaml(original.projectId, newContent, editedBy);
+	const newSpec = await createSpecFromYaml(original.projectId, newContent, editedBy);
 	newSpec.version = original.version + 1;
 
-	return { ok: true, value: newSpec };
+	// Update the version in Cosmos
+	const updateResult = await db.specs.update(newSpec, newSpec.projectId);
+	if (!updateResult.ok) {
+		return { ok: false, error: new Error(updateResult.error.message) };
+	}
+
+	return { ok: true, value: updateResult.value };
 }

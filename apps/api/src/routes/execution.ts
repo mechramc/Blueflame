@@ -21,7 +21,7 @@ export const executionRouter = Router();
  * Body: { runId }
  * Start executing an authorized plan.
  */
-executionRouter.post("/start", (req, res) => {
+executionRouter.post("/start", async (req, res) => {
 	const { runId } = req.body as { runId: string };
 
 	if (!runId) {
@@ -29,13 +29,13 @@ executionRouter.post("/start", (req, res) => {
 		return;
 	}
 
-	const plan = getPlanByRunId(runId);
+	const plan = await getPlanByRunId(runId);
 	if (!plan) {
 		res.status(404).json({ error: `Plan not found for run: ${runId}` });
 		return;
 	}
 
-	const lock = getLockByRunId(runId);
+	const lock = await getLockByRunId(runId);
 	if (!lock) {
 		res.status(404).json({ error: `Lock not found for run: ${runId}` });
 		return;
@@ -58,7 +58,7 @@ executionRouter.post("/start", (req, res) => {
  * POST /api/execution/:runId/advance
  * Execute the next wave of ready tasks.
  */
-executionRouter.post("/:runId/advance", (req, res) => {
+executionRouter.post("/:runId/advance", async (req, res) => {
 	const { runId } = req.params;
 
 	if (!runId) {
@@ -66,7 +66,7 @@ executionRouter.post("/:runId/advance", (req, res) => {
 		return;
 	}
 
-	const result = executeNextWave(runId);
+	const result = await executeNextWave(runId);
 	if (!result.ok) {
 		res.status(400).json({ error: result.error.message });
 		return;
@@ -89,7 +89,7 @@ executionRouter.post("/:runId/advance", (req, res) => {
  * POST /api/execution/:runId/complete-task
  * Body: { taskId, agentId, tokensUsed, costIncurred, sigmaValue? }
  */
-executionRouter.post("/:runId/complete-task", (req, res) => {
+executionRouter.post("/:runId/complete-task", async (req, res) => {
 	const { runId } = req.params;
 	const { taskId, agentId, tokensUsed, costIncurred, sigmaValue } = req.body as {
 		taskId: string;
@@ -104,7 +104,7 @@ executionRouter.post("/:runId/complete-task", (req, res) => {
 		return;
 	}
 
-	const result = completeTask(
+	const result = await completeTask(
 		runId,
 		taskId,
 		agentId,
@@ -129,7 +129,7 @@ executionRouter.post("/:runId/complete-task", (req, res) => {
  * POST /api/execution/:runId/fail-task
  * Body: { taskId, agentId, tokensUsed, costIncurred }
  */
-executionRouter.post("/:runId/fail-task", (req, res) => {
+executionRouter.post("/:runId/fail-task", async (req, res) => {
 	const { runId } = req.params;
 	const { taskId, agentId, tokensUsed, costIncurred } = req.body as {
 		taskId: string;
@@ -143,7 +143,7 @@ executionRouter.post("/:runId/fail-task", (req, res) => {
 		return;
 	}
 
-	const result = failTask(runId, taskId, agentId, tokensUsed ?? 0, costIncurred ?? 0);
+	const result = await failTask(runId, taskId, agentId, tokensUsed ?? 0, costIncurred ?? 0);
 	if (!result.ok) {
 		res.status(400).json({ error: result.error.message });
 		return;

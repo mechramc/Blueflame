@@ -2,24 +2,23 @@
  * Spec generation service — orchestrates spec creation from conversation.
  *
  * Calls the spec generator, creates an OutputSpec document, and stores it.
- * For MVP, uses in-memory store. Production will use Cosmos DB specs container.
+ * Uses Cosmos DB specs container via @blueflame/cosmos.
  */
 
 import type { OutputSpec } from "@blueflame/shared";
 import { SpecStatus } from "@blueflame/shared";
+import { db } from "../db.js";
 
-/** In-memory spec store for MVP */
-const specs = new Map<string, OutputSpec>();
 let specCounter = 0;
 
 /**
  * Create an OutputSpec from generated YAML content.
  */
-export function createSpecFromYaml(
+export async function createSpecFromYaml(
 	projectId: string,
 	yamlContent: string,
 	createdBy: string,
-): OutputSpec {
+): Promise<OutputSpec> {
 	specCounter += 1;
 	const specId = `spec-${projectId}-${Date.now()}-${specCounter}`;
 	const now = new Date().toISOString();
@@ -46,59 +45,76 @@ export function createSpecFromYaml(
 		createdBy,
 	};
 
-	specs.set(specId, spec);
-	return spec;
+	const result = await db.specs.create(spec, projectId);
+	if (!result.ok) {
+		throw new Error(`Failed to create spec: ${result.error.message}`);
+	}
+	return result.value;
 }
 
 /**
  * Get a spec by ID.
  */
-export function getSpec(specId: string): OutputSpec | undefined {
-	return specs.get(specId);
+export async function getSpec(specId: string, projectId?: string): Promise<OutputSpec | undefined> {
+	if (!projectId) {
+		// Cross-partition query fallback
+		const results = await db.specs.queryAll({
+			query: "SELECT * FROM c WHERE c.id = @id",
+			parameters: [{ name: "@id", value: specId }],
+		});
+		return results[0];
+	}
+	const result = await db.specs.read(specId, projectId);
+	return result.ok ? result.value : undefined;
 }
 
 /**
  * Get the latest spec for a project.
  */
-export function getLatestSpec(projectId: string): OutputSpec | undefined {
-	let latest: OutputSpec | undefined;
-	for (const spec of specs.values()) {
-		if (spec.projectId === projectId) {
-			if (!latest || spec.createdAt >= latest.createdAt) {
-				latest = spec;
-			}
-		}
-	}
-	return latest;
+export async function getLatestSpec(projectId: string): Promise<OutputSpec | undefined> {
+	const specs = await db.specs.findByProject(projectId);
+	return specs[0]; // findByProject orders by createdAt DESC
 }
 
 /**
  * Update a spec's content (only if DRAFT).
  */
-export function updateSpecContent(specId: string, content: string): OutputSpec | undefined {
-	const spec = specs.get(specId);
+export async function updateSpecContent(
+	specId: string,
+	content: string,
+	projectId?: string,
+): Promise<OutputSpec | undefined> {
+	const spec = await getSpec(specId, projectId);
 	if (!spec || spec.status !== SpecStatus.Draft) return undefined;
+
 	spec.content = content;
 	spec.updatedAt = new Date().toISOString();
-	return spec;
+
+	const result = await db.specs.update(spec, spec.projectId);
+	return result.ok ? result.value : undefined;
 }
 
 /**
  * Accept a spec (DRAFT → ACCEPTED).
  */
-export function acceptSpec(specId: string): OutputSpec | undefined {
-	const spec = specs.get(specId);
+export async function acceptSpec(
+	specId: string,
+	projectId?: string,
+): Promise<OutputSpec | undefined> {
+	const spec = await getSpec(specId, projectId);
 	if (!spec || spec.status !== SpecStatus.Draft) return undefined;
+
 	spec.status = SpecStatus.Accepted;
 	spec.updatedAt = new Date().toISOString();
-	return spec;
+
+	const result = await db.specs.update(spec, spec.projectId);
+	return result.ok ? result.value : undefined;
 }
 
 /**
- * Clear all specs (for testing).
+ * Clear all specs (for testing — no-op in production, tests mock db).
  */
 export function clearAllSpecs(): void {
-	specs.clear();
 	specCounter = 0;
 }
 

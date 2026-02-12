@@ -13,7 +13,7 @@ const router = Router();
  * Body: { runId: string, budgetCeiling: number, authorizedBy: string, userRoles: string[], constraints?: Constraint[] }
  * Creates an immutable PlanLock and authorizes agent execution.
  */
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
 	const { runId, budgetCeiling, authorizedBy, userRoles, constraints } = req.body as {
 		runId: string;
 		budgetCeiling: number;
@@ -29,13 +29,13 @@ router.post("/", (req, res) => {
 		return;
 	}
 
-	const plan = getPlanByRunId(runId);
+	const plan = await getPlanByRunId(runId);
 	if (!plan) {
 		res.status(404).json({ error: `No plan found for run: ${runId}` });
 		return;
 	}
 
-	const result = authorizePlan({
+	const result = await authorizePlan({
 		plan,
 		budgetCeiling,
 		authorizedBy,
@@ -55,8 +55,8 @@ router.post("/", (req, res) => {
  * GET /api/authorize/:runId
  * Returns the lock for a run.
  */
-router.get("/:runId", (req, res) => {
-	const lock = getLockByRunId(req.params.runId);
+router.get("/:runId", async (req, res) => {
+	const lock = await getLockByRunId(req.params.runId);
 	if (!lock) {
 		res.status(404).json({ error: "No lock found for this run" });
 		return;

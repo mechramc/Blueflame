@@ -1,6 +1,10 @@
 import { FailureSource, FailureType } from "@blueflame/shared";
 import type { NormalizedFailure } from "@blueflame/shared";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../db.js");
+
+import { clearAllMockStores } from "../__mocks__/db.js";
 import {
 	clearAllFailures,
 	getAllFailures,
@@ -32,55 +36,57 @@ function makeFailure(overrides: Partial<NormalizedFailure> = {}): NormalizedFail
 	};
 }
 
+afterEach(() => {
+	clearAllFailures();
+	clearAllMockStores();
+});
+
 describe("failure-store", () => {
-	beforeEach(() => {
-		clearAllFailures();
-	});
-
-	it("should store and retrieve a failure by ID", () => {
+	it("should store and retrieve a failure by ID", async () => {
 		const failure = makeFailure();
-		storeFailure(failure);
-		expect(getFailure("FAIL-1-123")).toEqual(failure);
+		await storeFailure(failure);
+		const retrieved = await getFailure("FAIL-1-123");
+		expect(retrieved).toEqual(failure);
 	});
 
-	it("should return undefined for non-existent failure", () => {
-		expect(getFailure("nonexistent")).toBeUndefined();
+	it("should return undefined for non-existent failure", async () => {
+		expect(await getFailure("nonexistent")).toBeUndefined();
 	});
 
-	it("should get failures by runId", () => {
-		storeFailure(makeFailure({ failureId: "f1", runId: "run-A" }));
-		storeFailure(makeFailure({ failureId: "f2", runId: "run-A" }));
-		storeFailure(makeFailure({ failureId: "f3", runId: "run-B" }));
+	it("should get failures by runId", async () => {
+		await storeFailure(makeFailure({ id: "f1", failureId: "f1", runId: "run-A" }));
+		await storeFailure(makeFailure({ id: "f2", failureId: "f2", runId: "run-A" }));
+		await storeFailure(makeFailure({ id: "f3", failureId: "f3", runId: "run-B" }));
 
-		const results = getFailuresByRunId("run-A");
+		const results = await getFailuresByRunId("run-A");
 		expect(results).toHaveLength(2);
 		expect(results.every((f) => f.runId === "run-A")).toBe(true);
 	});
 
-	it("should get failures by projectId", () => {
-		storeFailure(makeFailure({ failureId: "f1", projectId: "proj-X" }));
-		storeFailure(makeFailure({ failureId: "f2", projectId: "proj-Y" }));
+	it("should get failures by projectId", async () => {
+		await storeFailure(makeFailure({ id: "f1", failureId: "f1", projectId: "proj-X" }));
+		await storeFailure(makeFailure({ id: "f2", failureId: "f2", projectId: "proj-Y" }));
 
-		const results = getFailuresByProjectId("proj-X");
+		const results = await getFailuresByProjectId("proj-X");
 		expect(results).toHaveLength(1);
 		expect(results[0].projectId).toBe("proj-X");
 	});
 
-	it("should return empty array when no failures match", () => {
-		expect(getFailuresByRunId("no-match")).toEqual([]);
-		expect(getFailuresByProjectId("no-match")).toEqual([]);
+	it("should return empty array when no failures match", async () => {
+		expect(await getFailuresByRunId("no-match")).toEqual([]);
+		expect(await getFailuresByProjectId("no-match")).toEqual([]);
 	});
 
-	it("should return all failures", () => {
-		storeFailure(makeFailure({ failureId: "f1" }));
-		storeFailure(makeFailure({ failureId: "f2" }));
-		expect(getAllFailures()).toHaveLength(2);
+	it("should return all failures", async () => {
+		await storeFailure(makeFailure({ id: "f1", failureId: "f1" }));
+		await storeFailure(makeFailure({ id: "f2", failureId: "f2" }));
+		expect(await getAllFailures()).toHaveLength(2);
 	});
 
-	it("should clear all failures", () => {
-		storeFailure(makeFailure({ failureId: "f1" }));
-		storeFailure(makeFailure({ failureId: "f2" }));
-		clearAllFailures();
-		expect(getAllFailures()).toHaveLength(0);
+	it("should clear all failures via mock store reset", async () => {
+		await storeFailure(makeFailure({ id: "f1", failureId: "f1" }));
+		await storeFailure(makeFailure({ id: "f2", failureId: "f2" }));
+		clearAllMockStores();
+		expect(await getAllFailures()).toHaveLength(0);
 	});
 });

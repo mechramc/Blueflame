@@ -43,7 +43,7 @@ router.post("/generate", async (req, res) => {
 	try {
 		const config = getSpecGenConfig();
 		const yamlContent = await generateSpec(config, history);
-		const spec = createSpecFromYaml(projectId, yamlContent, "system");
+		const spec = await createSpecFromYaml(projectId, yamlContent, "system");
 		res.json({ spec });
 	} catch (error) {
 		console.error("[Specs] Generation error:", error);
@@ -55,8 +55,8 @@ router.post("/generate", async (req, res) => {
  * GET /api/specs/:projectId
  * Returns the latest spec for a project.
  */
-router.get("/:projectId", (req, res) => {
-	const spec = getLatestSpec(req.params.projectId);
+router.get("/:projectId", async (req, res) => {
+	const spec = await getLatestSpec(req.params.projectId);
 	if (!spec) {
 		res.status(404).json({ error: "No spec found for this project" });
 		return;
@@ -68,8 +68,8 @@ router.get("/:projectId", (req, res) => {
  * PUT /api/specs/:specId/accept
  * Transitions a spec from DRAFT → ACCEPTED.
  */
-router.put("/:specId/accept", (req, res) => {
-	const spec = acceptSpec(req.params.specId);
+router.put("/:specId/accept", async (req, res) => {
+	const spec = await acceptSpec(req.params.specId);
 	if (!spec) {
 		res.status(409).json({ error: "Spec cannot be accepted (not in DRAFT status or not found)" });
 		return;
@@ -81,8 +81,8 @@ router.put("/:specId/accept", (req, res) => {
  * PUT /api/specs/:specId/freeze
  * Freezes an ACCEPTED spec: computes SHA-256 hash, sets FROZEN, increments version.
  */
-router.put("/:specId/freeze", (req, res) => {
-	const result = freezeSpec(req.params.specId);
+router.put("/:specId/freeze", async (req, res) => {
+	const result = await freezeSpec(req.params.specId);
 	if (!result.ok) {
 		res.status(409).json({ error: result.error.message });
 		return;

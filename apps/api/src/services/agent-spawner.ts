@@ -2,13 +2,15 @@
  * Agent Spawner — creates and tracks agent instances for task execution.
  *
  * Manages agent lifecycle: spawn → execute → complete/fail.
+ * Hybrid: in-memory for hot state + Cosmos DB for persistence/audit.
  * Emits state changes for SignalR broadcast.
  */
 
 import type { AgentState } from "@blueflame/shared";
 import { type AgentRole, AgentStatus } from "@blueflame/shared";
+import { db } from "../db.js";
 
-/** In-memory agent store for MVP */
+/** In-memory agent cache for hot state during execution */
 const agents = new Map<string, AgentState>();
 let agentCounter = 0;
 
@@ -27,12 +29,12 @@ export function onAgentStateChange(callback: AgentStateCallback): void {
 /**
  * Spawn a new agent instance for a task.
  */
-export function spawnAgent(
+export async function spawnAgent(
 	runId: string,
 	role: AgentRole,
 	taskId: string,
 	model: string,
-): AgentState {
+): Promise<AgentState> {
 	agentCounter += 1;
 	const agentId = `agent-${runId}-${role.toLowerCase()}-${agentCounter}`;
 	const now = new Date().toISOString();
@@ -53,6 +55,12 @@ export function spawnAgent(
 	};
 
 	agents.set(agentId, state);
+
+	// Persist to Cosmos (fire and forget — don't block execution)
+	db.agents.create(state, runId).catch((err) => {
+		console.warn(`[AgentSpawner] Failed to persist agent ${agentId}:`, err);
+	});
+
 	notifyStateChange(state);
 	return state;
 }
@@ -60,12 +68,21 @@ export function spawnAgent(
 /**
  * Update an agent's status.
  */
-export function updateAgentStatus(agentId: string, status: AgentStatus): AgentState | undefined {
+export async function updateAgentStatus(
+	agentId: string,
+	status: AgentStatus,
+): Promise<AgentState | undefined> {
 	const agent = agents.get(agentId);
 	if (!agent) return undefined;
 
 	agent.status = status;
 	agent.lastUpdatedAt = new Date().toISOString();
+
+	// Persist to Cosmos
+	db.agents.update(agent, agent.runId).catch((err) => {
+		console.warn(`[AgentSpawner] Failed to persist agent status ${agentId}:`, err);
+	});
+
 	notifyStateChange(agent);
 	return agent;
 }
@@ -73,12 +90,12 @@ export function updateAgentStatus(agentId: string, status: AgentStatus): AgentSt
 /**
  * Record token usage and cost for an agent.
  */
-export function recordAgentUsage(
+export async function recordAgentUsage(
 	agentId: string,
 	tokensUsed: number,
 	costIncurred: number,
 	sigmaValue?: number,
-): AgentState | undefined {
+): Promise<AgentState | undefined> {
 	const agent = agents.get(agentId);
 	if (!agent) return undefined;
 
@@ -88,12 +105,18 @@ export function recordAgentUsage(
 		agent.sigmaValue = sigmaValue;
 	}
 	agent.lastUpdatedAt = new Date().toISOString();
+
+	// Persist to Cosmos
+	db.agents.update(agent, agent.runId).catch((err) => {
+		console.warn(`[AgentSpawner] Failed to persist agent usage ${agentId}:`, err);
+	});
+
 	notifyStateChange(agent);
 	return agent;
 }
 
 /**
- * Get all agents for a run.
+ * Get all agents for a run (from in-memory cache).
  */
 export function getAgentsByRunId(runId: string): AgentState[] {
 	return [...agents.values()].filter((a) => a.runId === runId);

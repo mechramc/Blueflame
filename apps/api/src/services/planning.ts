@@ -2,7 +2,7 @@
  * Planning service — orchestrates task plan creation from frozen specs.
  *
  * Takes a frozen OutputSpec, calls the Planner agent, validates the DAG,
- * and stores the resulting TaskPlan. For MVP, uses in-memory store.
+ * and stores the resulting TaskPlan in Cosmos DB.
  */
 
 import type { RawPlanOutput, RawPlanTask } from "@blueflame/foundry";
@@ -10,10 +10,9 @@ import { validateDAG } from "@blueflame/foundry";
 import type { PlanTask, TaskPlan } from "@blueflame/shared";
 import { AgentRole, SpecStatus, TaskStatus } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
+import { db } from "../db.js";
 import { getSpec } from "./spec-generation.js";
 
-/** In-memory plan store for MVP */
-const plans = new Map<string, TaskPlan>();
 let planCounter = 0;
 
 /**
@@ -32,13 +31,13 @@ function toAgentRole(role: string): AgentRole {
 /**
  * Convert raw LLM plan output into a typed TaskPlan and store it.
  */
-export function createPlanFromRaw(
+export async function createPlanFromRaw(
 	specId: string,
 	runId: string,
 	projectId: string,
 	raw: RawPlanOutput,
-): Result<TaskPlan> {
-	const spec = getSpec(specId);
+): Promise<Result<TaskPlan>> {
+	const spec = await getSpec(specId);
 	if (!spec) {
 		return { ok: false, error: new Error(`Spec not found: ${specId}`) };
 	}
@@ -88,36 +87,38 @@ export function createPlanFromRaw(
 		createdAt: new Date().toISOString(),
 	};
 
-	plans.set(planId, plan);
-	return { ok: true, value: plan };
+	const result = await db.plans.create(plan, runId);
+	if (!result.ok) {
+		return { ok: false, error: new Error(`Failed to create plan: ${result.error.message}`) };
+	}
+	return { ok: true, value: result.value };
 }
 
 /**
  * Get a plan by ID.
  */
-export function getPlan(planId: string): TaskPlan | undefined {
-	return plans.get(planId);
+export async function getPlan(planId: string, runId?: string): Promise<TaskPlan | undefined> {
+	if (!runId) {
+		const results = await db.plans.queryAll({
+			query: "SELECT * FROM c WHERE c.id = @id",
+			parameters: [{ name: "@id", value: planId }],
+		});
+		return results[0];
+	}
+	const result = await db.plans.read(planId, runId);
+	return result.ok ? result.value : undefined;
 }
 
 /**
  * Get the latest plan for a run.
  */
-export function getPlanByRunId(runId: string): TaskPlan | undefined {
-	let latest: TaskPlan | undefined;
-	for (const plan of plans.values()) {
-		if (plan.runId === runId) {
-			if (!latest || plan.createdAt >= latest.createdAt) {
-				latest = plan;
-			}
-		}
-	}
-	return latest;
+export async function getPlanByRunId(runId: string): Promise<TaskPlan | null> {
+	return db.plans.findByRun(runId);
 }
 
 /**
- * Clear all plans (for testing).
+ * Clear all plans (for testing — no-op in production, tests mock db).
  */
 export function clearAllPlans(): void {
-	plans.clear();
 	planCounter = 0;
 }

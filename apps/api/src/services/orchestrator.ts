@@ -6,6 +6,8 @@
  * Builder → Verifier handoff on task completion.
  * Explainer runs after all tasks are verified.
  * Emits run status events for SignalR dashboard updates.
+ *
+ * Hybrid: in-memory RunState for hot execution + Cosmos DB for persistence.
  */
 
 import { SigmaRouter } from "@blueflame/foundry";
@@ -50,7 +52,7 @@ export interface RunState {
 	interruptRequested: boolean;
 }
 
-/** In-memory run store for MVP */
+/** In-memory run store — hot state for active runs */
 const runs = new Map<string, RunState>();
 
 /** Callback for run status changes (wired to SignalR) */
@@ -109,7 +111,7 @@ export function startExecution(plan: TaskPlan, lock: PlanLock): Result<RunState>
  * Execute the next wave of ready tasks.
  * Returns the spawned agents for the tasks.
  */
-export function executeNextWave(runId: string): Result<AgentState[]> {
+export async function executeNextWave(runId: string): Promise<Result<AgentState[]>> {
 	const run = runs.get(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
@@ -145,13 +147,13 @@ export function executeNextWave(runId: string): Result<AgentState[]> {
 		const decision = router.route(task.agentRole, task.sigmaEstimate);
 		routingLog.push(decision);
 		const model = decision.model;
-		const agent = spawnAgent(runId, task.agentRole, task.id, model);
+		const agent = await spawnAgent(runId, task.agentRole, task.id, model);
 
 		// Mark task as running
 		task.status = TaskStatus.Running;
 
 		// Mark agent as executing
-		updateAgentStatus(agent.agentId, AgentStatus.Executing);
+		await updateAgentStatus(agent.agentId, AgentStatus.Executing);
 
 		spawnedAgents.push(agent);
 	}
@@ -163,14 +165,14 @@ export function executeNextWave(runId: string): Result<AgentState[]> {
  * Complete a task and trigger A2A handoff.
  * Builder completion → spawn Verifier for the same task.
  */
-export function completeTask(
+export async function completeTask(
 	runId: string,
 	taskId: string,
 	agentId: string,
 	tokensUsed: number,
 	costIncurred: number,
 	sigmaValue?: number,
-): Result<{ verifierAgent?: AgentState }> {
+): Promise<Result<{ verifierAgent?: AgentState }>> {
 	const run = runs.get(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
@@ -182,15 +184,15 @@ export function completeTask(
 	}
 
 	// Record usage
-	recordAgentUsage(agentId, tokensUsed, costIncurred, sigmaValue);
-	updateAgentStatus(agentId, AgentStatus.Completed);
+	await recordAgentUsage(agentId, tokensUsed, costIncurred, sigmaValue);
+	await updateAgentStatus(agentId, AgentStatus.Completed);
 
 	// A2A handoff: Builder → Verifier (use task's σ for verifier routing)
 	if (task.agentRole === AgentRole.Builder) {
 		const verifierDecision = router.route(AgentRole.Verifier, task.sigmaEstimate);
 		routingLog.push(verifierDecision);
-		const verifier = spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
-		updateAgentStatus(verifier.agentId, AgentStatus.Executing);
+		const verifier = await spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
+		await updateAgentStatus(verifier.agentId, AgentStatus.Executing);
 		return { ok: true, value: { verifierAgent: verifier } };
 	}
 
@@ -203,13 +205,13 @@ export function completeTask(
 /**
  * Fail a task.
  */
-export function failTask(
+export async function failTask(
 	runId: string,
 	taskId: string,
 	agentId: string,
 	tokensUsed: number,
 	costIncurred: number,
-): Result<void> {
+): Promise<Result<void>> {
 	const run = runs.get(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
@@ -220,8 +222,8 @@ export function failTask(
 		return { ok: false, error: new Error(`Task not found: ${taskId}`) };
 	}
 
-	recordAgentUsage(agentId, tokensUsed, costIncurred);
-	updateAgentStatus(agentId, AgentStatus.Failed);
+	await recordAgentUsage(agentId, tokensUsed, costIncurred);
+	await updateAgentStatus(agentId, AgentStatus.Failed);
 	task.status = TaskStatus.Failed;
 
 	return { ok: true, value: undefined };

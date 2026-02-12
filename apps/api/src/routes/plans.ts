@@ -37,7 +37,7 @@ router.post("/generate", async (req, res) => {
 		return;
 	}
 
-	const spec = getSpec(specId);
+	const spec = await getSpec(specId);
 	if (!spec) {
 		res.status(404).json({ error: `Spec not found: ${specId}` });
 		return;
@@ -46,7 +46,7 @@ router.post("/generate", async (req, res) => {
 	try {
 		const config = getPlannerConfig();
 		const rawPlan: RawPlanOutput = await generatePlan(config, spec.content);
-		const result = createPlanFromRaw(specId, runId, projectId, rawPlan);
+		const result = await createPlanFromRaw(specId, runId, projectId, rawPlan);
 
 		if (!result.ok) {
 			res.status(409).json({ error: result.error.message });
@@ -64,8 +64,8 @@ router.post("/generate", async (req, res) => {
  * GET /api/plans/:runId
  * Returns the latest plan for a run.
  */
-router.get("/:runId", (req, res) => {
-	const plan = getPlanByRunId(req.params.runId);
+router.get("/:runId", async (req, res) => {
+	const plan = await getPlanByRunId(req.params.runId);
 	if (!plan) {
 		res.status(404).json({ error: "No plan found for this run" });
 		return;

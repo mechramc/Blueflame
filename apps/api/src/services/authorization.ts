@@ -2,20 +2,17 @@
  * Authorization service — creates immutable PlanLock documents.
  *
  * Validates: user has Authorizer+ role, spec is frozen, plan exists,
- * budget is set. Creates PlanLock in locks store and transitions
- * run status to AUTHORIZED.
- *
- * For MVP, uses in-memory store. Production will use Cosmos DB locks container.
+ * budget is set. Creates PlanLock in Cosmos DB locks container and
+ * transitions run status to AUTHORIZED.
  */
 
 import type { AgentPermissions, Constraint, PlanLock, TaskPlan } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
 import { AgentRole, SpecStatus, UserRole } from "@blueflame/shared";
+import { db } from "../db.js";
 import { hasMinimumRole } from "../middleware/rbac.js";
 import { getSpec } from "./spec-generation.js";
 
-/** In-memory lock store for MVP */
-const locks = new Map<string, PlanLock>();
 let lockCounter = 0;
 
 /** Default per-agent token/cost limits based on role */
@@ -57,7 +54,7 @@ export interface AuthorizeRequest {
  * - Budget ceiling is positive
  * - Plan has tasks
  */
-export function authorizePlan(request: AuthorizeRequest): Result<PlanLock> {
+export async function authorizePlan(request: AuthorizeRequest): Promise<Result<PlanLock>> {
 	const { plan, budgetCeiling, authorizedBy, userRoles, constraints = [] } = request;
 
 	// Role check
@@ -69,7 +66,7 @@ export function authorizePlan(request: AuthorizeRequest): Result<PlanLock> {
 	}
 
 	// Spec check
-	const spec = getSpec(plan.specId);
+	const spec = await getSpec(plan.specId);
 	if (!spec) {
 		return { ok: false, error: new Error(`Spec not found: ${plan.specId}`) };
 	}
@@ -115,33 +112,35 @@ export function authorizePlan(request: AuthorizeRequest): Result<PlanLock> {
 		authorizedAt: new Date().toISOString(),
 	};
 
-	locks.set(lockId, lock);
-	return { ok: true, value: lock };
+	const result = await db.locks.create(lock, plan.runId);
+	if (!result.ok) {
+		return { ok: false, error: new Error(`Failed to create lock: ${result.error.message}`) };
+	}
+	return { ok: true, value: result.value };
 }
 
 /**
  * Get a lock by ID.
  */
-export function getLock(lockId: string): PlanLock | undefined {
-	return locks.get(lockId);
+export async function getLock(lockId: string, runId?: string): Promise<PlanLock | undefined> {
+	if (!runId) {
+		// Cannot query LocksRepository without runId — it's immutable and read-only
+		return undefined;
+	}
+	const result = await db.locks.read(lockId, runId);
+	return result.ok ? result.value : undefined;
 }
 
 /**
  * Get lock for a run.
  */
-export function getLockByRunId(runId: string): PlanLock | undefined {
-	for (const lock of locks.values()) {
-		if (lock.runId === runId) {
-			return lock;
-		}
-	}
-	return undefined;
+export async function getLockByRunId(runId: string): Promise<PlanLock | null> {
+	return db.locks.findByRun(runId);
 }
 
 /**
- * Clear all locks (for testing).
+ * Clear all locks (for testing — no-op in production, tests mock db).
  */
 export function clearAllLocks(): void {
-	locks.clear();
 	lockCounter = 0;
 }

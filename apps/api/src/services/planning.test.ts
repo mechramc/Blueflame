@@ -1,6 +1,10 @@
 import type { RawPlanOutput } from "@blueflame/foundry";
 import { TaskStatus } from "@blueflame/shared";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../db.js");
+
+import { clearAllMockStores } from "../__mocks__/db.js";
 import { clearAllPlans, createPlanFromRaw, getPlan, getPlanByRunId } from "./planning.js";
 import { freezeSpec } from "./spec-freeze.js";
 import { acceptSpec, clearAllSpecs, createSpecFromYaml } from "./spec-generation.js";
@@ -53,19 +57,20 @@ const VALID_RAW_PLAN: RawPlanOutput = {
 afterEach(() => {
 	clearAllSpecs();
 	clearAllPlans();
+	clearAllMockStores();
 });
 
-function createFrozenSpec(): string {
-	const spec = createSpecFromYaml("proj-1", SAMPLE_YAML, "user-1");
-	acceptSpec(spec.specId);
-	freezeSpec(spec.specId);
+async function createFrozenSpec(): Promise<string> {
+	const spec = await createSpecFromYaml("proj-1", SAMPLE_YAML, "user-1");
+	await acceptSpec(spec.specId, "proj-1");
+	await freezeSpec(spec.specId);
 	return spec.specId;
 }
 
 describe("Planning Service", () => {
-	it("should create a plan from raw LLM output for a frozen spec", () => {
-		const specId = createFrozenSpec();
-		const result = createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should create a plan from raw LLM output for a frozen spec", async () => {
+		const specId = await createFrozenSpec();
+		const result = await createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
 		expect(result.ok).toBe(true);
 		if (result.ok) {
@@ -77,9 +82,9 @@ describe("Planning Service", () => {
 		}
 	});
 
-	it("should set all tasks to PENDING status", () => {
-		const specId = createFrozenSpec();
-		const result = createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should set all tasks to PENDING status", async () => {
+		const specId = await createFrozenSpec();
+		const result = await createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
 		expect(result.ok).toBe(true);
 		if (result.ok) {
@@ -89,9 +94,9 @@ describe("Planning Service", () => {
 		}
 	});
 
-	it("should map agent roles correctly", () => {
-		const specId = createFrozenSpec();
-		const result = createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should map agent roles correctly", async () => {
+		const specId = await createFrozenSpec();
+		const result = await createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
 		expect(result.ok).toBe(true);
 		if (result.ok) {
@@ -100,9 +105,9 @@ describe("Planning Service", () => {
 		}
 	});
 
-	it("should include spec hash from frozen spec", () => {
-		const specId = createFrozenSpec();
-		const result = createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should include spec hash from frozen spec", async () => {
+		const specId = await createFrozenSpec();
+		const result = await createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
 		expect(result.ok).toBe(true);
 		if (result.ok) {
@@ -111,9 +116,9 @@ describe("Planning Service", () => {
 		}
 	});
 
-	it("should reject planning for a non-frozen spec", () => {
-		const spec = createSpecFromYaml("proj-1", SAMPLE_YAML, "user-1");
-		const result = createPlanFromRaw(spec.specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should reject planning for a non-frozen spec", async () => {
+		const spec = await createSpecFromYaml("proj-1", SAMPLE_YAML, "user-1");
+		const result = await createPlanFromRaw(spec.specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -121,13 +126,13 @@ describe("Planning Service", () => {
 		}
 	});
 
-	it("should reject planning for non-existent spec", () => {
-		const result = createPlanFromRaw("nonexistent", "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should reject planning for non-existent spec", async () => {
+		const result = await createPlanFromRaw("nonexistent", "run-1", "proj-1", VALID_RAW_PLAN);
 		expect(result.ok).toBe(false);
 	});
 
-	it("should reject plan with cyclic dependencies", () => {
-		const specId = createFrozenSpec();
+	it("should reject plan with cyclic dependencies", async () => {
+		const specId = await createFrozenSpec();
 		const cyclicPlan: RawPlanOutput = {
 			tasks: [
 				{
@@ -157,35 +162,36 @@ describe("Planning Service", () => {
 			total_estimated_tokens: 2000,
 		};
 
-		const result = createPlanFromRaw(specId, "run-1", "proj-1", cyclicPlan);
+		const result = await createPlanFromRaw(specId, "run-1", "proj-1", cyclicPlan);
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
 			expect(result.error.message).toContain("cycle");
 		}
 	});
 
-	it("should retrieve plan by ID", () => {
-		const specId = createFrozenSpec();
-		const result = createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should retrieve plan by ID", async () => {
+		const specId = await createFrozenSpec();
+		const result = await createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
 		expect(result.ok).toBe(true);
 		if (result.ok) {
-			const retrieved = getPlan(result.value.id);
+			const retrieved = await getPlan(result.value.id, "run-1");
 			expect(retrieved).toBeDefined();
 			expect(retrieved?.runId).toBe("run-1");
 		}
 	});
 
-	it("should retrieve plan by run ID", () => {
-		const specId = createFrozenSpec();
-		createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
+	it("should retrieve plan by run ID", async () => {
+		const specId = await createFrozenSpec();
+		await createPlanFromRaw(specId, "run-1", "proj-1", VALID_RAW_PLAN);
 
-		const plan = getPlanByRunId("run-1");
+		const plan = await getPlanByRunId("run-1");
 		expect(plan).toBeDefined();
 		expect(plan?.runId).toBe("run-1");
 	});
 
-	it("should return undefined for unknown run ID", () => {
-		expect(getPlanByRunId("unknown")).toBeUndefined();
+	it("should return null for unknown run ID", async () => {
+		const plan = await getPlanByRunId("unknown");
+		expect(plan).toBeNull();
 	});
 });

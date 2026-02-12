@@ -121,6 +121,8 @@ export enum FailureType {
 	Deploy = "deploy",
 	Timeout = "timeout",
 	Infrastructure = "infrastructure",
+	Cancelled = "cancelled",
+	Unknown = "unknown",
 }
 
 /** Remediation status lifecycle */

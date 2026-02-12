@@ -1,6 +1,10 @@
 import type { PlanLock, PlanTask, TaskPlan } from "@blueflame/shared";
 import { AgentRole, RunStatus, TaskStatus } from "@blueflame/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../db.js");
+
+import { clearAllMockStores } from "../__mocks__/db.js";
 import { clearAllAgents, recordAgentUsage, spawnAgent } from "./agent-spawner.js";
 import {
 	clearAllRuns,
@@ -77,6 +81,7 @@ function makeLock(): PlanLock {
 afterEach(() => {
 	clearAllRuns();
 	clearAllAgents();
+	clearAllMockStores();
 });
 
 describe("startExecution", () => {
@@ -111,10 +116,10 @@ describe("startExecution", () => {
 });
 
 describe("executeNextWave", () => {
-	it("should spawn agents for ready tasks", () => {
+	it("should spawn agents for ready tasks", async () => {
 		startExecution(makePlan(), makeLock());
 
-		const result = executeNextWave("run-1");
+		const result = await executeNextWave("run-1");
 		expect(result.ok).toBe(true);
 		if (result.ok) {
 			expect(result.value.length).toBe(1);
@@ -122,27 +127,27 @@ describe("executeNextWave", () => {
 		}
 	});
 
-	it("should return empty array when no tasks ready", () => {
+	it("should return empty array when no tasks ready", async () => {
 		const plan = makePlan([{ id: "TASK-001", status: TaskStatus.Running }]);
 		startExecution(plan, makeLock());
 
-		const result = executeNextWave("run-1");
+		const result = await executeNextWave("run-1");
 		expect(result.ok).toBe(true);
 		if (result.ok) {
 			expect(result.value).toHaveLength(0);
 		}
 	});
 
-	it("should fail for unknown run", () => {
-		const result = executeNextWave("unknown");
+	it("should fail for unknown run", async () => {
+		const result = await executeNextWave("unknown");
 		expect(result.ok).toBe(false);
 	});
 
-	it("should spawn parallel tasks in same wave", () => {
+	it("should spawn parallel tasks in same wave", async () => {
 		const plan = makePlan([{ id: "TASK-001" }, { id: "TASK-002" }]);
 		startExecution(plan, makeLock());
 
-		const result = executeNextWave("run-1");
+		const result = await executeNextWave("run-1");
 		expect(result.ok).toBe(true);
 		if (result.ok) {
 			expect(result.value.length).toBe(2);
@@ -151,9 +156,9 @@ describe("executeNextWave", () => {
 });
 
 describe("completeTask", () => {
-	it("should spawn verifier on builder completion (A2A handoff)", () => {
+	it("should spawn verifier on builder completion (A2A handoff)", async () => {
 		startExecution(makePlan(), makeLock());
-		const waveResult = executeNextWave("run-1");
+		const waveResult = await executeNextWave("run-1");
 		expect(waveResult.ok).toBe(true);
 		if (!waveResult.ok) return;
 
@@ -161,7 +166,7 @@ describe("completeTask", () => {
 		expect(agent).toBeDefined();
 		if (!agent) return;
 
-		const result = completeTask("run-1", "TASK-001", agent.agentId, 500, 0.05);
+		const result = await completeTask("run-1", "TASK-001", agent.agentId, 500, 0.05);
 		expect(result.ok).toBe(true);
 		if (result.ok) {
 			expect(result.value.verifierAgent).toBeDefined();
@@ -169,14 +174,14 @@ describe("completeTask", () => {
 		}
 	});
 
-	it("should mark task completed on verifier completion", () => {
+	it("should mark task completed on verifier completion", async () => {
 		const plan = makePlan([
 			{ id: "TASK-001", agentRole: AgentRole.Verifier, status: TaskStatus.Running },
 		]);
 		startExecution(plan, makeLock());
 
-		const agent = spawnAgent("run-1", AgentRole.Verifier, "TASK-001", "gpt-4o");
-		const result = completeTask("run-1", "TASK-001", agent.agentId, 500, 0.02);
+		const agent = await spawnAgent("run-1", AgentRole.Verifier, "TASK-001", "gpt-4o");
+		const result = await completeTask("run-1", "TASK-001", agent.agentId, 500, 0.02);
 		expect(result.ok).toBe(true);
 
 		const run = getRun("run-1");
@@ -184,18 +189,18 @@ describe("completeTask", () => {
 		expect(task?.status).toBe(TaskStatus.Completed);
 	});
 
-	it("should fail for unknown run", () => {
-		const result = completeTask("unknown", "TASK-001", "agent-1", 0, 0);
+	it("should fail for unknown run", async () => {
+		const result = await completeTask("unknown", "TASK-001", "agent-1", 0, 0);
 		expect(result.ok).toBe(false);
 	});
 });
 
 describe("failTask", () => {
-	it("should mark task as failed", () => {
+	it("should mark task as failed", async () => {
 		startExecution(makePlan(), makeLock());
-		executeNextWave("run-1");
+		await executeNextWave("run-1");
 
-		const result = failTask("run-1", "TASK-001", "agent-1", 200, 0.01);
+		const result = await failTask("run-1", "TASK-001", "agent-1", 200, 0.01);
 		expect(result.ok).toBe(true);
 
 		const run = getRun("run-1");
@@ -226,18 +231,18 @@ describe("requestInterrupt", () => {
 		expect(result.ok).toBe(false);
 	});
 
-	it("should cause next executeNextWave to pause", () => {
+	it("should cause next executeNextWave to pause", async () => {
 		startExecution(makePlan(), makeLock());
 		requestInterrupt("run-1");
 
-		executeNextWave("run-1");
+		await executeNextWave("run-1");
 		const run = getRun("run-1");
 		expect(run?.status).toBe(RunStatus.Paused);
 	});
 });
 
 describe("budget enforcement", () => {
-	it("should emit budget alert at 80%", () => {
+	it("should emit budget alert at 80%", async () => {
 		const budgetAlert = vi.fn();
 		onBudgetAlert(budgetAlert);
 
@@ -246,36 +251,36 @@ describe("budget enforcement", () => {
 		startExecution(makePlan(), lock);
 
 		// Simulate spending 80%+ by recording usage on an agent
-		const agent = spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
-		recordAgentUsage(agent.agentId, 10000, 0.85);
+		const agent = await spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
+		await recordAgentUsage(agent.agentId, 10000, 0.85);
 
-		executeNextWave("run-1");
+		await executeNextWave("run-1");
 		expect(budgetAlert).toHaveBeenCalled();
 	});
 
-	it("should pause run at 95% budget", () => {
+	it("should pause run at 95% budget", async () => {
 		const lock = makeLock();
 		lock.budgetCeiling = 1.0;
 		startExecution(makePlan(), lock);
 
-		const agent = spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
-		recordAgentUsage(agent.agentId, 10000, 0.96);
+		const agent = await spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
+		await recordAgentUsage(agent.agentId, 10000, 0.96);
 
-		executeNextWave("run-1");
+		await executeNextWave("run-1");
 		const run = getRun("run-1");
 		expect(run?.status).toBe(RunStatus.Paused);
 	});
 
-	it("should defer pending tasks on budget pause", () => {
+	it("should defer pending tasks on budget pause", async () => {
 		const lock = makeLock();
 		lock.budgetCeiling = 1.0;
 		const plan = makePlan([{ id: "TASK-001" }, { id: "TASK-002", dependencies: ["TASK-001"] }]);
 		startExecution(plan, lock);
 
-		const agent = spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
-		recordAgentUsage(agent.agentId, 10000, 0.96);
+		const agent = await spawnAgent("run-1", AgentRole.Builder, "TASK-001", "gpt-4o");
+		await recordAgentUsage(agent.agentId, 10000, 0.96);
 
-		executeNextWave("run-1");
+		await executeNextWave("run-1");
 		const run = getRun("run-1");
 		const task2 = run?.plan.tasks.find((t) => t.id === "TASK-002");
 		expect(task2?.status).toBe(TaskStatus.Deferred);

@@ -1,9 +1,10 @@
 /**
- * Demo seed route — populates in-memory stores with realistic demo data.
+ * Demo seed route — populates stores with realistic demo data.
  *
  * POST /api/demo/seed — populates all stores
  * POST /api/demo/reset — clears all stores
  *
+ * Gated behind NODE_ENV !== 'production'.
  * For hackathon demo only. Not for production.
  */
 
@@ -25,19 +26,28 @@ export const demoSeedRouter = Router();
 const PROJECT_ID = "demo-project-1";
 const RUN_ID = "demo-run-1";
 
+// Gate: reject in production
+demoSeedRouter.use((_req, res, next) => {
+	if (process.env.NODE_ENV === "production") {
+		res.status(403).json({ error: "Demo endpoints are disabled in production" });
+		return;
+	}
+	next();
+});
+
 /**
  * POST /api/demo/seed
- * Populates all in-memory stores with demo data.
+ * Populates all stores with demo data.
  */
-demoSeedRouter.post("/seed", (_req, res) => {
+demoSeedRouter.post("/seed", async (_req, res) => {
 	// 1. Seed conversation history
 	seedConversation();
 
 	// 2. Seed spec
-	seedSpec();
+	await seedSpec();
 
 	// 3. Seed failures
-	seedFailures();
+	await seedFailures();
 
 	// 4. Seed remediations (with root cause analysis)
 	seedRemediations();
@@ -105,7 +115,7 @@ function seedConversation() {
 	});
 }
 
-function seedSpec() {
+async function seedSpec() {
 	clearAllSpecs();
 
 	const yamlContent = `title: "TaskFlow — Real-time Task Management Platform"
@@ -178,10 +188,10 @@ risks:
 definition_of_done: "All acceptance criteria pass, CI green, deployed to Azure staging"
 `;
 
-	createSpecFromYaml(PROJECT_ID, yamlContent, "system");
+	await createSpecFromYaml(PROJECT_ID, yamlContent, "system");
 }
 
-function seedFailures() {
+async function seedFailures() {
 	clearAllFailures();
 
 	const failures: NormalizedFailure[] = [
@@ -283,7 +293,7 @@ function seedFailures() {
 	];
 
 	for (const f of failures) {
-		storeFailure(f);
+		await storeFailure(f);
 	}
 }
 
