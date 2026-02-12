@@ -100,8 +100,8 @@ Five specialized agent roles (Planner, Builder, Verifier, Explainer, Fixer) oper
 ### Authorization Gates
 No agent spawns without an immutable `plan.lock.json` signed by an authorized user (RBAC-gated). The lock captures: frozen spec hash, task DAG, budget ceiling, constraint snapshot, and agent permissions.
 
-### ACAR-Informed Routing
-Self-consistency variance (σ) from N=3 samples routes tasks across execution modes. Simple tasks (σ=0) use single-model. Complex tasks (σ=1.0) use multi-model ensemble. 54% of tasks avoid full ensembling — up to 70% cost reduction.
+### ACAR-Informed Multi-Provider Routing
+Self-consistency variance (σ) from N=3 samples routes tasks across execution modes and providers. Simple tasks (σ=0) use single-model (e.g., GPT-4o-mini). Complex tasks (σ=1.0) use multi-model ensemble across providers (Azure OpenAI + Anthropic + Google). 54% of tasks avoid full ensembling — up to 70% cost reduction. Each agent role has configurable provider+model defaults.
 
 ### CI/CD Failure Intelligence
 Azure DevOps pipeline failures are captured, normalized, and analyzed by the Fixer agent. Root cause analysis and remediation plans flow through the same authorization gate. No unreviewed fixes.
@@ -119,13 +119,13 @@ Persistent, project-level rules (architectural, security, performance) survive a
 
 ## Agent Roles
 
-| Role | Responsibility | Model | Key Insight |
+| Role | Responsibility | Default Model (Configurable) | Key Insight |
 |---|---|---|---|
-| **Planner** | Task decomposition, DAG construction, σ-based effort estimation | o1 | ACAR task difficulty estimation |
-| **Builder** | Code implementation, branch management, PR creation | Claude Sonnet 4.5 | σ-routing: single/lite/full based on task complexity |
-| **Verifier** | Test execution, constraint validation, acceptance checking | GPT-4o | Uses acceptance criteria as ground truth — not model consensus (ACAR: agreement-but-wrong is unrecoverable) |
-| **Explainer** | Root cause analysis, PR descriptions, decision rationale | GPT-4o | Uses explicit diffs — not proxy estimation (ACAR: proxy attribution fails) |
-| **Fixer** | CI/CD failure analysis, remediation planning | GPT-4o + Claude Sonnet 4.5 | Reads pipeline logs + test results, produces governed remediation DAG |
+| **Planner** | Task decomposition, DAG construction, σ-based effort estimation | o1 (Azure) — fallback: Claude Opus 4.6 | ACAR task difficulty estimation |
+| **Builder** | Code implementation, branch management, PR creation | Claude Sonnet 4.5 (Anthropic) — fallback: Codex / GPT-4o | σ-routing: single/lite/full based on task complexity |
+| **Verifier** | Test execution, constraint validation, acceptance checking | GPT-4o (Azure) — fallback: Gemini 2.5 Pro | Uses acceptance criteria as ground truth — not model consensus (ACAR: agreement-but-wrong is unrecoverable) |
+| **Explainer** | Root cause analysis, PR descriptions, decision rationale | GPT-4o (Azure) — fallback: Claude Opus 4.6 | Uses explicit diffs — not proxy estimation (ACAR: proxy attribution fails) |
+| **Fixer** | CI/CD failure analysis, remediation planning | GPT-4o + Claude Sonnet 4.5 (multi-provider) | Reads pipeline logs + test results, produces governed remediation DAG |
 
 ---
 
@@ -151,7 +151,7 @@ Persistent, project-level rules (architectural, security, performance) survive a
 | Real-Time | Socket.IO (Azure Web PubSub adapter for prod) | Live agent streaming, budget alerts |
 | Backend | Node.js + TypeScript on Azure Container Apps | API gateway, webhooks, orchestration |
 | AI Platform | Microsoft Foundry (11 services) | Agent factory: models, routing, workflows, safety, tracing |
-| Models | GPT-4o, o1, GPT-4o-mini, Claude Sonnet 4.5 | σ-informed selection via Foundry Model Router |
+| Models | GPT-4o, o1, GPT-4o-mini (Azure) + Claude Opus 4.6, Sonnet 4.5 (Anthropic) + Gemini 2.5 Pro/Flash (Google) + Codex (OpenAI) | σ-informed multi-provider selection via Foundry Model Router |
 | Agent Framework | Microsoft Agent Framework + A2A + MCP | Multi-agent orchestration and tool access |
 | Database | Azure Cosmos DB (8 containers) | Specs, plans, locks, runs, agents, constraints, documents, failures |
 | CI/CD | GitHub Actions + Azure DevOps Pipelines | Agentic DevOps + failure intelligence |

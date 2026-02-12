@@ -29,8 +29,15 @@ The companion `tasks.yaml` breaks each system into atomic tasks sized for Claude
 | S8 | GitHub Integration (Agentic DevOps) | 9 | Week 3 | P0 |
 | S9 | Budget System & Partial Execution | 16 | Week 4 | P1 |
 | S10 | Observability Dashboard | 18 | Week 4 | P1 |
+| S11 | CI/CD Failure Intelligence | 10.3, 11 | Week 5 | P0 |
+| S12 | ACAR σ-Routing (Multi-Provider) | 3, 6 | Week 6 | P0 |
+| S13 | Enterprise Governance (Tracing + Compliance) | 6, 15, 23 | Week 6 | P0 |
+| S14 | Spec Delta Detection | 17 | Week 6 | P1 |
+| S15 | CI/CD Templates & Security Constraints | 7.2, 9, 14 | Week 6 | P0 |
+| S16 | Enterprise Budgeting & MS Integration | 16, 23 | Week 7 | P0 |
 
-**Deferred to Week 4–5 (P2):** Document Upload (11.2), Codebase-Context Entry (11.3), Constraint Registry (14), Spec Delta Detection (17), Protected Material Detection (15.3).
+**Completed:** S1–S11 (all MVP systems), visual animations, demo wiring, UI redesign.
+**In Progress:** S12–S16 (enterprise streams).
 
 ---
 
@@ -197,7 +204,7 @@ Build the conversational design UI (Stage 1) and the Designer agent that elicits
 **Foundry (`packages/foundry/`):**
 - Foundry project client wrapper
 - Agent creation helper (Designer role)
-- Model configuration: GPT-4o primary
+- Model configuration: multi-provider (Azure OpenAI, Anthropic, Google, OpenAI Direct) — configurable per agent role via model registry
 
 ### Acceptance Criteria
 - [ ] User can type message and receive streaming response
@@ -351,7 +358,7 @@ interface PlanLock {
 ## S7: Agent Swarm (Foundry Agent Service)
 
 ### Purpose
-Deploy the 4 agent roles (Planner, Builder, Verifier, Explainer) in Foundry Agent Service with orchestration via Foundry Workflows.
+Deploy the 5 agent roles (Planner, Builder, Verifier, Explainer, Fixer) in Foundry Agent Service with orchestration via Foundry Workflows. Each agent role has a configurable default model+provider pair, supporting multi-provider routing (Azure OpenAI, Anthropic, Google, OpenAI Direct).
 
 ### User Stories
 - As a system, I can spawn Builder agents that create branches and write code.
@@ -363,12 +370,13 @@ Deploy the 4 agent roles (Planner, Builder, Verifier, Explainer) in Foundry Agen
 
 **Agent Definitions (`packages/foundry/agents/`):**
 
-| Agent | System Prompt Focus | Tools (MCP) | Model |
+| Agent | System Prompt Focus | Tools (MCP) | Default Model (Configurable) |
 |---|---|---|---|
-| Planner | Task decomposition, DAG, σ estimation | GitHub API (read), Cosmos (read), Foundry IQ | o1 |
-| Builder | Code implementation, branch/PR creation | GitHub API (write), Foundry IQ, Code Server MCP | Claude Sonnet 4.5 |
-| Verifier | Test execution, constraint validation | GitHub Actions (trigger), Test Runner MCP, Cosmos (constraints) | GPT-4o |
-| Explainer | Root cause analysis, PR descriptions, run summaries | Foundry Tracing (read), Cosmos (read), GitHub Diff API | GPT-4o |
+| Planner | Task decomposition, DAG, σ estimation | GitHub API (read), Cosmos (read), Foundry IQ | o1 (Azure) — fallback: Claude Opus 4.6 |
+| Builder | Code implementation, branch/PR creation | GitHub API (write), Foundry IQ, Code Server MCP | Claude Sonnet 4.5 (Anthropic) — fallback: Codex / GPT-4o |
+| Verifier | Test execution, constraint validation | GitHub Actions (trigger), Test Runner MCP, Cosmos (constraints) | GPT-4o (Azure) — fallback: Gemini 2.5 Pro |
+| Explainer | Root cause analysis, PR descriptions, run summaries | Foundry Tracing (read), Cosmos (read), GitHub Diff API | GPT-4o (Azure) — fallback: Claude Opus 4.6 |
+| Fixer | CI/CD failure analysis, remediation planning | ADO REST API (read), GitHub API (read), Foundry IQ, Cosmos (failures) | GPT-4o + Claude Sonnet 4.5 (multi-provider) |
 
 **Orchestration (`apps/api/services/orchestrator.ts`):**
 - Workflow engine: receives authorized PlanLock, spawns agents per task DAG
@@ -382,7 +390,7 @@ Deploy the 4 agent roles (Planner, Builder, Verifier, Explainer) in Foundry Agen
 - Agent status changes → Cosmos change feed → SignalR → dashboard
 
 ### Acceptance Criteria
-- [ ] All 4 agents deployed in Foundry Agent Service
+- [ ] All 5 agents deployed in Foundry Agent Service (Planner, Builder, Verifier, Explainer, Fixer)
 - [ ] Builder creates branch, writes files, opens PR
 - [ ] Verifier triggers GitHub Action and receives results
 - [ ] Explainer generates PR description with spec traceability

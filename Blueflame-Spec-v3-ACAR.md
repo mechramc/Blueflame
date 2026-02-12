@@ -221,24 +221,33 @@ Microsoft Foundry is Blueflame's central intelligence platform. Every AI operati
 | Foundry Evaluation | Automated benchmarking against acceptance criteria. Pre-built templates for code quality, test coverage, constraint compliance. Custom evaluators for spec adherence. |
 | Foundry Agent (Failure Analyzer) | CI/CD failure root cause analysis and remediation plan generation. Reads normalized failure schema, pipeline logs, and codebase context. Produces structured remediation DAG. |
 
-### 6.3 Model Selection Strategy (σ-Informed)
+### 6.3 Model Selection Strategy (σ-Informed, Multi-Provider)
 
-Blueflame's model selection is grounded in ACAR's findings. Rather than using opaque "best model" logic, the Foundry Model Router uses σ-based task difficulty estimation to allocate models. This is model-agnostic by design — ACAR demonstrated that σ depends only on answer equivalence, not on provider-specific behavior.
+Blueflame's model selection is grounded in ACAR's findings. Rather than using opaque "best model" logic, the Foundry Model Router uses σ-based task difficulty estimation to allocate models across multiple providers. This is model-agnostic by design — ACAR demonstrated that σ depends only on answer equivalence, not on provider-specific behavior.
 
-| Task Type | Primary Model | Fallback | σ Routing |
+**Supported Providers:**
+- **Azure OpenAI**: GPT-4o, GPT-4o-mini, o1
+- **Anthropic**: Claude Opus 4.6, Claude Sonnet 4.5
+- **Google**: Gemini 2.5 Pro, Gemini 2.5 Flash
+- **OpenAI Direct**: Codex, GPT-4o (non-Azure)
+
+Each agent role has a configurable default provider+model pair. The σ-router selects a complexity tier (routine/standard/complex), and the model registry resolves to the configured provider. This allows enterprises to mix providers per role — e.g., Builder uses Claude Sonnet 4.5 (Anthropic), Verifier uses GPT-4o (Azure), Planner uses o1 (Azure).
+
+| Task Type | Default Model | Fallback | σ Routing |
 |---|---|---|---|
 | Conversational Design | GPT-4o | Claude Sonnet 4.5 | N/A (always interactive) |
-| Document Parsing | o1 | GPT-4o | σ computed on extraction quality |
+| Document Parsing | o1 | Gemini 2.5 Pro | σ computed on extraction quality |
 | Spec Generation | o1 | GPT-4o | σ computed on spec completeness |
-| Code Generation | Claude Sonnet 4.5 | GPT-4o | σ=0 → single; σ=0.5 → two; σ=1.0 → full ensemble |
+| Code Generation | Claude Sonnet 4.5 | Codex / GPT-4o | σ=0 → single; σ=0.5 → two; σ=1.0 → full ensemble |
 | Bug Reproduction | Claude Sonnet 4.5 | GPT-4o | σ on reproduction consistency |
-| Test Generation | Claude Sonnet 4.5 | GPT-4o | σ on test validity |
-| Constraint Verification | GPT-4o-mini | GPT-4o | Always single-model (deterministic checks) |
-| Root Cause Explanation | GPT-4o | Claude Sonnet 4.5 | N/A (synthesis task) |
-| Planning/Decomposition | o1 | Claude Sonnet 4.5 | σ on task decomposition consistency |
+| Test Generation | Claude Sonnet 4.5 | Gemini 2.5 Pro | σ on test validity |
+| Constraint Verification | GPT-4o-mini | Gemini 2.5 Flash | Always single-model (deterministic checks) |
+| Root Cause Explanation | GPT-4o | Claude Opus 4.6 | N/A (synthesis task) |
+| Planning/Decomposition | o1 | Claude Opus 4.6 | σ on task decomposition consistency |
 | Spec Delta Analysis | GPT-4o | GPT-4o-mini | Always single-model (diff computation) |
+| CI/CD Failure Analysis | GPT-4o | Claude Sonnet 4.5 | σ on remediation complexity |
 
-> **[COST]** ACAR demonstrated 70% cost reduction on easy tasks while maintaining quality floors. Blueflame inherits this through σ-informed routing via Foundry Model Router.
+> **[COST]** ACAR demonstrated 70% cost reduction on easy tasks while maintaining quality floors. Blueflame inherits this through σ-informed routing via Foundry Model Router. Multi-provider support enables cost optimization by routing routine tasks to cheaper providers while reserving premium models for complex work.
 
 ---
 
@@ -248,13 +257,15 @@ Blueflame's model selection is grounded in ACAR's findings. Rather than using op
 
 Blueflame's agent architecture extends ACAR's execution modes into a governed swarm. Each agent role has a precise responsibility boundary, dedicated toolset, and strict constraints. The Verifier and Explainer roles are direct implementations of ACAR's verification and attribution methodology. The Fixer role extends the architecture to handle CI/CD failure remediation (Section 10).
 
-| Role | Responsibility | Model | Tools (via MCP) | ACAR Lineage |
+| Role | Responsibility | Default Model (Configurable) | Tools (via MCP) | ACAR Lineage |
 |---|---|---|---|---|
-| Planner | Task decomposition, DAG construction, σ-based effort estimation, agent role assignment | o1 | GitHub API (read), Cosmos DB (read), Foundry IQ | ACAR task difficulty estimation |
-| Builder | Code implementation, branch management, PR creation. Bug-fix: reproduce, fix, add regression tests. | Claude Sonnet 4.5 | GitHub API (write), Foundry IQ, MCP Code Server, Runtime/Debug MCP | ACAR execution modes (single/lite/full based on task σ) |
-| Verifier | Test execution, constraint validation, acceptance checking. Uses acceptance criteria as ground truth — not just model agreement. | GPT-4o | GitHub Actions (trigger), Test Runner MCP, Linter MCP, Cosmos DB (constraints, read-only) | ACAR finding: agreement-but-wrong is unrecoverable → Verifier uses criteria, not consensus |
-| Explainer | Root cause analysis, decision rationale, PR descriptions. Uses explicit diffs and test results, not proxy estimation. | GPT-4o | Foundry Tracing (read), Cosmos DB (read), GitHub Diff API, Foundry Evaluation results | ACAR finding: proxy attribution fails → Explainer uses counterfactual diffs |
-| Fixer | CI/CD failure analysis, remediation planning. Reads pipeline logs and test results, produces root cause analysis and remediation task DAG. | GPT-4o + Claude Sonnet 4.5 | ADO REST API (read), GitHub API (read), Foundry IQ, Cosmos DB (failures, read) | ACAR σ-routing applied to remediation task difficulty |
+| Planner | Task decomposition, DAG construction, σ-based effort estimation, agent role assignment | o1 (Azure OpenAI) — fallback: Claude Opus 4.6 (Anthropic) | GitHub API (read), Cosmos DB (read), Foundry IQ | ACAR task difficulty estimation |
+| Builder | Code implementation, branch management, PR creation. Bug-fix: reproduce, fix, add regression tests. | Claude Sonnet 4.5 (Anthropic) — fallback: Codex (OpenAI) / GPT-4o | GitHub API (write), Foundry IQ, MCP Code Server, Runtime/Debug MCP | ACAR execution modes (single/lite/full based on task σ) |
+| Verifier | Test execution, constraint validation, acceptance checking. Uses acceptance criteria as ground truth — not just model agreement. | GPT-4o (Azure OpenAI) — fallback: Gemini 2.5 Pro (Google) | GitHub Actions (trigger), Test Runner MCP, Linter MCP, Cosmos DB (constraints, read-only) | ACAR finding: agreement-but-wrong is unrecoverable → Verifier uses criteria, not consensus |
+| Explainer | Root cause analysis, decision rationale, PR descriptions. Uses explicit diffs and test results, not proxy estimation. | GPT-4o (Azure OpenAI) — fallback: Claude Opus 4.6 (Anthropic) | Foundry Tracing (read), Cosmos DB (read), GitHub Diff API, Foundry Evaluation results | ACAR finding: proxy attribution fails → Explainer uses counterfactual diffs |
+| Fixer | CI/CD failure analysis, remediation planning. Reads pipeline logs and test results, produces root cause analysis and remediation task DAG. | GPT-4o + Claude Sonnet 4.5 (multi-provider) | ADO REST API (read), GitHub API (read), Foundry IQ, Cosmos DB (failures, read) | ACAR σ-routing applied to remediation task difficulty |
+
+> **[MULTI-PROVIDER]** All agent role model assignments are configurable defaults. Enterprises can assign any supported provider+model pair to any role. The σ-router operates independently of the provider — it selects a complexity tier, and the model registry resolves to the configured provider for that role+tier combination.
 
 ### 7.2 Verifier Agent: Beyond Agreement (ACAR-Informed)
 
@@ -767,7 +778,7 @@ Explainer generates: execution summary, per-task breakdown with spec traceabilit
 | Real-time | Azure SignalR Service | Live agent streaming, budget alerts |
 | Backend | Node.js/Python on Azure Container Apps | API gateway, webhooks, budget monitor |
 | AI Platform | Microsoft Foundry (11 services) | Agent factory: models, routing, workflows, safety, tracing, evaluation, failure analysis |
-| Models | GPT-4o, o1, GPT-4o-mini, Claude Sonnet 4.5 | σ-informed selection via Foundry Model Router |
+| Models | GPT-4o, o1, GPT-4o-mini (Azure OpenAI) + Claude Opus 4.6, Claude Sonnet 4.5 (Anthropic) + Gemini 2.5 Pro, Gemini 2.5 Flash (Google) + Codex (OpenAI Direct) | σ-informed multi-provider selection via Foundry Model Router |
 | Agent Framework | Microsoft Agent Framework + A2A + MCP | Multi-agent orchestration |
 | Database | Azure Cosmos DB (8 containers) | Specs, plans, locks, runs, agents, constraints, documents, failures |
 | CI/CD Intelligence | Azure DevOps | Pipeline failure capture, test results, service hooks, remediation validation |

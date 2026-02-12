@@ -52,7 +52,7 @@ Full audit revealed gaps between spec claims and implementation. Created compreh
 | **S15: CI/CD Templates** | Failure intelligence | 5 tasks | Cosmos failures, verifier templates, ADO outbound |
 | **S16: Enterprise Budgeting** | MS integration | 5 tasks | Azure Cost Mgmt, org pools, SignalR migration |
 
-**New dependencies to install**: `@azure/monitor-opentelemetry`, `applicationinsights`, `@azure/arm-costmanagement`, `@microsoft/signalr`, `azure-devops-node-api`
+**New dependencies to install**: `@azure/monitor-opentelemetry`, `applicationinsights`, `@azure/arm-costmanagement`, `@microsoft/signalr`, `azure-devops-node-api`, `@anthropic-ai/sdk`, `@google/generative-ai`, `openai`
 
 ## Prior Sessions Summary
 
@@ -65,11 +65,16 @@ Full audit revealed gaps between spec claims and implementation. Created compreh
 
 ### Tomorrow's Session — Priority Order
 
-1. **S12-001: ACAR σ-routing** (~2 hrs) — HIGHEST PRIORITY
+1. **S12-001: ACAR σ-routing (multi-provider)** (~4 hrs) — HIGHEST PRIORITY
    - Replace hardcoded `"gpt-4o"` in `orchestrator.ts` line 128
-   - Create `packages/foundry/src/routing/sigma-router.ts`
-   - Three tiers: σ < 0.3 → gpt-4o-mini, 0.3–0.7 → gpt-4o, > 0.7 → o1
-   - Ensure 3 model deployments exist in Azure OpenAI resource
+   - Create `packages/foundry/src/routing/sigma-router.ts` + `model-registry.ts`
+   - Create provider clients: `providers/azure-openai.ts`, `anthropic.ts`, `google.ts`, `openai-direct.ts`
+   - Common `FoundryModelClient` interface (chat, stream, embed)
+   - Three σ tiers: < 0.3 → routine, 0.3–0.7 → standard, > 0.7 → complex
+   - Each tier resolves to configurable provider+model pair
+   - Support 4 providers: Azure OpenAI, Anthropic, Google, OpenAI Direct
+   - Install: `@anthropic-ai/sdk`, `@google/generative-ai`, `openai`
+   - Env vars: `ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY`, `OPENAI_API_KEY`
 
 2. **S13-001: OpenTelemetry tracing** (~4 hrs)
    - Install `@azure/monitor-opentelemetry`
@@ -96,6 +101,7 @@ Full audit revealed gaps between spec claims and implementation. Created compreh
 ## Blockers
 - **ACAR credibility risk**: Spec claims σ-routing as core differentiator, but orchestrator hardcodes gpt-4o. S12-001 is mandatory before demo.
 - **Azure model deployments**: Need gpt-4o-mini + gpt-4o + o1 deployments in Azure OpenAI resource for σ-routing to work.
+- **Multi-provider API keys**: Need API keys for Anthropic, Google AI, and OpenAI Direct to enable full multi-provider routing.
 
 ## Key Files Reference
 - `Blueflame-Spec-v3-ACAR.md` — Source of truth (24 sections)

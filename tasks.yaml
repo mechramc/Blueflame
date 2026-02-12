@@ -812,29 +812,52 @@ tasks:
 
   - id: S12-001
     system: S12-acar
-    title: "Implement σ-based model routing in orchestrator"
+    title: "Implement σ-based multi-provider model routing in orchestrator"
     sprint: W6
     priority: P0
     description: |
-      Replace hardcoded "gpt-4o" in orchestrator.ts with σ-informed routing.
-      Route based on task.sigmaEstimate: σ < 0.3 → gpt-4o-mini (routine),
-      0.3–0.7 → gpt-4o (standard), > 0.7 → o1 (complex). Record actual
-      model used in agent state. Requires 3 model deployments in Azure OpenAI.
+      Replace hardcoded "gpt-4o" in orchestrator.ts with σ-informed,
+      provider-agnostic model routing. Support multiple AI providers:
+      Azure OpenAI (GPT-4o, GPT-4o-mini, o1), Anthropic (Claude Opus 4.6,
+      Claude Sonnet 4.5), Google (Gemini 2.5 Pro, Gemini 2.5 Flash),
+      and OpenAI Direct (Codex, GPT-4o). Each agent role has a configurable
+      default model+provider pair. σ-routing selects tier (routine/standard/
+      complex), then the model registry resolves to the configured provider.
+
+      Provider-agnostic client: unified interface wrapping @azure/openai,
+      @anthropic-ai/sdk, @google/generative-ai, and openai SDKs. Each
+      provider client implements a common FoundryModelClient interface
+      (chat, stream, embed). The model registry maps role+tier to a
+      specific provider+deployment pair.
+
+      Route based on task.sigmaEstimate: σ < 0.3 → routine tier,
+      0.3–0.7 → standard tier, > 0.7 → complex tier. Each tier resolves
+      to a configured model (e.g., routine=gpt-4o-mini, standard=gpt-4o,
+      complex=o1 — but configurable per deployment).
     spec_sections: [3, 6]
     files_to_create:
       - packages/foundry/src/routing/sigma-router.ts
       - packages/foundry/src/routing/model-registry.ts
+      - packages/foundry/src/routing/provider-client.ts
+      - packages/foundry/src/routing/providers/azure-openai.ts
+      - packages/foundry/src/routing/providers/anthropic.ts
+      - packages/foundry/src/routing/providers/google.ts
+      - packages/foundry/src/routing/providers/openai-direct.ts
+      - packages/foundry/src/routing/providers/index.ts
     files_to_modify:
       - apps/api/src/services/orchestrator.ts
       - packages/foundry/src/config.ts
     dependencies: [S7-004]
     acceptance_criteria:
       - "Orchestrator selects model based on sigmaEstimate threshold"
-      - "Low-σ tasks (< 0.3) route to gpt-4o-mini"
-      - "Medium-σ tasks (0.3–0.7) route to gpt-4o"
-      - "High-σ tasks (> 0.7) route to o1"
-      - "Actual model recorded in AgentState.model field"
-      - "Unit tests verify routing logic for all 3 tiers"
+      - "Low-σ tasks (< 0.3) route to routine tier model"
+      - "Medium-σ tasks (0.3–0.7) route to standard tier model"
+      - "High-σ tasks (> 0.7) route to complex tier model"
+      - "Each tier resolves to a configurable provider+model pair"
+      - "Provider-agnostic client supports Azure OpenAI, Anthropic, Google, OpenAI Direct"
+      - "Agent roles have configurable default model (e.g., Builder=Claude Sonnet 4.5, Verifier=GPT-4o)"
+      - "Actual provider+model recorded in AgentState.model field"
+      - "Unit tests verify routing logic for all tiers and providers"
     verify_command: "npm run test -- --grep sigma-router"
 
   - id: S12-002

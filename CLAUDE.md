@@ -188,17 +188,24 @@ Goal: Transform MVP into enterprise-grade product with full MS ecosystem integra
 4. **S15: CI/CD Templates** — Cosmos failures, verifier templates, ADO outbound
 5. **S16: Enterprise Budgeting** — Azure Cost Management, org pools, SignalR migration
 
-### New Azure Dependencies
+### New Dependencies
 ```
+# Azure / Microsoft
 @azure/monitor-opentelemetry    # S13: Tracing → App Insights
 applicationinsights             # S16: Auto-collection SDK
 @azure/arm-costmanagement       # S16: Budget queries
 @microsoft/signalr              # S16: Replace Socket.IO
 azure-devops-node-api           # S15: ADO outbound operations
+
+# Multi-Provider Model Routing (S12)
+@anthropic-ai/sdk               # S12: Anthropic provider (Claude Opus 4.6, Sonnet 4.5)
+@google/generative-ai           # S12: Google provider (Gemini 2.5 Pro/Flash)
+openai                          # S12: OpenAI Direct provider (Codex, GPT-4o non-Azure)
 ```
 
 ### Key Implementation Notes
-- σ-routing: `packages/foundry/src/routing/sigma-router.ts` (new)
+- σ-routing: `packages/foundry/src/routing/sigma-router.ts` (new) — multi-provider
+- Provider clients: `packages/foundry/src/routing/providers/` (azure-openai, anthropic, google, openai-direct)
 - Tracing: `packages/foundry/src/tracing/telemetry.ts` (new)
 - Compliance: `apps/web/app/compliance/page.tsx` (new page)
 - Chargeback: `apps/web/app/chargeback/page.tsx` (new page)
@@ -231,4 +238,5 @@ See `.env.example` for all required variables. Key groups:
 - `dotenv` loads `.env` from repo root in API via `import.meta.dirname`
 - CSS uses custom properties — test assertions must match (e.g., `bg-[--bg-secondary]` not `bg-gray-900`)
 - Fonts loaded via CSS variable strategy — `font-sans` and `font-mono` classes work via Tailwind config
-- ACAR σ-routing requires 3 model deployments in Azure OpenAI (gpt-4o-mini, gpt-4o, o1)
+- ACAR σ-routing requires 3 model deployments in Azure OpenAI (gpt-4o-mini, gpt-4o, o1) + API keys for Anthropic, Google, OpenAI Direct
+- Multi-provider env vars: `ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY`, `OPENAI_API_KEY` (direct, non-Azure)

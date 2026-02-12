@@ -79,7 +79,7 @@
 ### Week 6 (Next) — Enterprise Stream 1: ACAR + Governance + CI/CD
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
-| S12-001: σ-based model routing | S12 | P0 | Not started |
+| S12-001: σ-based multi-provider model routing | S12 | P0 | Not started |
 | S12-002: Self-consistency sampling | S12 | P1 | Not started |
 | S12-003: Cost tracking per model tier | S12 | P1 | Not started |
 | S13-001: OpenTelemetry tracing | S13 | P0 | Not started |
@@ -120,7 +120,7 @@
 
 | Stream | System | Tasks | P0 | P1 | Goal |
 |--------|--------|-------|----|----|------|
-| **ACAR σ-Routing** | S12 | 3 | 1 | 2 | Make σ-routing real (currently hardcoded gpt-4o) |
+| **ACAR σ-Routing** | S12 | 3 | 1 | 2 | Multi-provider σ-routing (Azure OpenAI, Anthropic, Google, OpenAI Direct) |
 | **Enterprise Governance** | S13 | 3 | 2 | 1 | OpenTelemetry + compliance dashboard + trace viewer |
 | **CI/CD Templates** | S15 | 5 | 2 | 3 | Cosmos failures + verifier templates + ADO outbound |
 | **Enterprise Budgeting** | S16 | 5 | 2 | 3 | Azure Cost Mgmt + org pools + chargeback + SignalR |
@@ -135,6 +135,9 @@
 | `@azure/arm-costmanagement` | S16 | Azure Cost Management queries |
 | `@microsoft/signalr` | S16 | Azure SignalR Service SDK |
 | `azure-devops-node-api` | S15 | ADO outbound operations |
+| `@anthropic-ai/sdk` | S12 | Anthropic provider (Claude Opus 4.6, Sonnet 4.5) |
+| `@google/generative-ai` | S12 | Google provider (Gemini 2.5 Pro/Flash) |
+| `openai` | S12 | OpenAI Direct provider (Codex, GPT-4o) |
 
 ## Decisions Log
 | Date | Decision | Rationale |
