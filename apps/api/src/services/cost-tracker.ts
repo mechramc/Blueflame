@@ -13,10 +13,17 @@ export interface ModelPricing {
 
 /** Known model pricing tiers */
 const MODEL_PRICING: Record<string, ModelPricing> = {
+	// Azure OpenAI / OpenAI Direct
 	"gpt-4o": { inputPer1K: 0.005, outputPer1K: 0.015 },
 	"gpt-4o-mini": { inputPer1K: 0.00015, outputPer1K: 0.0006 },
+	o1: { inputPer1K: 0.015, outputPer1K: 0.06 },
+	// Anthropic
+	"claude-opus-4-6": { inputPer1K: 0.015, outputPer1K: 0.075 },
 	"claude-sonnet-4-5": { inputPer1K: 0.003, outputPer1K: 0.015 },
 	"claude-haiku-4-5": { inputPer1K: 0.0008, outputPer1K: 0.004 },
+	// Google
+	"gemini-2.5-pro": { inputPer1K: 0.00125, outputPer1K: 0.01 },
+	"gemini-2.5-flash": { inputPer1K: 0.000075, outputPer1K: 0.0003 },
 };
 
 /** Cost entry for a single agent invocation */

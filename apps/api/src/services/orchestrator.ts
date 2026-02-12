@@ -8,6 +8,8 @@
  * Emits run status events for SignalR dashboard updates.
  */
 
+import { SigmaRouter } from "@blueflame/foundry";
+import type { RoutingDecision } from "@blueflame/foundry";
 import type { AgentState, PlanLock, TaskPlan } from "@blueflame/shared";
 import { AgentRole, AgentStatus, RunStatus, TaskStatus } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
@@ -18,6 +20,22 @@ import {
 	updateAgentStatus,
 } from "./agent-spawner.js";
 import { allTasksTerminal, getReadyTasks, hasFailedTasks } from "./dag-executor.js";
+
+/** Shared σ-router instance */
+const router = new SigmaRouter();
+
+/** Routing decision log for transparency/audit (NOT attribution) */
+const routingLog: RoutingDecision[] = [];
+
+/** Get routing log entries for a given run (for transparency) */
+export function getRoutingLog(): ReadonlyArray<RoutingDecision> {
+	return routingLog;
+}
+
+/** Clear routing log (for testing) */
+export function clearRoutingLog(): void {
+	routingLog.length = 0;
+}
 
 /** Run state tracked by orchestrator */
 export interface RunState {
@@ -123,8 +141,10 @@ export function executeNextWave(runId: string): Result<AgentState[]> {
 	const spawnedAgents: AgentState[] = [];
 
 	for (const task of readyTasks) {
-		// Determine agent role based on task
-		const model = "gpt-4o"; // Default Foundry deployment
+		// σ-routing: select model based on task sigma estimate
+		const decision = router.route(task.agentRole, task.sigmaEstimate);
+		routingLog.push(decision);
+		const model = decision.model;
 		const agent = spawnAgent(runId, task.agentRole, task.id, model);
 
 		// Mark task as running
@@ -165,9 +185,11 @@ export function completeTask(
 	recordAgentUsage(agentId, tokensUsed, costIncurred, sigmaValue);
 	updateAgentStatus(agentId, AgentStatus.Completed);
 
-	// A2A handoff: Builder → Verifier
+	// A2A handoff: Builder → Verifier (use task's σ for verifier routing)
 	if (task.agentRole === AgentRole.Builder) {
-		const verifier = spawnAgent(runId, AgentRole.Verifier, taskId, "gpt-4o");
+		const verifierDecision = router.route(AgentRole.Verifier, task.sigmaEstimate);
+		routingLog.push(verifierDecision);
+		const verifier = spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
 		updateAgentStatus(verifier.agentId, AgentStatus.Executing);
 		return { ok: true, value: { verifierAgent: verifier } };
 	}
@@ -236,6 +258,7 @@ export function clearAllRuns(): void {
 	runs.clear();
 	statusCallback = null;
 	budgetCallback = null;
+	routingLog.length = 0;
 }
 
 // ─── Internal ────────────────────────────────────────────────

@@ -85,3 +85,21 @@ export {
 } from "./agents/fixer.js";
 
 export { FIXER_SYSTEM_PROMPT } from "./agents/prompts/fixer-system.js";
+
+// ─── Routing (ACAR σ-routing) ────────────────────────────────
+
+export {
+	type ChatMessage,
+	type ChatOptions,
+	type ChatResponse,
+	type FoundryModelClient,
+	type ModelRouter,
+	type ProviderConfig,
+	type RoutingDecision,
+	ExecutionTier,
+	ProviderType,
+} from "./routing/types.js";
+
+export { getProviderConfig, resetRegistry, setProviderConfig } from "./routing/model-registry.js";
+export { SigmaRouter, sigmaToTier } from "./routing/sigma-router.js";
+export { createModelClient } from "./routing/provider-client.js";

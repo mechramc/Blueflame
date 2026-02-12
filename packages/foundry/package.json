@@ -18,7 +18,9 @@
 		"clean": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^0.39.0",
 		"@blueflame/shared": "*",
+		"@google/generative-ai": "^0.24.0",
 		"openai": "^6.21.0"
 	},
 	"devDependencies": {
