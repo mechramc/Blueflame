@@ -4,31 +4,28 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 /**
- * Top navigation header — present on all pages.
- * Shows Blueflame branding, contextual nav links, and user menu placeholder.
- * Auth-aware: when MSAL is not configured, shows a "Demo Mode" badge instead.
+ * Top navigation header — frosted glass style with gradient Blueflame wordmark.
+ * Shows contextual breadcrumb nav and connection status.
  */
 export function NavHeader() {
 	const pathname = usePathname();
 
-	// Extract projectId and runId from pathname for contextual links
 	const projectMatch = pathname.match(/\/project\/([^/]+)/);
 	const projectId = projectMatch?.[1];
 	const runMatch = pathname.match(/\/run\/([^/]+)/);
 	const runId = runMatch?.[1];
 
 	return (
-		<header className="border-b border-gray-800 bg-gray-950 px-4 py-2.5 flex items-center justify-between">
+		<header className="sticky top-0 z-40 border-b border-[--border] bg-[--bg-primary]/80 backdrop-blur-xl px-4 py-2 flex items-center justify-between">
 			{/* Left: brand + nav */}
-			<div className="flex items-center gap-6">
+			<div className="flex items-center gap-5">
 				<Link href="/" className="flex items-center gap-2">
-					<div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center text-xs font-bold text-white">
-						B
-					</div>
-					<span className="text-sm font-semibold text-gray-100">Blueflame</span>
+					<span className="text-sm font-semibold tracking-tight bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+						Blueflame
+					</span>
 				</Link>
 
-				<nav className="flex items-center gap-1">
+				<nav className="flex items-center gap-0.5 text-xs">
 					<NavItem href="/" label="Projects" active={pathname === "/"} />
 					{projectId && (
 						<>
@@ -59,10 +56,11 @@ export function NavHeader() {
 				</nav>
 			</div>
 
-			{/* Right: demo mode badge */}
-			<div className="flex items-center gap-3">
-				<span className="text-[10px] font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-					Demo Mode
+			{/* Right: connection status */}
+			<div className="flex items-center gap-2">
+				<span className="flex items-center gap-1.5 text-[10px] text-[--text-muted]">
+					<span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+					Connected
 				</span>
 			</div>
 		</header>
@@ -73,10 +71,10 @@ function NavItem({ href, label, active }: { href: string; label: string; active:
 	return (
 		<Link
 			href={href}
-			className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+			className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
 				active
-					? "bg-gray-800 text-gray-100"
-					: "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+					? "bg-[--bg-tertiary] text-[--text-primary]"
+					: "text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-tertiary]/50"
 			}`}
 		>
 			{label}
@@ -85,5 +83,5 @@ function NavItem({ href, label, active }: { href: string; label: string; active:
 }
 
 function Separator() {
-	return <span className="text-gray-700 text-xs">/</span>;
+	return <span className="text-[--text-muted] text-xs">/</span>;
 }

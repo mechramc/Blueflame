@@ -55,20 +55,20 @@ export function AuthorizeButton({
 					type="button"
 					onClick={handleClick}
 					disabled={disabled || !canAuthorize}
-					className={`rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed ${isReady ? "animate-pulse-glow" : ""}`}
+					className={`rounded border border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10 disabled:opacity-50 disabled:cursor-not-allowed ${isReady ? "animate-pulse-glow" : ""}`}
 					title={canAuthorize ? "Authorize execution" : "Requires Authorizer role or higher"}
 				>
 					Authorize Execution
 				</button>
 				{ripple && (
 					<span
-						className="absolute inset-0 rounded bg-green-400 animate-launch-ripple pointer-events-none"
+						className="absolute inset-0 rounded bg-emerald-400 animate-launch-ripple pointer-events-none"
 						onAnimationEnd={() => setRipple(false)}
 					/>
 				)}
 			</div>
 			{!canAuthorize && (
-				<p className="text-xs text-red-500 mt-1">Requires Blueflame_Authorizer role or higher</p>
+				<p className="text-xs text-red-400 mt-1">Requires Blueflame_Authorizer role or higher</p>
 			)}
 			{showModal && (
 				<AuthorizeModal

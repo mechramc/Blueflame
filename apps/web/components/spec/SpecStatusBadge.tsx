@@ -2,10 +2,16 @@
 
 import type { SpecStatus } from "@blueflame/shared";
 
-const STATUS_STYLES: Record<string, string> = {
-	DRAFT: "bg-yellow-900/50 text-yellow-300 border-yellow-700",
-	ACCEPTED: "bg-blue-900/50 text-blue-300 border-blue-700",
-	FROZEN: "bg-emerald-900/50 text-emerald-300 border-emerald-700",
+const STATUS_DOT: Record<string, string> = {
+	DRAFT: "bg-yellow-400",
+	ACCEPTED: "bg-blue-400",
+	FROZEN: "bg-emerald-400",
+};
+
+const STATUS_TEXT: Record<string, string> = {
+	DRAFT: "text-yellow-400",
+	ACCEPTED: "text-blue-400",
+	FROZEN: "text-emerald-400",
 };
 
 interface SpecStatusBadgeProps {
@@ -13,11 +19,11 @@ interface SpecStatusBadgeProps {
 }
 
 export function SpecStatusBadge({ status }: SpecStatusBadgeProps) {
-	const style = STATUS_STYLES[status] ?? STATUS_STYLES.DRAFT;
+	const dot = STATUS_DOT[status] ?? "bg-[--text-muted]";
+	const text = STATUS_TEXT[status] ?? "text-[--text-muted]";
 	return (
-		<span
-			className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${style}`}
-		>
+		<span className={`inline-flex items-center gap-1.5 text-xs font-medium ${text}`}>
+			<span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
 			{status}
 		</span>
 	);

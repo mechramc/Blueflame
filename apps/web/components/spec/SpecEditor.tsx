@@ -9,7 +9,7 @@ import { SpecStatusBadge } from "./SpecStatusBadge";
 const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((m) => m.default), {
 	ssr: false,
 	loading: () => (
-		<div className="flex h-full items-center justify-center text-sm text-gray-500">
+		<div className="flex h-full items-center justify-center text-sm text-[--text-muted]">
 			Loading editor...
 		</div>
 	),
@@ -24,7 +24,8 @@ interface SpecEditorProps {
 interface SpecData {
 	specId: string;
 	status: SpecStatus;
-	yamlContent: string;
+	content: string;
+	yamlContent?: string;
 }
 
 const PLACEHOLDER_YAML = `# Specification will appear here after generation
@@ -58,7 +59,7 @@ export function SpecEditor({ projectId }: SpecEditorProps) {
 					if (data.spec) {
 						setSpecId(data.spec.specId);
 						setStatus(data.spec.status);
-						setContent(data.spec.yamlContent);
+						setContent(data.spec.content ?? data.spec.yamlContent ?? "");
 					}
 				}
 			} catch {
@@ -82,7 +83,7 @@ export function SpecEditor({ projectId }: SpecEditorProps) {
 				const data = (await res.json()) as { spec: SpecData };
 				setSpecId(data.spec.specId);
 				setStatus(data.spec.status);
-				setContent(data.spec.yamlContent);
+				setContent(data.spec.content ?? data.spec.yamlContent ?? "");
 			} else {
 				const errData = (await res.json()) as { error: string };
 				setError(errData.error ?? "Spec generation failed");
@@ -133,12 +134,12 @@ export function SpecEditor({ projectId }: SpecEditorProps) {
 	return (
 		<div className="flex h-full flex-col">
 			{/* Header */}
-			<div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+			<div className="flex items-center justify-between border-b border-[--border] px-4 py-3">
 				<div className="flex items-center gap-3">
-					<h2 className="text-sm font-semibold text-gray-200">Specification</h2>
+					<h2 className="text-sm font-semibold text-[--text-primary]">Specification</h2>
 					<SpecStatusBadge status={status} />
 					{isGenerating && (
-						<span className="text-xs text-blue-400 animate-pulse">Generating...</span>
+						<span className="text-xs text-[--accent] animate-pulse">Generating...</span>
 					)}
 				</div>
 				<SpecActions
@@ -151,12 +152,12 @@ export function SpecEditor({ projectId }: SpecEditorProps) {
 
 			{/* Error banner */}
 			{error && (
-				<div className="bg-red-900/30 border-b border-red-800 px-4 py-2 text-xs text-red-300">
+				<div className="bg-red-500/10 border-b border-red-500/30 px-4 py-2 text-xs text-red-400">
 					{error}
 					<button
 						type="button"
 						onClick={() => setError(null)}
-						className="ml-2 text-red-400 hover:text-red-200"
+						className="ml-2 text-red-300 hover:text-red-200"
 					>
 						Dismiss
 					</button>

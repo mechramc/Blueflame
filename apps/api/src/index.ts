@@ -1,3 +1,9 @@
+import { resolve } from "node:path";
+import { config } from "dotenv";
+
+// Load .env from repo root (two levels up from apps/api/)
+config({ path: resolve(import.meta.dirname, "../../..", ".env") });
+
 import { createServer } from "node:http";
 import cors from "cors";
 import express from "express";

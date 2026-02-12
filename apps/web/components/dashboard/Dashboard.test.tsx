@@ -53,17 +53,17 @@ describe("AgentStatusCard", () => {
 		expect(screen.getByText("$0.1875")).toBeTruthy();
 	});
 
-	it("should use green styling for executing status", () => {
+	it("should use dark card styling for executing status", () => {
 		const { container } = render(<AgentStatusCard agent={mockAgent} />);
 		const card = container.firstElementChild;
-		expect(card?.className).toContain("bg-green-50");
+		expect(card?.className).toContain("bg-[--bg-secondary]");
 	});
 
-	it("should use red styling for failed status", () => {
+	it("should use dark card styling for failed status", () => {
 		const failedAgent = { ...mockAgent, status: AgentStatus.Failed };
 		const { container } = render(<AgentStatusCard agent={failedAgent} />);
 		const card = container.firstElementChild;
-		expect(card?.className).toContain("bg-red-50");
+		expect(card?.className).toContain("bg-[--bg-secondary]");
 	});
 
 	it("should show dash for null taskId", () => {
@@ -177,22 +177,22 @@ describe("DAGProgress", () => {
 	it("should use green fill for completed tasks", () => {
 		const { container } = render(<DAGProgress tasks={mockTasks} />);
 		const node = container.querySelector("[data-testid='dag-progress-node-T-001'] rect");
-		expect(node?.getAttribute("fill")).toBe("#dcfce7");
+		expect(node?.getAttribute("fill")).toBe("#1a3a2e");
 		expect(node?.getAttribute("stroke")).toBe("#22c55e");
 	});
 
 	it("should use blue fill for running tasks", () => {
 		const { container } = render(<DAGProgress tasks={mockTasks} />);
 		const node = container.querySelector("[data-testid='dag-progress-node-T-002'] rect");
-		expect(node?.getAttribute("fill")).toBe("#dbeafe");
+		expect(node?.getAttribute("fill")).toBe("#1e3a5f");
 		expect(node?.getAttribute("stroke")).toBe("#3b82f6");
 	});
 
-	it("should use gray fill for pending tasks", () => {
+	it("should use dark fill for pending tasks", () => {
 		const { container } = render(<DAGProgress tasks={mockTasks} />);
 		const node = container.querySelector("[data-testid='dag-progress-node-T-003'] rect");
-		expect(node?.getAttribute("fill")).toBe("#f3f4f6");
-		expect(node?.getAttribute("stroke")).toBe("#9ca3af");
+		expect(node?.getAttribute("fill")).toBe("#1a1a2e");
+		expect(node?.getAttribute("stroke")).toBe("#555570");
 	});
 
 	it("should show empty message when no tasks", () => {

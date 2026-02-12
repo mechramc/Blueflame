@@ -8,7 +8,7 @@ interface ChatInputProps {
 }
 
 /**
- * ChatInput — text area with send button.
+ * ChatInput — full-width bottom bar with frosted glass effect.
  * Enter sends, Shift+Enter adds newline.
  */
 export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
@@ -20,7 +20,6 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 		if (!trimmed || disabled) return;
 		onSend(trimmed);
 		setValue("");
-		// Reset textarea height
 		if (textareaRef.current) {
 			textareaRef.current.style.height = "auto";
 		}
@@ -45,7 +44,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 	}, []);
 
 	return (
-		<div className="border-t border-gray-800 bg-gray-950 px-4 py-3">
+		<div className="border-t border-[--border] bg-[--bg-primary]/80 backdrop-blur-xl px-4 py-3">
 			<div className="flex items-end gap-2">
 				<textarea
 					ref={textareaRef}
@@ -56,20 +55,20 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 					placeholder="Describe what you want to build..."
 					disabled={disabled}
 					rows={1}
-					className="flex-1 resize-none rounded-xl border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+					className="flex-1 resize-none rounded border border-[--border] bg-[--bg-secondary] px-3 py-2 text-sm text-[--text-primary] placeholder-[--text-muted] focus:border-[--accent] focus:outline-none focus:ring-1 focus:ring-[--accent-glow] disabled:opacity-50 font-sans"
 				/>
 				<button
 					onClick={handleSend}
 					disabled={disabled || !value.trim()}
 					type="button"
-					className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition-colors hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600"
+					className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-[--accent] text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
 					aria-label="Send message"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
 						fill="currentColor"
-						className="h-5 w-5"
+						className="h-4 w-4"
 						role="img"
 						aria-label="Send"
 					>
@@ -77,8 +76,8 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 					</svg>
 				</button>
 			</div>
-			<p className="mt-1 text-[10px] text-gray-600">
-				Press Enter to send, Shift+Enter for new line
+			<p className="mt-1 text-[10px] text-[--text-muted]">
+				Enter to send, Shift+Enter for new line
 			</p>
 		</div>
 	);

@@ -80,7 +80,7 @@ describe("ConstraintViolationToast", () => {
 			<ConstraintViolationToast violation={mockWarning} onDismiss={() => {}} />,
 		);
 		const inner = container.querySelector("[data-testid='constraint-violation-toast'] > div");
-		expect(inner?.className).toContain("border-yellow-400");
-		expect(inner?.className).toContain("bg-yellow-50");
+		expect(inner?.className).toContain("border-yellow-500/50");
+		expect(inner?.className).toContain("bg-yellow-500/10");
 	});
 });

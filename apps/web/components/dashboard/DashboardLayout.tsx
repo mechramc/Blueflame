@@ -24,8 +24,7 @@ interface DashboardLayoutProps {
 }
 
 /**
- * Unified run dashboard combining: agent cards, DAG progress, cost bar, and action stream.
- * Threads animation props to child components.
+ * Unified run dashboard — dark theme with role-colored agent cards, DAG, and terminal-style stream.
  */
 export function DashboardLayout({
 	runId,
@@ -44,8 +43,8 @@ export function DashboardLayout({
 		<div className="p-4 space-y-4" data-testid="dashboard-layout">
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<h1 className="text-lg font-semibold text-gray-900">
-					Run: <span className="font-mono">{runId}</span>
+				<h1 className="text-base font-semibold text-[--text-primary]">
+					Run: <span className="font-mono text-[--text-secondary]">{runId}</span>
 				</h1>
 			</div>
 
@@ -57,7 +56,9 @@ export function DashboardLayout({
 
 			{/* Agent cards */}
 			<div>
-				<h2 className="text-sm font-semibold text-gray-700 mb-2">Agents</h2>
+				<h2 className="text-xs font-semibold uppercase text-[--text-muted] tracking-wider mb-2">
+					Agents
+				</h2>
 				<AgentGrid
 					agents={agents}
 					justAuthorized={justAuthorized}
@@ -67,7 +68,9 @@ export function DashboardLayout({
 
 			{/* DAG progress */}
 			<div>
-				<h2 className="text-sm font-semibold text-gray-700 mb-2">Task Progress</h2>
+				<h2 className="text-xs font-semibold uppercase text-[--text-muted] tracking-wider mb-2">
+					Task Progress
+				</h2>
 				<DAGProgress
 					tasks={tasks}
 					recentlyChangedTaskIds={recentlyChangedTaskIds}
@@ -77,7 +80,9 @@ export function DashboardLayout({
 
 			{/* Action stream */}
 			<div>
-				<h2 className="text-sm font-semibold text-gray-700 mb-2">Action Stream</h2>
+				<h2 className="text-xs font-semibold uppercase text-[--text-muted] tracking-wider mb-2">
+					Action Stream
+				</h2>
 				<ActionStream events={events} />
 			</div>
 		</div>

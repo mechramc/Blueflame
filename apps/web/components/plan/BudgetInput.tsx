@@ -25,12 +25,12 @@ export function BudgetInput({ estimatedCost, onBudgetSet, disabled = false }: Bu
 	};
 
 	return (
-		<div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-			<label htmlFor="budget-input" className="text-sm font-medium text-gray-700">
+		<div className="flex items-center gap-3 p-3 bg-[--bg-secondary] rounded border border-[--border]">
+			<label htmlFor="budget-input" className="text-sm font-medium text-[--text-secondary]">
 				Budget Ceiling (USD):
 			</label>
 			<div className="flex items-center gap-1">
-				<span className="text-gray-500">$</span>
+				<span className="text-[--text-muted]">$</span>
 				<input
 					id="budget-input"
 					type="number"
@@ -39,18 +39,20 @@ export function BudgetInput({ estimatedCost, onBudgetSet, disabled = false }: Bu
 					value={value}
 					onChange={handleChange}
 					disabled={disabled}
-					className="w-24 rounded border border-gray-300 px-2 py-1 text-sm font-mono disabled:opacity-50"
+					className="w-24 rounded border border-[--border] bg-[--bg-primary] px-2 py-1 text-sm font-mono text-[--text-primary] disabled:opacity-50"
 				/>
 			</div>
 			<button
 				type="button"
 				onClick={handleApply}
 				disabled={disabled || value <= 0}
-				className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+				className="rounded border border-[--accent] px-3 py-1 text-sm text-blue-400 hover:bg-[--accent]/10 disabled:opacity-50"
 			>
 				Set Budget
 			</button>
-			<span className="text-xs text-gray-500">Estimated: ${estimatedCost.toFixed(2)}</span>
+			<span className="text-xs text-[--text-muted] font-mono">
+				Estimated: ${estimatedCost.toFixed(2)}
+			</span>
 		</div>
 	);
 }

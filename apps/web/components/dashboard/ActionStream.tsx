@@ -16,16 +16,13 @@ interface ActionStreamProps {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-	BUILDER: "text-purple-600",
-	VERIFIER: "text-teal-600",
-	EXPLAINER: "text-orange-600",
-	PLANNER: "text-blue-600",
+	BUILDER: "text-purple-400",
+	VERIFIER: "text-teal-400",
+	EXPLAINER: "text-orange-400",
+	PLANNER: "text-blue-400",
+	FIXER: "text-red-400",
 };
 
-/**
- * Scrolling log of timestamped agent events.
- * Auto-scrolls to bottom as new events arrive.
- */
 export function ActionStream({ events }: ActionStreamProps) {
 	const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +36,7 @@ export function ActionStream({ events }: ActionStreamProps) {
 
 	if (events.length === 0) {
 		return (
-			<div className="text-gray-400 text-sm p-4" data-testid="action-stream-empty">
+			<div className="text-[--text-muted] text-sm p-4" data-testid="action-stream-empty">
 				No events yet
 			</div>
 		);
@@ -47,18 +44,18 @@ export function ActionStream({ events }: ActionStreamProps) {
 
 	return (
 		<div
-			className="border rounded bg-gray-900 text-gray-100 p-3 max-h-64 overflow-y-auto font-mono text-xs"
+			className="border border-[--border] rounded bg-[--bg-primary] text-[--text-primary] p-3 max-h-64 overflow-y-auto font-mono text-xs"
 			data-testid="action-stream"
 		>
 			{events.map((event) => {
-				const roleColor = ROLE_COLORS[event.role] ?? "text-gray-400";
+				const roleColor = ROLE_COLORS[event.role] ?? "text-[--text-muted]";
 				const time = formatTime(event.timestamp);
 				return (
 					<div key={event.id} className="flex gap-2 py-0.5">
-						<span className="text-gray-500 shrink-0">{time}</span>
+						<span className="text-[--text-muted] shrink-0">{time}</span>
 						<span className={`shrink-0 ${roleColor}`}>[{event.role}]</span>
-						<span className="text-gray-300">{event.action}</span>
-						<span className="text-gray-500 truncate">{event.detail}</span>
+						<span className="text-[--text-primary]">{event.action}</span>
+						<span className="text-[--text-muted] truncate">{event.detail}</span>
 					</div>
 				);
 			})}

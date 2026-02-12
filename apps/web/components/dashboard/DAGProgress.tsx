@@ -8,15 +8,14 @@ interface DAGProgressProps {
 	preservedTaskIds?: string[];
 }
 
-/** Status → node color mapping: gray (pending) → blue (running) → green (complete) → red (failed) */
-const DEFAULT_FILL = { fill: "#f3f4f6", stroke: "#9ca3af" };
+const DEFAULT_FILL = { fill: "#1a1a2e", stroke: "#555570" };
 
 const STATUS_FILLS: Record<string, { fill: string; stroke: string }> = {
-	PENDING: { fill: "#f3f4f6", stroke: "#9ca3af" },
-	RUNNING: { fill: "#dbeafe", stroke: "#3b82f6" },
-	COMPLETED: { fill: "#dcfce7", stroke: "#22c55e" },
-	FAILED: { fill: "#fee2e2", stroke: "#ef4444" },
-	DEFERRED: { fill: "#fef3c7", stroke: "#f59e0b" },
+	PENDING: { fill: "#1a1a2e", stroke: "#555570" },
+	RUNNING: { fill: "#1e3a5f", stroke: "#3b82f6" },
+	COMPLETED: { fill: "#1a3a2e", stroke: "#22c55e" },
+	FAILED: { fill: "#3a1a1a", stroke: "#ef4444" },
+	DEFERRED: { fill: "#2e2a1a", stroke: "#f59e0b" },
 };
 
 interface NodePosition {
@@ -25,10 +24,6 @@ interface NodePosition {
 	task: PlanTask;
 }
 
-/**
- * DAG visualization where nodes light up based on task status.
- * Supports flash for recently changed nodes, glow for preserved work, and pulse for rebuilding.
- */
 export function DAGProgress({
 	tasks,
 	recentlyChangedTaskIds = [],
@@ -38,7 +33,7 @@ export function DAGProgress({
 
 	if (positions.length === 0) {
 		return (
-			<div className="text-gray-400 text-sm p-4" data-testid="dag-progress-empty">
+			<div className="text-[--text-muted] text-sm p-4" data-testid="dag-progress-empty">
 				No tasks to display
 			</div>
 		);
@@ -48,7 +43,10 @@ export function DAGProgress({
 	const maxY = Math.max(...positions.map((p) => p.y)) + 60;
 
 	return (
-		<div className="overflow-auto border rounded bg-white" data-testid="dag-progress">
+		<div
+			className="overflow-auto border border-[--border] rounded bg-[--bg-secondary]"
+			data-testid="dag-progress"
+		>
 			<svg
 				width={Math.max(maxX, 300)}
 				height={Math.max(maxY, 100)}
@@ -67,7 +65,7 @@ export function DAGProgress({
 								y1={dep.y + 30}
 								x2={node.x + 70}
 								y2={node.y}
-								stroke="#94a3b8"
+								stroke="#2a2a4a"
 								strokeWidth={1.5}
 								markerEnd="url(#dag-arrow)"
 							/>
@@ -76,7 +74,7 @@ export function DAGProgress({
 				)}
 				<defs>
 					<marker id="dag-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-						<polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+						<polygon points="0 0, 8 3, 0 6" fill="#2a2a4a" />
 					</marker>
 				</defs>
 				{/* Nodes */}
@@ -109,7 +107,7 @@ export function DAGProgress({
 								rx={4}
 								fill={colors.fill}
 								stroke={colors.stroke}
-								strokeWidth={2}
+								strokeWidth={1.5}
 							/>
 							<text
 								x={node.x + 70}
@@ -117,7 +115,7 @@ export function DAGProgress({
 								textAnchor="middle"
 								fontFamily="monospace"
 								fontSize={11}
-								fill="#374151"
+								fill="#e4e4ed"
 							>
 								{node.task.id}
 							</text>
@@ -126,6 +124,7 @@ export function DAGProgress({
 									x={node.x + 130}
 									y={node.y + 12}
 									fontSize={12}
+									fill="#22c55e"
 									data-testid={`preserved-check-${node.task.id}`}
 								>
 									{"\u2713"}

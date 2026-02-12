@@ -25,7 +25,7 @@ export function SpecActions({
 						onClick={onGenerateSpec}
 						disabled={disabled}
 						type="button"
-						className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:bg-gray-600 disabled:opacity-50"
+						className="rounded border border-[--border-bright] px-3 py-1 text-xs font-medium text-[--text-secondary] transition-colors hover:bg-[--bg-tertiary] hover:text-[--text-primary] disabled:opacity-50"
 					>
 						Regenerate
 					</button>
@@ -33,7 +33,7 @@ export function SpecActions({
 						onClick={onAccept}
 						disabled={disabled}
 						type="button"
-						className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+						className="rounded border border-[--accent] px-3 py-1 text-xs font-medium text-blue-400 transition-colors hover:bg-[--accent]/10 disabled:opacity-50"
 					>
 						Accept
 					</button>
@@ -44,13 +44,13 @@ export function SpecActions({
 					onClick={onFreeze}
 					disabled={disabled}
 					type="button"
-					className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+					className="rounded border border-emerald-500 px-3 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10 disabled:opacity-50"
 				>
 					Freeze
 				</button>
 			)}
 			{status === SpecStatus.Frozen && (
-				<span className="text-xs text-gray-500">Spec is frozen — no edits allowed</span>
+				<span className="text-xs text-[--text-muted]">Spec is frozen</span>
 			)}
 		</div>
 	);

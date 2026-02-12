@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { NavHeader } from "@/components/layout/NavHeader";
+
+const inter = Inter({
+	subsets: ["latin"],
+	variable: "--font-inter",
+	display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+	subsets: ["latin"],
+	variable: "--font-jetbrains",
+	display: "swap",
+});
 
 export const metadata: Metadata = {
 	title: "Blueflame",
@@ -13,11 +26,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
-			<body className="min-h-screen bg-gray-950 text-gray-100 antialiased">
+		<html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+			<body className="min-h-screen font-sans antialiased">
 				<div className="flex flex-col min-h-screen">
 					<NavHeader />
-					<main className="flex-1">{children}</main>
+					<main className="flex-1 animate-fade-in">{children}</main>
 				</div>
 			</body>
 		</html>

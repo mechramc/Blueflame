@@ -21,7 +21,7 @@ describe("CostProgressBar", () => {
 	it("should show green color under 80%", () => {
 		const { container } = render(<CostProgressBar currentSpend={5} ceiling={10} />);
 		const bar = container.querySelector("[role='progressbar']");
-		expect(bar?.className).toContain("bg-green-500");
+		expect(bar?.className).toContain("bg-emerald-500");
 	});
 
 	it("should show yellow color at 80-95%", () => {

@@ -23,9 +23,9 @@ describe("MessageBubble", () => {
 	it("should render user message with right alignment", () => {
 		render(<MessageBubble message={baseMessage} />);
 		expect(screen.getByText("Hello, world!")).toBeInTheDocument();
-		// User messages have blue background
-		const bubble = screen.getByText("Hello, world!").closest("div[class*='bg-blue-600']");
-		expect(bubble).toBeInTheDocument();
+		// User messages are right-aligned (justify-end)
+		const row = screen.getByText("Hello, world!").closest("div[class*='justify-end']");
+		expect(row).toBeInTheDocument();
 	});
 
 	it("should render agent message with left alignment and markdown", () => {
@@ -44,6 +44,8 @@ describe("MessageBubble", () => {
 	it("should show streaming pulse animation when streaming", () => {
 		const streamingMsg: ChatMessage = {
 			...baseMessage,
+			id: "msg-stream",
+			role: "agent",
 			streaming: true,
 		};
 		const { container } = render(<MessageBubble message={streamingMsg} />);
@@ -133,7 +135,7 @@ describe("ChatInput", () => {
 describe("TypingIndicator", () => {
 	it("should render typing text", () => {
 		render(<TypingIndicator />);
-		expect(screen.getByText(/agent is typing/i)).toBeInTheDocument();
+		expect(screen.getByText(/designer is typing/i)).toBeInTheDocument();
 	});
 
 	it("should render three animated dots", () => {

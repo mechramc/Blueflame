@@ -19,7 +19,7 @@ export function AgentGrid({
 }: AgentGridProps) {
 	if (agents.length === 0) {
 		return (
-			<div className="text-gray-400 text-sm p-4" data-testid="agent-grid-empty">
+			<div className="text-[--text-muted] text-sm p-4" data-testid="agent-grid-empty">
 				No agents spawned yet
 			</div>
 		);

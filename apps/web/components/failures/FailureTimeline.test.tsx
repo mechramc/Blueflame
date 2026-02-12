@@ -41,8 +41,8 @@ describe("FailureTimeline", () => {
 
 	it("should show build numbers", () => {
 		render(<FailureTimeline failures={mockFailures} onSelect={vi.fn()} />);
-		expect(screen.getByText("Build #42")).toBeInTheDocument();
-		expect(screen.getByText("Build #43")).toBeInTheDocument();
+		expect(screen.getByText("#42")).toBeInTheDocument();
+		expect(screen.getByText("#43")).toBeInTheDocument();
 	});
 
 	it("should show remediation badge when remediated", () => {
@@ -61,7 +61,7 @@ describe("FailureTimeline", () => {
 	it("should highlight selected entry", () => {
 		render(<FailureTimeline failures={mockFailures} onSelect={vi.fn()} selectedId="FAIL-2" />);
 		const selected = screen.getByTestId("failure-entry-FAIL-2");
-		expect(selected.className).toContain("bg-blue-50");
+		expect(selected.className).toContain("bg-[--accent]/10");
 	});
 
 	it("should strip refs/heads/ from branch display", () => {

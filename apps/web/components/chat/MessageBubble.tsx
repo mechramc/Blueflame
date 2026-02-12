@@ -4,33 +4,52 @@ import type { ChatMessage } from "@blueflame/shared";
 import Markdown from "react-markdown";
 
 /**
- * MessageBubble — renders a single chat message.
- * User messages are right-aligned; agent messages are left-aligned with markdown.
+ * MessageRow — renders a single chat message in a Linear-style full-width row.
+ * Agent messages have a blue left border; user messages are right-aligned with subtle dimming.
  */
 export function MessageBubble({ message }: { message: ChatMessage }) {
 	const isUser = message.role === "user";
 
 	return (
-		<div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} px-4 py-1`}>
-			<div
-				className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-					isUser ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-100"
-				} ${message.streaming ? "animate-pulse" : ""}`}
-			>
-				{isUser ? (
-					<p className="whitespace-pre-wrap">{message.content}</p>
-				) : (
-					<div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-code:rounded prose-code:bg-gray-700 prose-code:px-1 prose-code:py-0.5 prose-pre:bg-gray-900 prose-pre:p-3">
+		<div className={`flex w-full px-4 py-1.5 ${isUser ? "justify-end" : ""}`}>
+			{!isUser && (
+				<div className="w-full border-l-2 border-[--accent] pl-3">
+					<div className="flex items-center gap-2 mb-1">
+						<span className="text-[10px] font-medium text-[--accent] uppercase tracking-wider">
+							Designer
+						</span>
+						<time className="text-[10px] font-mono text-[--text-muted]">
+							{new Date(message.createdAt).toLocaleTimeString([], {
+								hour: "2-digit",
+								minute: "2-digit",
+							})}
+						</time>
+					</div>
+					<div
+						className={`prose prose-invert prose-sm max-w-none text-sm leading-relaxed text-[--text-primary] prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-code:rounded prose-code:bg-[--bg-tertiary] prose-code:px-1 prose-code:py-0.5 prose-pre:bg-[--bg-primary] prose-pre:p-3 prose-pre:border prose-pre:border-[--border] ${message.streaming ? "animate-pulse" : ""}`}
+					>
 						<Markdown>{message.content}</Markdown>
 					</div>
-				)}
-				<time className={`mt-1 block text-[10px] ${isUser ? "text-blue-200" : "text-gray-500"}`}>
-					{new Date(message.createdAt).toLocaleTimeString([], {
-						hour: "2-digit",
-						minute: "2-digit",
-					})}
-				</time>
-			</div>
+				</div>
+			)}
+			{isUser && (
+				<div className="max-w-[80%]">
+					<div className="flex items-center justify-end gap-2 mb-1">
+						<time className="text-[10px] font-mono text-[--text-muted]">
+							{new Date(message.createdAt).toLocaleTimeString([], {
+								hour: "2-digit",
+								minute: "2-digit",
+							})}
+						</time>
+						<span className="text-[10px] font-medium text-[--text-muted] uppercase tracking-wider">
+							You
+						</span>
+					</div>
+					<p className="whitespace-pre-wrap text-sm leading-relaxed text-[--text-secondary]">
+						{message.content}
+					</p>
+				</div>
+			)}
 		</div>
 	);
 }
