@@ -765,6 +765,7 @@ tasks:
     title: "Implement spec delta detection engine"
     sprint: W4
     priority: P1
+    status: DONE
     description: |
       Create delta detection service: compares two spec versions (YAML diff +
       semantic analysis via GPT-4o). Classifies each change, maps to affected
@@ -789,6 +790,7 @@ tasks:
     title: "Build spec delta impact map UI"
     sprint: W4
     priority: P1
+    status: DONE
     description: |
       Create the visual impact map component showing tasks color-coded:
       green (PRESERVE), amber (REBUILD), blue (NEW), red (REMOVE).
@@ -815,6 +817,7 @@ tasks:
     title: "Implement σ-based multi-provider model routing in orchestrator"
     sprint: W6
     priority: P0
+    status: DONE
     description: |
       Replace hardcoded "gpt-4o" in orchestrator.ts with σ-informed,
       provider-agnostic model routing. Support multiple AI providers:
@@ -865,6 +868,7 @@ tasks:
     title: "Implement self-consistency sampling for high-σ tasks"
     sprint: W6
     priority: P1
+    status: DONE
     description: |
       For tasks with σ > 0.7, run N=3 parallel completions and compute
       variance. If variance exceeds threshold, escalate to multi-model
@@ -888,6 +892,7 @@ tasks:
     title: "Implement cost tracking per model tier and benchmarking"
     sprint: W6
     priority: P1
+    status: DONE
     description: |
       Track actual cost per model tier (mini vs standard vs premium).
       Create benchmarking service that compares σ-routed vs fixed-model
@@ -915,6 +920,7 @@ tasks:
     title: "Instrument all agents with OpenTelemetry tracing"
     sprint: W6
     priority: P0
+    status: DONE
     description: |
       Add @azure/monitor-opentelemetry SDK. Instrument orchestrator and all
       6 agents with span start/end, parent-child trace IDs, and attribute
@@ -946,6 +952,7 @@ tasks:
     title: "Build compliance dashboard page"
     sprint: W6
     priority: P0
+    status: DONE
     description: |
       New page: /compliance. Audit log viewer showing all authorization
       events, agent actions, spec changes, and budget decisions. Filter
@@ -972,6 +979,7 @@ tasks:
     title: "Build reasoning trace viewer in run dashboard"
     sprint: W6
     priority: P1
+    status: DONE
     description: |
       Add expandable trace timeline to run dashboard. Shows per-agent
       span timeline with duration, model used, tokens consumed. Clicking
@@ -1001,6 +1009,7 @@ tasks:
     title: "Add failures container to Cosmos DB"
     sprint: W6
     priority: P0
+    status: DONE
     description: |
       Add 8th container 'failures' to Cosmos DB (Bicep + repository).
       Migrate in-memory failure-store to Cosmos. Add TTL (30 days).
@@ -1025,6 +1034,7 @@ tasks:
     title: "Create pre-packaged Verifier templates"
     sprint: W6
     priority: P0
+    status: DONE
     description: |
       Create JSON-based Verifier templates for common CI checks:
       ESLint (lint), TypeScript strict (typecheck), npm audit (deps),
@@ -1051,6 +1061,7 @@ tasks:
     title: "Add security constraint types to constraint registry"
     sprint: W6
     priority: P1
+    status: DONE
     description: |
       Extend constraint system with security-specific types: CVE_CHECK,
       LICENSE_COMPLIANCE, SECRET_SCANNING, DEPENDENCY_AUDIT. Each type
@@ -1075,6 +1086,7 @@ tasks:
     title: "Implement ADO outbound client for pipeline operations"
     sprint: W6
     priority: P1
+    status: DONE
     description: |
       Add azure-devops-node-api SDK. Create ADO client that can:
       trigger pipeline runs, query build status, get test results,
@@ -1098,6 +1110,7 @@ tasks:
     title: "Wire GitHub Actions failures to failure store"
     sprint: W6
     priority: P1
+    status: DONE
     description: |
       Extend GitHub webhook handler to normalize GitHub Actions
       workflow_run failures into the same NormalizedFailure schema
@@ -1125,6 +1138,7 @@ tasks:
     title: "Integrate Azure Cost Management for real budget data"
     sprint: W7
     priority: P0
+    status: DONE
     description: |
       Add @azure/arm-costmanagement SDK. Replace mock token-math budget
       with real Azure Cost Management queries. Track actual Azure spend
@@ -1148,6 +1162,7 @@ tasks:
     title: "Implement org-level budget pools and team allocation"
     sprint: W7
     priority: P0
+    status: DONE
     description: |
       Create multi-tenant budget system: org → team → project hierarchy.
       Org admin sets total budget pool. Team leads allocate to projects.
@@ -1172,6 +1187,7 @@ tasks:
     title: "Build chargeback reporting dashboard"
     sprint: W7
     priority: P1
+    status: DONE
     description: |
       Create chargeback page: cost breakdown by team, project, agent role,
       and model tier. Time-series charts. Export as CSV for finance.
@@ -1196,6 +1212,7 @@ tasks:
     title: "Migrate Socket.IO to Azure SignalR Service"
     sprint: W7
     priority: P1
+    status: DEFERRED  # Socket.IO adequate for hackathon; migration is mechanical
     description: |
       Replace Socket.IO with @microsoft/signalr SDK. Use the Azure
       SignalR Service already provisioned in Bicep. Server-side hub
@@ -1220,6 +1237,7 @@ tasks:
     title: "Implement Application Insights instrumentation"
     sprint: W7
     priority: P1
+    status: DEFERRED  # OTel spans already provide instrumentation
     description: |
       Wire applicationinsights SDK into API server. Auto-collect:
       HTTP requests, dependencies (Cosmos, Foundry), exceptions,
