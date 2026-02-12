@@ -1,20 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { AdoClient, PipelineRunStatus } from "./ado-client.js";
+import {
+	type IAdoClient,
+	PipelineRunStatus,
+	RealAdoClient,
+	SimulatedAdoClient,
+	createAdoClientFromEnv,
+} from "./ado-client.js";
 
-function createTestClient(): AdoClient {
-	return new AdoClient({
+function createTestClient(): IAdoClient {
+	return new SimulatedAdoClient({
 		orgUrl: "https://dev.azure.com/testorg",
 		pat: "test-pat-token",
 		project: "TestProject",
 	});
 }
 
-describe("AdoClient", () => {
+describe("SimulatedAdoClient", () => {
 	it("should store config", () => {
 		const client = createTestClient();
 		expect(client.getOrgUrl()).toBe("https://dev.azure.com/testorg");
 		expect(client.getProject()).toBe("TestProject");
+		expect(client.isReal()).toBe(false);
 	});
 
 	it("should trigger a pipeline run", async () => {
@@ -81,5 +88,26 @@ describe("AdoClient", () => {
 	it("should return null for unknown work item", async () => {
 		const client = createTestClient();
 		expect(await client.getWorkItem(99999)).toBeNull();
+	});
+});
+
+describe("RealAdoClient", () => {
+	it("should report isReal as true", () => {
+		const client = new RealAdoClient({
+			orgUrl: "https://dev.azure.com/testorg",
+			pat: "test-pat",
+			project: "TestProject",
+		});
+		expect(client.isReal()).toBe(true);
+		expect(client.getOrgUrl()).toBe("https://dev.azure.com/testorg");
+		expect(client.getProject()).toBe("TestProject");
+	});
+});
+
+describe("createAdoClientFromEnv", () => {
+	it("should return null when ADO_ORG_URL is not set", () => {
+		// env vars not set in test environment
+		const client = createAdoClientFromEnv();
+		expect(client).toBeNull();
 	});
 });

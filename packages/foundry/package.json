@@ -21,6 +21,7 @@
 		"@anthropic-ai/sdk": "^0.39.0",
 		"@blueflame/shared": "*",
 		"@google/generative-ai": "^0.24.0",
+		"applicationinsights": "^3.13.0",
 		"openai": "^6.21.0"
 	},
 	"devDependencies": {

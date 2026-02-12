@@ -2,7 +2,9 @@
  * OpenTelemetry tracing instrumentation for Blueflame agents.
  *
  * Provides span tracking for orchestrator operations, agent execution,
- * and model routing decisions. Exports to Azure Monitor / App Insights.
+ * and model routing decisions. Dual output:
+ *   1. In-memory span store (for dashboard UI / SignalR)
+ *   2. Azure Application Insights (when APPLICATIONINSIGHTS_CONNECTION_STRING is set)
  *
  * Source: Blueflame-Spec-v3-ACAR.md Section 13 (Governance)
  */
@@ -50,7 +52,85 @@ export interface AgentSpanAttributes {
 	"cost.usd"?: number;
 }
 
-/** In-memory span store for MVP (replace with Azure Monitor exporter in prod) */
+// ─── App Insights Client ─────────────────────────────────────
+
+/** Minimal interface for the App Insights TelemetryClient methods we use */
+interface AppInsightsClient {
+	trackDependency(telemetry: {
+		name: string;
+		dependencyTypeName: string;
+		duration: number;
+		resultCode: string;
+		success: boolean;
+		data?: string;
+		properties?: Record<string, string>;
+		measurements?: Record<string, number>;
+	}): void;
+	trackEvent(telemetry: {
+		name: string;
+		properties?: Record<string, string>;
+		measurements?: Record<string, number>;
+	}): void;
+	flush(): void;
+}
+
+let appInsightsClient: AppInsightsClient | null = null;
+let telemetryInitialized = false;
+
+/**
+ * Initialize Application Insights telemetry.
+ * Call once at API startup. No-op if connection string is not set.
+ */
+export function initTelemetry(connectionString?: string): boolean {
+	const connStr = connectionString ?? process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
+	if (!connStr) {
+		console.log("[Telemetry] No APPLICATIONINSIGHTS_CONNECTION_STRING — App Insights disabled");
+		return false;
+	}
+
+	try {
+		// Dynamic import to avoid hard dependency when not configured
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const appInsights = require("applicationinsights");
+		appInsights.setup(connStr)
+			.setAutoCollectRequests(true)
+			.setAutoCollectPerformance(true)
+			.setAutoCollectExceptions(true)
+			.setAutoCollectDependencies(false) // We track these manually
+			.setAutoCollectConsole(false)
+			.start();
+
+		appInsightsClient = appInsights.defaultClient;
+		telemetryInitialized = true;
+		console.log("[Telemetry] Application Insights initialized");
+		return true;
+	} catch (err) {
+		console.warn("[Telemetry] Failed to initialize App Insights:", err);
+		return false;
+	}
+}
+
+/**
+ * Check if App Insights telemetry is active.
+ */
+export function isTelemetryEnabled(): boolean {
+	return telemetryInitialized && appInsightsClient !== null;
+}
+
+/**
+ * Shut down telemetry (flush pending data). For testing.
+ */
+export function shutdownTelemetry(): void {
+	if (appInsightsClient) {
+		appInsightsClient.flush();
+	}
+	appInsightsClient = null;
+	telemetryInitialized = false;
+}
+
+// ─── In-memory Span Store ────────────────────────────────────
+
+/** In-memory span store (kept for dashboard UI + SignalR streaming) */
 const spanStore = new Map<string, TraceSpan[]>();
 
 let spanCounter = 0;
@@ -147,6 +227,7 @@ export function addSpanEvent(
 
 /**
  * End a span with optional token/cost metrics.
+ * Automatically exports to App Insights if enabled.
  */
 export function endSpan(
 	span: TraceSpan,
@@ -168,6 +249,9 @@ export function endSpan(
 			span.attributes["cost.usd"] = metrics.cost;
 		}
 	}
+
+	// Export to App Insights (fire-and-forget)
+	exportSpanToAppInsights(span);
 }
 
 /**
@@ -232,4 +316,53 @@ export function clearSpanStore(): void {
  */
 export function getSpanCount(runId: string): number {
 	return (spanStore.get(runId) ?? []).length;
+}
+
+// ─── App Insights Export ─────────────────────────────────────
+
+/**
+ * Export a completed span to App Insights as a dependency telemetry item.
+ * No-op if App Insights is not initialized.
+ */
+function exportSpanToAppInsights(span: TraceSpan): void {
+	if (!appInsightsClient) return;
+
+	const properties: Record<string, string> = {};
+	const measurements: Record<string, number> = {};
+
+	for (const [key, value] of Object.entries(span.attributes)) {
+		if (typeof value === "number") {
+			measurements[key] = value;
+		} else {
+			properties[key] = String(value);
+		}
+	}
+
+	// Add span metadata
+	properties["spanId"] = span.spanId;
+	properties["traceId"] = span.traceId;
+	if (span.parentSpanId) {
+		properties["parentSpanId"] = span.parentSpanId;
+	}
+
+	// Agent spans → dependency telemetry (shows in App Map)
+	if (span.operationName.startsWith("agent.")) {
+		appInsightsClient.trackDependency({
+			name: span.operationName,
+			dependencyTypeName: "BlueflameAgent",
+			duration: span.durationMs ?? 0,
+			resultCode: span.status === SpanStatus.Ok ? "200" : "500",
+			success: span.status === SpanStatus.Ok,
+			data: span.attributes["agent.model"] as string | undefined,
+			properties,
+			measurements,
+		});
+	} else {
+		// Run-level spans → custom events
+		appInsightsClient.trackEvent({
+			name: span.operationName,
+			properties,
+			measurements,
+		});
+	}
 }

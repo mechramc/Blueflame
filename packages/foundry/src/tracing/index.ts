@@ -10,6 +10,9 @@ export {
 	getRunSpans,
 	getSpanCount,
 	getSpanTree,
+	initTelemetry,
+	isTelemetryEnabled,
+	shutdownTelemetry,
 	startAgentSpan,
 	startRunTrace,
 } from "./telemetry.js";

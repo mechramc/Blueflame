@@ -11,12 +11,16 @@ import {
 	getRunSpans,
 	getSpanCount,
 	getSpanTree,
+	initTelemetry,
+	isTelemetryEnabled,
+	shutdownTelemetry,
 	startAgentSpan,
 	startRunTrace,
 } from "./telemetry.js";
 
 afterEach(() => {
 	clearSpanStore();
+	shutdownTelemetry();
 });
 
 const mockDecision: RoutingDecision = {
@@ -121,5 +125,37 @@ describe("getSpanCount", () => {
 
 	it("should return 0 for unknown run", () => {
 		expect(getSpanCount("unknown")).toBe(0);
+	});
+});
+
+describe("initTelemetry", () => {
+	it("should return false when no connection string is provided", () => {
+		const result = initTelemetry();
+		expect(result).toBe(false);
+		expect(isTelemetryEnabled()).toBe(false);
+	});
+
+	it("should return false for empty connection string", () => {
+		const result = initTelemetry("");
+		expect(result).toBe(false);
+		expect(isTelemetryEnabled()).toBe(false);
+	});
+});
+
+describe("shutdownTelemetry", () => {
+	it("should reset telemetry state", () => {
+		shutdownTelemetry();
+		expect(isTelemetryEnabled()).toBe(false);
+	});
+});
+
+describe("endSpan with App Insights disabled", () => {
+	it("should not throw when App Insights is not initialized", () => {
+		const parent = startRunTrace("run-1");
+		const child = startAgentSpan("run-1", parent, "agent-1", "BUILDER", "TASK-001", mockDecision);
+
+		// endSpan should silently skip App Insights export
+		expect(() => endSpan(parent, SpanStatus.Ok)).not.toThrow();
+		expect(() => endSpan(child, SpanStatus.Ok, { inputTokens: 100, outputTokens: 50, cost: 0.01 })).not.toThrow();
 	});
 });

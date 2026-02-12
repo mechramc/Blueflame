@@ -7,6 +7,10 @@ config({ path: resolve(import.meta.dirname, "../../..", ".env") });
 import { createServer } from "node:http";
 import cors from "cors";
 import express from "express";
+import { initTelemetry, isTelemetryEnabled } from "@blueflame/foundry";
+
+// Initialize Application Insights (no-op if connection string not set)
+initTelemetry();
 import { chatRouter } from "./routes/chat.js";
 import { createHub } from "./signalr/hub.js";
 
@@ -17,7 +21,15 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
-	res.json({ status: "ok", service: "blueflame-api" });
+	res.json({
+		status: "ok",
+		service: "blueflame-api",
+		version: process.env.npm_package_version ?? "0.0.1",
+		telemetry: isTelemetryEnabled(),
+		cosmos: !!process.env.COSMOS_ENDPOINT,
+		entra: !!process.env.ENTRA_CLIENT_ID,
+		uptime: process.uptime(),
+	});
 });
 
 import { authorizeRouter } from "./routes/authorize.js";

@@ -118,6 +118,9 @@ export {
 	getRunSpans,
 	getSpanCount,
 	getSpanTree,
+	initTelemetry,
+	isTelemetryEnabled,
+	shutdownTelemetry,
 	startAgentSpan,
 	startRunTrace,
 } from "./tracing/index.js";
