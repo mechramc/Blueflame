@@ -14,9 +14,15 @@ import { db } from "../db.js";
  * Store a normalized failure.
  */
 export async function storeFailure(failure: NormalizedFailure): Promise<void> {
-	const result = await db.failures.create(failure as NormalizedFailure & { id: string }, failure.projectId);
+	const result = await db.failures.create(
+		failure as NormalizedFailure & { id: string },
+		failure.projectId,
+	);
 	if (!result.ok) {
-		console.warn(`[FailureStore] Failed to store failure ${failure.failureId}:`, result.error.message);
+		console.warn(
+			`[FailureStore] Failed to store failure ${failure.failureId}:`,
+			result.error.message,
+		);
 	}
 }
 

@@ -79,7 +79,7 @@ describe("detectChanges", () => {
 	it("should detect removed criterion", () => {
 		const oldSpec = makeSpec();
 		const newSpec = makeSpec({
-			acceptanceCriteria: [oldSpec.acceptanceCriteria[0]!],
+			acceptanceCriteria: [oldSpec.acceptanceCriteria[0] as (typeof oldSpec.acceptanceCriteria)[0]],
 		});
 
 		const changes = detectChanges(oldSpec, newSpec);
@@ -93,7 +93,7 @@ describe("detectChanges", () => {
 		const newSpec = makeSpec({
 			acceptanceCriteria: [
 				{ id: "AC-001", description: "Feature A works differently", verificationMethod: "test" },
-				oldSpec.acceptanceCriteria[1]!,
+				oldSpec.acceptanceCriteria[1] as (typeof oldSpec.acceptanceCriteria)[1],
 			],
 		});
 

@@ -92,7 +92,8 @@ export function initTelemetry(connectionString?: string): boolean {
 		// Dynamic import to avoid hard dependency when not configured
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		const appInsights = require("applicationinsights");
-		appInsights.setup(connStr)
+		appInsights
+			.setup(connStr)
 			.setAutoCollectRequests(true)
 			.setAutoCollectPerformance(true)
 			.setAutoCollectExceptions(true)
@@ -339,10 +340,10 @@ function exportSpanToAppInsights(span: TraceSpan): void {
 	}
 
 	// Add span metadata
-	properties["spanId"] = span.spanId;
-	properties["traceId"] = span.traceId;
+	properties.spanId = span.spanId;
+	properties.traceId = span.traceId;
 	if (span.parentSpanId) {
-		properties["parentSpanId"] = span.parentSpanId;
+		properties.parentSpanId = span.parentSpanId;
 	}
 
 	// Agent spans → dependency telemetry (shows in App Map)

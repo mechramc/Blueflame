@@ -26,7 +26,9 @@ async function main() {
 	console.log("1. Testing client connection...");
 	const client = getClient(cfg);
 	const { resource: account } = await client.getDatabaseAccount();
-	console.log(`   ✓ Connected — writable regions: ${account.writableLocations?.map((l) => l.name).join(", ") ?? "unknown"}\n`);
+	console.log(
+		`   ✓ Connected — writable regions: ${account.writableLocations?.map((l) => l.name).join(", ") ?? "unknown"}\n`,
+	);
 
 	// 2. Test database exists
 	console.log("2. Testing database access...");

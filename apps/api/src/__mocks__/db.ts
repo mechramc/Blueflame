@@ -48,9 +48,16 @@ function createMockRepo<T extends Doc>() {
 			return { ok: true, value: undefined };
 		},
 
-		query: async () => ({ items: [...store.values()], continuationToken: undefined, requestCharge: 0 }),
+		query: async () => ({
+			items: [...store.values()],
+			continuationToken: undefined,
+			requestCharge: 0,
+		}),
 
-		queryAll: async (querySpec: { query: string; parameters?: Array<{ name: string; value: string }> }) => {
+		queryAll: async (querySpec: {
+			query: string;
+			parameters?: Array<{ name: string; value: string }>;
+		}) => {
 			const items = [...store.values()];
 			// Simple parameter-based filtering for common patterns
 			const params = querySpec.parameters ?? [];
@@ -78,13 +85,13 @@ function createMockRepo<T extends Doc>() {
 			[...store.values()]
 				.filter((item) => (item as Record<string, unknown>).projectId === projectId)
 				.sort((a, b) => {
-					const aDate = (a as Record<string, unknown>).createdAt as string ?? "";
-					const bDate = (b as Record<string, unknown>).createdAt as string ?? "";
+					const aDate = ((a as Record<string, unknown>).createdAt as string) ?? "";
+					const bDate = ((b as Record<string, unknown>).createdAt as string) ?? "";
 					const dateCmp = bDate.localeCompare(aDate);
 					if (dateCmp !== 0) return dateCmp;
 					// Break ties by id DESC (later-created items have higher counters)
-					const aId = (a as Record<string, unknown>).id as string ?? "";
-					const bId = (b as Record<string, unknown>).id as string ?? "";
+					const aId = ((a as Record<string, unknown>).id as string) ?? "";
+					const bId = ((b as Record<string, unknown>).id as string) ?? "";
 					return bId.localeCompare(aId);
 				}) as T[],
 
@@ -121,7 +128,9 @@ function createSpecsRepo<T extends Doc>() {
 			}
 			// Simulate freeze: set status, compute hash placeholder, increment version
 			const { createHash } = await import("node:crypto");
-			const hash = createHash("sha256").update(spec.content as string).digest("hex");
+			const hash = createHash("sha256")
+				.update(spec.content as string)
+				.digest("hex");
 			const frozen = {
 				...item,
 				status: "FROZEN",

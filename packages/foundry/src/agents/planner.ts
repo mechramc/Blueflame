@@ -155,7 +155,8 @@ export function validateDAG(tasks: RawPlanTask[]): string[] {
 
 	let visited = 0;
 	while (queue.length > 0) {
-		const current = queue.shift()!;
+		const current = queue.shift();
+		if (!current) break;
 		visited++;
 		for (const neighbor of adjacency.get(current) ?? []) {
 			const newDegree = (inDegree.get(neighbor) ?? 1) - 1;

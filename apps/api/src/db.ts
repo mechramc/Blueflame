@@ -29,30 +29,63 @@ let _constraints: ConstraintsRepository | null = null;
 let _documents: DocumentsRepository | null = null;
 let _failures: FailuresRepository | null = null;
 
+function lazySpecs() {
+	if (!_specs) _specs = new SpecsRepository(getContainer("specs"));
+	return _specs;
+}
+function lazyPlans() {
+	if (!_plans) _plans = new PlansRepository(getContainer("plans"));
+	return _plans;
+}
+function lazyLocks() {
+	if (!_locks) _locks = new LocksRepository(getContainer("locks"));
+	return _locks;
+}
+function lazyRuns() {
+	if (!_runs) _runs = new RunsRepository(getContainer("runs"));
+	return _runs;
+}
+function lazyAgents() {
+	if (!_agents) _agents = new AgentsRepository(getContainer("agents"));
+	return _agents;
+}
+function lazyConstraints() {
+	if (!_constraints) _constraints = new ConstraintsRepository(getContainer("constraints"));
+	return _constraints;
+}
+function lazyDocuments() {
+	if (!_documents) _documents = new DocumentsRepository(getContainer("documents"));
+	return _documents;
+}
+function lazyFailures() {
+	if (!_failures) _failures = new FailuresRepository(getContainer("failures"));
+	return _failures;
+}
+
 export const db = {
 	get specs() {
-		return (_specs ??= new SpecsRepository(getContainer("specs")));
+		return lazySpecs();
 	},
 	get plans() {
-		return (_plans ??= new PlansRepository(getContainer("plans")));
+		return lazyPlans();
 	},
 	get locks() {
-		return (_locks ??= new LocksRepository(getContainer("locks")));
+		return lazyLocks();
 	},
 	get runs() {
-		return (_runs ??= new RunsRepository(getContainer("runs")));
+		return lazyRuns();
 	},
 	get agents() {
-		return (_agents ??= new AgentsRepository(getContainer("agents")));
+		return lazyAgents();
 	},
 	get constraints() {
-		return (_constraints ??= new ConstraintsRepository(getContainer("constraints")));
+		return lazyConstraints();
 	},
 	get documents() {
-		return (_documents ??= new DocumentsRepository(getContainer("documents")));
+		return lazyDocuments();
 	},
 	get failures() {
-		return (_failures ??= new FailuresRepository(getContainer("failures")));
+		return lazyFailures();
 	},
 };
 

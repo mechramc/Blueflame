@@ -156,6 +156,8 @@ describe("endSpan with App Insights disabled", () => {
 
 		// endSpan should silently skip App Insights export
 		expect(() => endSpan(parent, SpanStatus.Ok)).not.toThrow();
-		expect(() => endSpan(child, SpanStatus.Ok, { inputTokens: 100, outputTokens: 50, cost: 0.01 })).not.toThrow();
+		expect(() =>
+			endSpan(child, SpanStatus.Ok, { inputTokens: 100, outputTokens: 50, cost: 0.01 }),
+		).not.toThrow();
 	});
 });

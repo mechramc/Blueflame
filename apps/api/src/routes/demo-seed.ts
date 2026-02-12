@@ -64,7 +64,10 @@ demoSeedRouter.post("/seed", async (_req, res) => {
 		});
 	} catch (err: unknown) {
 		const errObj = err as Record<string, unknown>;
-		console.error("[demo-seed] Error:", JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2));
+		console.error(
+			"[demo-seed] Error:",
+			JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2),
+		);
 		res.status(500).json({
 			error: "Seed failed",
 			message: errObj?.message ?? String(err),

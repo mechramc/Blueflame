@@ -177,15 +177,21 @@ export class RealAdoClient implements IAdoClient {
 		if (!this.connection) {
 			const azdev = await import("azure-devops-node-api");
 			const authHandler = azdev.getPersonalAccessTokenHandler(this.config.pat);
-			this.connection = new azdev.WebApi(this.config.orgUrl, authHandler) as unknown as typeof this.connection;
+			this.connection = new azdev.WebApi(
+				this.config.orgUrl,
+				authHandler,
+			) as unknown as typeof this.connection;
 		}
 		return this.connection;
 	}
 
 	async triggerPipeline(params: TriggerPipelineParams): Promise<PipelineRun> {
 		const conn = await this.getConnection();
-		const buildApi = await (conn as { getBuildApi(): Promise<unknown> }).getBuildApi() as {
-			queueBuild(build: unknown, project: string): Promise<{
+		const buildApi = (await (conn as { getBuildApi(): Promise<unknown> }).getBuildApi()) as {
+			queueBuild(
+				build: unknown,
+				project: string,
+			): Promise<{
 				id?: number;
 				buildNumber?: string;
 				status?: number;
@@ -212,14 +218,19 @@ export class RealAdoClient implements IAdoClient {
 			result: null,
 			createdDate: new Date().toISOString(),
 			finishedDate: null,
-			url: build.url ?? `${this.config.orgUrl}/${this.config.project}/_build/results?buildId=${build.id}`,
+			url:
+				build.url ??
+				`${this.config.orgUrl}/${this.config.project}/_build/results?buildId=${build.id}`,
 		};
 	}
 
 	async getPipelineRun(runId: number): Promise<PipelineRun | null> {
 		const conn = await this.getConnection();
-		const buildApi = await (conn as { getBuildApi(): Promise<unknown> }).getBuildApi() as {
-			getBuild(project: string, buildId: number): Promise<{
+		const buildApi = (await (conn as { getBuildApi(): Promise<unknown> }).getBuildApi()) as {
+			getBuild(
+				project: string,
+				buildId: number,
+			): Promise<{
 				id?: number;
 				buildNumber?: string;
 				status?: number;
@@ -248,23 +259,48 @@ export class RealAdoClient implements IAdoClient {
 
 	async listPipelineRuns(pipelineId: number, top = 10): Promise<PipelineRun[]> {
 		const conn = await this.getConnection();
-		const buildApi = await (conn as { getBuildApi(): Promise<unknown> }).getBuildApi() as {
-			getBuilds(project: string, definitions?: number[], queues?: undefined, buildNumber?: undefined, minTime?: undefined, maxTime?: undefined, requestedFor?: undefined, reasonFilter?: undefined, statusFilter?: undefined, resultFilter?: undefined, tagFilters?: undefined, properties?: undefined, top?: number): Promise<Array<{
-				id?: number;
-				buildNumber?: string;
-				status?: number;
-				result?: number;
-				startTime?: Date;
-				finishTime?: Date;
-				url?: string;
-				definition?: { id?: number };
-			}>>;
+		const buildApi = (await (conn as { getBuildApi(): Promise<unknown> }).getBuildApi()) as {
+			getBuilds(
+				project: string,
+				definitions?: number[],
+				queues?: undefined,
+				buildNumber?: undefined,
+				minTime?: undefined,
+				maxTime?: undefined,
+				requestedFor?: undefined,
+				reasonFilter?: undefined,
+				statusFilter?: undefined,
+				resultFilter?: undefined,
+				tagFilters?: undefined,
+				properties?: undefined,
+				top?: number,
+			): Promise<
+				Array<{
+					id?: number;
+					buildNumber?: string;
+					status?: number;
+					result?: number;
+					startTime?: Date;
+					finishTime?: Date;
+					url?: string;
+					definition?: { id?: number };
+				}>
+			>;
 		};
 
 		const builds = await buildApi.getBuilds(
 			this.config.project,
 			[pipelineId],
-			undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
 			top,
 		);
 
@@ -282,8 +318,15 @@ export class RealAdoClient implements IAdoClient {
 
 	async createWorkItem(params: CreateWorkItemParams): Promise<WorkItemRef> {
 		const conn = await this.getConnection();
-		const witApi = await (conn as { getWorkItemTrackingApi(): Promise<unknown> }).getWorkItemTrackingApi() as {
-			createWorkItem(customHeaders: undefined, document: Array<{ op: string; path: string; value: string }>, project: string, type: string): Promise<{
+		const witApi = (await (
+			conn as { getWorkItemTrackingApi(): Promise<unknown> }
+		).getWorkItemTrackingApi()) as {
+			createWorkItem(
+				customHeaders: undefined,
+				document: Array<{ op: string; path: string; value: string }>,
+				project: string,
+				type: string,
+			): Promise<{
 				id?: number;
 				url?: string;
 				fields?: Record<string, string>;
@@ -317,7 +360,9 @@ export class RealAdoClient implements IAdoClient {
 
 	async getWorkItem(id: number): Promise<WorkItemRef | null> {
 		const conn = await this.getConnection();
-		const witApi = await (conn as { getWorkItemTrackingApi(): Promise<unknown> }).getWorkItemTrackingApi() as {
+		const witApi = (await (
+			conn as { getWorkItemTrackingApi(): Promise<unknown> }
+		).getWorkItemTrackingApi()) as {
 			getWorkItem(id: number): Promise<{
 				id?: number;
 				url?: string;
@@ -353,20 +398,29 @@ export class RealAdoClient implements IAdoClient {
 
 function mapBuildStatus(status: number | undefined): PipelineRunStatus {
 	switch (status) {
-		case 1: return PipelineRunStatus.InProgress;
-		case 2: return PipelineRunStatus.Completed;
-		case 4: return PipelineRunStatus.Cancelling;
-		case 8: return PipelineRunStatus.Cancelled;
-		default: return PipelineRunStatus.NotStarted;
+		case 1:
+			return PipelineRunStatus.InProgress;
+		case 2:
+			return PipelineRunStatus.Completed;
+		case 4:
+			return PipelineRunStatus.Cancelling;
+		case 8:
+			return PipelineRunStatus.Cancelled;
+		default:
+			return PipelineRunStatus.NotStarted;
 	}
 }
 
 function mapBuildResult(result: number | undefined): PipelineRunResult | null {
 	switch (result) {
-		case 2: return PipelineRunResult.Succeeded;
-		case 8: return PipelineRunResult.Failed;
-		case 32: return PipelineRunResult.Canceled;
-		default: return null;
+		case 2:
+			return PipelineRunResult.Succeeded;
+		case 8:
+			return PipelineRunResult.Failed;
+		case 32:
+			return PipelineRunResult.Canceled;
+		default:
+			return null;
 	}
 }
 

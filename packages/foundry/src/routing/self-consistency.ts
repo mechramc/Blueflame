@@ -88,7 +88,9 @@ export function selectByMajorityVote(responses: ChatResponse[]): ChatResponse {
 	if (responses.length === 0) {
 		throw new Error("Cannot select from empty responses");
 	}
-	if (responses.length === 1) return responses[0]!;
+	const first = responses[0];
+	if (!first) throw new Error("Cannot select from empty responses");
+	if (responses.length === 1) return first;
 
 	const contents = responses.map((r) => r.content);
 	let bestIndex = 0;
@@ -108,7 +110,9 @@ export function selectByMajorityVote(responses: ChatResponse[]): ChatResponse {
 		}
 	}
 
-	return responses[bestIndex]!;
+	const selected = responses[bestIndex];
+	if (!selected) throw new Error("Selection failed: no response at best index");
+	return selected;
 }
 
 /**

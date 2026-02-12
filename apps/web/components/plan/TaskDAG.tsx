@@ -101,7 +101,8 @@ function computeLayout(tasks: PlanTask[]): NodePosition[] {
 	const depthMap = new Map<string, number>();
 
 	function getDepth(taskId: string): number {
-		if (depthMap.has(taskId)) return depthMap.get(taskId)!;
+		const cached = depthMap.get(taskId);
+		if (cached !== undefined) return cached;
 		const task = tasks.find((t) => t.id === taskId);
 		if (!task || task.dependencies.length === 0) {
 			depthMap.set(taskId, 0);

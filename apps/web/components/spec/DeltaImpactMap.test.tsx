@@ -74,7 +74,7 @@ describe("DeltaImpactMap", () => {
 			<DeltaImpactMap
 				oldSpecId="spec-v1"
 				newSpecId="spec-v2"
-				taskImpacts={[mockImpacts[0]!]}
+				taskImpacts={[mockImpacts[0] as TaskImpactDisplay]}
 				summary={{ preserve: 1, rebuild: 0, new: 0, remove: 0, totalChanges: 0 }}
 				onReauthorize={() => {}}
 			/>,

@@ -5,9 +5,9 @@ import { config } from "dotenv";
 config({ path: resolve(import.meta.dirname, "../../..", ".env") });
 
 import { createServer } from "node:http";
+import { initTelemetry, isTelemetryEnabled } from "@blueflame/foundry";
 import cors from "cors";
 import express from "express";
-import { initTelemetry, isTelemetryEnabled } from "@blueflame/foundry";
 
 // Initialize Application Insights (no-op if connection string not set)
 initTelemetry();
