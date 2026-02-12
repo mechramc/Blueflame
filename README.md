@@ -3,7 +3,7 @@
 **The Governed AI Software Refinery**
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-397%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-453%20passing-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 [![Hackathon](https://img.shields.io/badge/Microsoft%20AI%20Dev%20Days-2026-purple)]()
@@ -13,7 +13,7 @@
 
 Blueflame is an interactive software refinery that transforms human intent into explicit, versioned specifications and executes them through a governed swarm of AI agents. Authorization gates, immutable plan locks, budget ceilings, CI/CD failure intelligence, and real-time observability keep humans in control while accelerating delivery through agentic DevOps.
 
-**Grounded in original research:** ACAR (Adaptive Complexity & Attribution Routing), validated across 7,550+ auditable runs on four benchmarks.
+**Grounded in original research:** [ACAR (Adaptive Complexity & Attribution Routing)](https://zenodo.org/records/18446175), validated across 7,550+ auditable runs on four benchmarks.
 
 ---
 
@@ -162,7 +162,7 @@ Persistent, project-level rules (architectural, security, performance) survive a
 | IaC | Azure Bicep | Repeatable infrastructure deployment |
 | Monorepo | Turborepo + npm workspaces | Build orchestration |
 | Linting | Biome | Fast lint + format |
-| Testing | Vitest (unit) + Playwright (E2E) | 397+ tests |
+| Testing | Vitest (unit) + Playwright (E2E) | 453+ tests |
 
 ---
 
@@ -267,13 +267,13 @@ npx turbo dev
 ## Testing
 
 ```
-Total: 397+ tests across 7 packages
-├── apps/api:      156 tests (services, routes, middleware, webhooks)
-├── apps/web:       97 tests (components, hooks, dashboard, animations)
-├── packages/cosmos: 44 tests (repositories, change feed)
-├── packages/foundry: 72 tests (5 agents, prompts, parsers)
+Total: 453+ tests across 7 packages
+├── apps/api:      181 tests (services, routes, middleware, webhooks, SignalR)
+├── apps/web:      119 tests (components, hooks, dashboard, animations, budget, failures)
+├── packages/foundry: 81 tests (6 agents, prompts, parsers)
+├── packages/cosmos:  44 tests (repositories, change feed)
 ├── packages/github-app: 24 tests (branches, PRs, actions, diffs)
-└── packages/shared:  4 tests (hash, types)
+└── packages/shared:   4 tests (hash, types)
 ```
 
 All tests run in CI via GitHub Actions on every PR.
@@ -306,8 +306,13 @@ All tests run in CI via GitHub Actions on every PR.
 | **S6: Planning** | Done | Planner agent, DAG visualization, authorization gate |
 | **S7-S8: Agent Swarm** | Done | Builder, verifier, explainer, orchestrator, GitHub integration |
 | **S9-S10: Governance** | Done | Budget system, dashboard, agent cards, animations |
-| **S11: Failure Intelligence** | Next | ADO adapter, failure analyzer, remediation gate, failure dashboard |
-| **S12: Demo + Submit** | Planned | Recording, submission package |
+| **S11: Failure Intelligence** | Done | ADO adapter, Fixer agent, remediation gate, failure dashboard |
+| **S12: ACAR σ-Routing** | Next | σ-based model selection, self-consistency sampling, cost benchmarking |
+| **S13: Enterprise Governance** | Next | OpenTelemetry tracing, compliance dashboard, reasoning trace viewer |
+| **S14: Spec Delta Detection** | Next | WF6: spec diff engine, impact classifier, surgical re-execution |
+| **S15: CI/CD Templates** | Next | Cosmos failures, verifier templates, security constraints, ADO outbound |
+| **S16: Enterprise Budgeting** | Planned | Azure Cost Management, org budget pools, chargeback, SignalR migration |
+| **Demo + Submit** | Planned | Recording, submission package |
 
 ---
 
@@ -326,7 +331,7 @@ All tests run in CI via GitHub Actions on every PR.
 
 ### Research Foundation
 
-Blueflame is backed by ACAR (Adaptive Complexity & Attribution Routing), a peer-quality research paper with:
+Blueflame is backed by [ACAR (Adaptive Complexity & Attribution Routing)](https://zenodo.org/records/18446175), a peer-quality research paper with:
 - 7,550+ auditable runs across 4 benchmarks and 1,510 tasks
 - Falsifiable baselines and documented negative results
 - σ-based routing that avoids full ensembling on 54% of tasks

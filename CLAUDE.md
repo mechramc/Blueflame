@@ -177,13 +177,48 @@ A feature is NOT done until ALL of these are true:
 - Include: session number, what was done, what's next, blockers, test counts
 - This is the handoff document between sessions
 
+## Enterprise Streams (Current Phase)
+
+Goal: Transform MVP into enterprise-grade product with full MS ecosystem integration.
+
+### Stream Priority Order
+1. **S12: ACAR σ-Routing** — Make σ-routing real (orchestrator currently hardcodes gpt-4o)
+2. **S14: Spec Delta Detection** — WF6 implementation (deferred from MVP)
+3. **S13: Enterprise Governance** — OpenTelemetry + App Insights + compliance dashboard
+4. **S15: CI/CD Templates** — Cosmos failures, verifier templates, ADO outbound
+5. **S16: Enterprise Budgeting** — Azure Cost Management, org pools, SignalR migration
+
+### New Azure Dependencies
+```
+@azure/monitor-opentelemetry    # S13: Tracing → App Insights
+applicationinsights             # S16: Auto-collection SDK
+@azure/arm-costmanagement       # S16: Budget queries
+@microsoft/signalr              # S16: Replace Socket.IO
+azure-devops-node-api           # S15: ADO outbound operations
+```
+
+### Key Implementation Notes
+- σ-routing: `packages/foundry/src/routing/sigma-router.ts` (new)
+- Tracing: `packages/foundry/src/tracing/telemetry.ts` (new)
+- Compliance: `apps/web/app/compliance/page.tsx` (new page)
+- Chargeback: `apps/web/app/chargeback/page.tsx` (new page)
+- Failures container: 8th Cosmos container (add to `infra/modules/cosmos.bicep`)
+
+### Design System (Session 7)
+- CSS custom properties in `apps/web/app/globals.css` (`--bg-primary`, `--accent`, etc.)
+- Tailwind `bf.*` color tokens reference CSS vars
+- Fonts: Inter (sans) + JetBrains Mono (mono) via `next/font/google`
+- All new components must use CSS var classes, not direct Tailwind colors (e.g., `bg-[--bg-secondary]` not `bg-gray-900`)
+
 ## Environment Variables
 
 See `.env.example` for all required variables. Key groups:
 - **Azure**: subscription, resource group, Cosmos DB, SignalR, Key Vault
 - **Entra ID**: client ID, tenant ID, client secret
 - **GitHub**: token, app ID, private key
-- **Foundry**: API key, endpoint
+- **Foundry**: API key, endpoint, deployment names (gpt-4o, gpt-4o-mini, o1)
+- **App Insights**: `APPLICATIONINSIGHTS_CONNECTION_STRING`
+- **ADO**: webhook secret, org URL, PAT (for outbound operations)
 - **App**: API URL, Node env
 
 ## Known Issues / Gotchas
@@ -193,3 +228,7 @@ See `.env.example` for all required variables. Key groups:
 - Azure Cosmos DB emulator available for local dev (reduces Azure costs)
 - Foundry SDK may need specific Node.js version — check compatibility
 - Bicep CLI must be installed separately (`az bicep install`)
+- `dotenv` loads `.env` from repo root in API via `import.meta.dirname`
+- CSS uses custom properties — test assertions must match (e.g., `bg-[--bg-secondary]` not `bg-gray-900`)
+- Fonts loaded via CSS variable strategy — `font-sans` and `font-mono` classes work via Tailwind config
+- ACAR σ-routing requires 3 model deployments in Azure OpenAI (gpt-4o-mini, gpt-4o, o1)

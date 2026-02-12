@@ -803,3 +803,415 @@ tasks:
       - "Summary shows count of preserve/rebuild/new/remove"
       - "Re-authorize button creates new PlanLock for affected tasks"
     verify_command: "npm run build -w apps/web"
+
+# ═══════════════════════════════════════════════════════════════
+# S12: ACAR σ-ROUTING (Enterprise Stream 2)
+# Goal: Make the spec's core differentiator real — σ-informed
+# model selection with self-consistency sampling and benchmarking.
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S12-001
+    system: S12-acar
+    title: "Implement σ-based model routing in orchestrator"
+    sprint: W6
+    priority: P0
+    description: |
+      Replace hardcoded "gpt-4o" in orchestrator.ts with σ-informed routing.
+      Route based on task.sigmaEstimate: σ < 0.3 → gpt-4o-mini (routine),
+      0.3–0.7 → gpt-4o (standard), > 0.7 → o1 (complex). Record actual
+      model used in agent state. Requires 3 model deployments in Azure OpenAI.
+    spec_sections: [3, 6]
+    files_to_create:
+      - packages/foundry/src/routing/sigma-router.ts
+      - packages/foundry/src/routing/model-registry.ts
+    files_to_modify:
+      - apps/api/src/services/orchestrator.ts
+      - packages/foundry/src/config.ts
+    dependencies: [S7-004]
+    acceptance_criteria:
+      - "Orchestrator selects model based on sigmaEstimate threshold"
+      - "Low-σ tasks (< 0.3) route to gpt-4o-mini"
+      - "Medium-σ tasks (0.3–0.7) route to gpt-4o"
+      - "High-σ tasks (> 0.7) route to o1"
+      - "Actual model recorded in AgentState.model field"
+      - "Unit tests verify routing logic for all 3 tiers"
+    verify_command: "npm run test -- --grep sigma-router"
+
+  - id: S12-002
+    system: S12-acar
+    title: "Implement self-consistency sampling for high-σ tasks"
+    sprint: W6
+    priority: P1
+    description: |
+      For tasks with σ > 0.7, run N=3 parallel completions and compute
+      variance. If variance exceeds threshold, escalate to multi-model
+      ensemble (gpt-4o + o1 + claude-sonnet). Use majority vote for
+      code generation, union for test generation.
+    spec_sections: [3, 6.4]
+    files_to_create:
+      - packages/foundry/src/routing/self-consistency.ts
+      - packages/foundry/src/routing/ensemble.ts
+    dependencies: [S12-001]
+    acceptance_criteria:
+      - "N=3 parallel completions generated for high-σ tasks"
+      - "Variance computed across completions"
+      - "High-variance tasks escalate to multi-model ensemble"
+      - "Ensemble uses majority vote for code, union for tests"
+      - "Cost of sampling tracked and included in budget"
+    verify_command: "npm run test -- --grep self-consistency"
+
+  - id: S12-003
+    system: S12-acar
+    title: "Implement cost tracking per model tier and benchmarking"
+    sprint: W6
+    priority: P1
+    description: |
+      Track actual cost per model tier (mini vs standard vs premium).
+      Create benchmarking service that compares σ-routed vs fixed-model
+      runs. Log cost savings percentage. Expose via API for dashboard.
+    spec_sections: [3, 16]
+    files_to_create:
+      - apps/api/src/services/model-cost-tracker.ts
+      - apps/api/src/routes/benchmarks.ts
+    dependencies: [S12-001, S9-001]
+    acceptance_criteria:
+      - "Cost tracked per model tier with different token rates"
+      - "Benchmark endpoint returns cost comparison data"
+      - "Dashboard shows σ-routing cost savings percentage"
+      - "Historical routing decisions queryable"
+    verify_command: "npm run test -- --grep model-cost"
+
+# ═══════════════════════════════════════════════════════════════
+# S13: ENTERPRISE GOVERNANCE (Enterprise Stream 1)
+# Goal: Full observability via OpenTelemetry + App Insights,
+# compliance dashboard with audit log, reasoning trace viewer.
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S13-001
+    system: S13-governance
+    title: "Instrument all agents with OpenTelemetry tracing"
+    sprint: W6
+    priority: P0
+    description: |
+      Add @azure/monitor-opentelemetry SDK. Instrument orchestrator and all
+      6 agents with span start/end, parent-child trace IDs, and attribute
+      recording (agent role, task ID, model, token count, cost). Connect
+      to Application Insights via APPLICATIONINSIGHTS_CONNECTION_STRING.
+    spec_sections: [6, 23.2]
+    files_to_create:
+      - packages/foundry/src/tracing/telemetry.ts
+      - packages/foundry/src/tracing/agent-spans.ts
+    files_to_modify:
+      - apps/api/src/index.ts
+      - packages/foundry/src/agents/designer.ts
+      - packages/foundry/src/agents/planner.ts
+      - packages/foundry/src/agents/builder.ts
+      - packages/foundry/src/agents/verifier.ts
+      - packages/foundry/src/agents/explainer.ts
+      - packages/foundry/src/agents/fixer.ts
+    dependencies: [S7-004]
+    acceptance_criteria:
+      - "All agent calls produce OpenTelemetry spans"
+      - "Spans include: agentRole, taskId, model, tokenCount, cost"
+      - "Parent-child span hierarchy: orchestrator → agent → LLM call"
+      - "Traces visible in Application Insights"
+      - "Connection string loaded from env"
+    verify_command: "npm run test -- --grep telemetry"
+
+  - id: S13-002
+    system: S13-governance
+    title: "Build compliance dashboard page"
+    sprint: W6
+    priority: P0
+    description: |
+      New page: /compliance. Audit log viewer showing all authorization
+      events, agent actions, spec changes, and budget decisions. Filter
+      by run, agent, date range, action type. Export as CSV. Query from
+      Cosmos DB locks, runs, and agents containers.
+    spec_sections: [15, 23]
+    files_to_create:
+      - apps/web/app/compliance/page.tsx
+      - apps/web/components/compliance/AuditLogTable.tsx
+      - apps/web/components/compliance/AuditFilters.tsx
+      - apps/web/components/compliance/ExportButton.tsx
+      - apps/api/src/routes/compliance.ts
+    dependencies: [S13-001, S3-002]
+    acceptance_criteria:
+      - "Compliance page renders audit log from Cosmos DB"
+      - "Filters: date range, run ID, agent role, action type"
+      - "CSV export works"
+      - "Shows authorization events with user, timestamp, spec hash"
+      - "Shows agent actions with trace IDs linking to App Insights"
+    verify_command: "npm run test -- --grep compliance"
+
+  - id: S13-003
+    system: S13-governance
+    title: "Build reasoning trace viewer in run dashboard"
+    sprint: W6
+    priority: P1
+    description: |
+      Add expandable trace timeline to run dashboard. Shows per-agent
+      span timeline with duration, model used, tokens consumed. Clicking
+      a span shows full prompt/response (redacted). Links to App Insights
+      for full distributed trace.
+    spec_sections: [18.2, 23.2]
+    files_to_create:
+      - apps/web/components/dashboard/TraceTimeline.tsx
+      - apps/web/components/dashboard/SpanDetail.tsx
+      - apps/api/src/routes/traces.ts
+    dependencies: [S13-001, S10-002]
+    acceptance_criteria:
+      - "Trace timeline shows per-agent spans with duration bars"
+      - "Clicking span shows prompt/response detail"
+      - "Links to Application Insights trace ID"
+      - "PII redacted from displayed prompts"
+    verify_command: "npm run test -- --grep trace"
+
+# ═══════════════════════════════════════════════════════════════
+# S15: CI/CD FAILURE INTELLIGENCE TEMPLATES (Enterprise Stream 3)
+# Goal: Cosmos-backed failure store, pre-packaged verifier
+# templates, security constraints, bidirectional ADO + GH Actions.
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S15-001
+    system: S15-cicd
+    title: "Add failures container to Cosmos DB"
+    sprint: W6
+    priority: P0
+    description: |
+      Add 8th container 'failures' to Cosmos DB (Bicep + repository).
+      Migrate in-memory failure-store to Cosmos. Add TTL (30 days).
+      Partition by projectId.
+    spec_sections: [10.3, 13.2]
+    files_to_create:
+      - packages/cosmos/src/repositories/failures.ts
+    files_to_modify:
+      - infra/modules/cosmos.bicep
+      - apps/api/src/services/failure-store.ts
+      - packages/cosmos/src/index.ts
+    dependencies: [S3-001]
+    acceptance_criteria:
+      - "failures container created in Bicep with /projectId partition"
+      - "FailuresRepository implements CRUD with TTL support"
+      - "failure-store.ts uses Cosmos instead of in-memory Map"
+      - "Existing failure tests still pass"
+    verify_command: "npm run test -- --grep failure"
+
+  - id: S15-002
+    system: S15-cicd
+    title: "Create pre-packaged Verifier templates"
+    sprint: W6
+    priority: P0
+    description: |
+      Create JSON-based Verifier templates for common CI checks:
+      ESLint (lint), TypeScript strict (typecheck), npm audit (deps),
+      Vitest coverage (test), Biome (format). Templates define
+      acceptance criteria, commands, and pass/fail parsing rules.
+    spec_sections: [7.2]
+    files_to_create:
+      - packages/shared/src/templates/verifier-lint.ts
+      - packages/shared/src/templates/verifier-typecheck.ts
+      - packages/shared/src/templates/verifier-deps.ts
+      - packages/shared/src/templates/verifier-test.ts
+      - packages/shared/src/templates/verifier-format.ts
+      - packages/shared/src/templates/index.ts
+    dependencies: [S7-002]
+    acceptance_criteria:
+      - "5 verifier templates defined with acceptance criteria"
+      - "Each template specifies: command, pass regex, fail regex"
+      - "Templates exported from @blueflame/shared"
+      - "Verifier agent can consume templates as acceptance criteria"
+    verify_command: "npm run test -- --grep verifier-template"
+
+  - id: S15-003
+    system: S15-cicd
+    title: "Add security constraint types to constraint registry"
+    sprint: W6
+    priority: P1
+    description: |
+      Extend constraint system with security-specific types: CVE_CHECK,
+      LICENSE_COMPLIANCE, SECRET_SCANNING, DEPENDENCY_AUDIT. Each type
+      has a schema defining what the Verifier checks. Add to Cosmos
+      constraints container.
+    spec_sections: [14, 15]
+    files_to_create:
+      - packages/shared/src/types/security-constraints.ts
+    files_to_modify:
+      - packages/shared/src/types/constraint.ts
+      - packages/cosmos/src/repositories/constraints.ts
+    dependencies: [S15-002]
+    acceptance_criteria:
+      - "4 new constraint types defined with Zod schemas"
+      - "Constraints stored in Cosmos with projectId partition"
+      - "Verifier evaluates security constraints during CI validation"
+      - "API endpoint to CRUD security constraints"
+    verify_command: "npm run test -- --grep security-constraint"
+
+  - id: S15-004
+    system: S15-cicd
+    title: "Implement ADO outbound client for pipeline operations"
+    sprint: W6
+    priority: P1
+    description: |
+      Add azure-devops-node-api SDK. Create ADO client that can:
+      trigger pipeline runs, query build status, get test results,
+      create work items from failures. Bidirectional ADO integration.
+    spec_sections: [9, 11]
+    files_to_create:
+      - packages/shared/src/services/ado-client.ts
+      - apps/api/src/services/ado-operations.ts
+    files_to_modify:
+      - apps/api/src/services/remediation.ts
+    dependencies: [S11-001]
+    acceptance_criteria:
+      - "Can trigger ADO pipeline via REST API"
+      - "Can query build status and test results"
+      - "Can create work items linked to failures"
+      - "Remediation can trigger re-run of failed pipeline"
+    verify_command: "npm run test -- --grep ado-client"
+
+  - id: S15-005
+    system: S15-cicd
+    title: "Wire GitHub Actions failures to failure store"
+    sprint: W6
+    priority: P1
+    description: |
+      Extend GitHub webhook handler to normalize GitHub Actions
+      workflow_run failures into the same NormalizedFailure schema
+      used by ADO. Route to failure store and Fixer agent.
+    spec_sections: [9.2, 11]
+    files_to_modify:
+      - apps/api/src/webhooks/github.ts
+      - apps/api/src/services/failure-store.ts
+    dependencies: [S8-002, S11-001]
+    acceptance_criteria:
+      - "GitHub Actions failures normalized to NormalizedFailure schema"
+      - "Failures stored in Cosmos (same as ADO failures)"
+      - "Fixer agent triggered for GitHub Actions failures"
+      - "Source field distinguishes 'github-actions' vs 'azure-devops'"
+    verify_command: "npm run test -- --grep github-failure"
+
+# ═══════════════════════════════════════════════════════════════
+# S16: ENTERPRISE BUDGETING & MS INTEGRATION (Enterprise Stream 4)
+# Goal: Azure Cost Management, org budget pools, chargeback,
+# Azure SignalR migration, Application Insights instrumentation.
+# ═══════════════════════════════════════════════════════════════
+
+  - id: S16-001
+    system: S16-enterprise
+    title: "Integrate Azure Cost Management for real budget data"
+    sprint: W7
+    priority: P0
+    description: |
+      Add @azure/arm-costmanagement SDK. Replace mock token-math budget
+      with real Azure Cost Management queries. Track actual Azure spend
+      (Foundry API calls, Cosmos RUs, compute). Dashboard shows real costs.
+    spec_sections: [16, 23.2]
+    files_to_create:
+      - apps/api/src/services/azure-cost-management.ts
+    files_to_modify:
+      - apps/api/src/services/cost-tracker.ts
+      - apps/api/src/routes/budget.ts
+    dependencies: [S9-001]
+    acceptance_criteria:
+      - "Budget queries Azure Cost Management API for actual spend"
+      - "Cost breakdown by service (Foundry, Cosmos, Compute)"
+      - "Real-time cost updates (within 5-min Azure lag)"
+      - "Fallback to token math when Azure Cost API unavailable"
+    verify_command: "npm run test -- --grep azure-cost"
+
+  - id: S16-002
+    system: S16-enterprise
+    title: "Implement org-level budget pools and team allocation"
+    sprint: W7
+    priority: P0
+    description: |
+      Create multi-tenant budget system: org → team → project hierarchy.
+      Org admin sets total budget pool. Team leads allocate to projects.
+      Per-run budgets draw from project allocation. Prevent overspend
+      across concurrent runs.
+    spec_sections: [16, 23.2]
+    files_to_create:
+      - apps/api/src/services/budget-pools.ts
+      - apps/api/src/routes/org-budgets.ts
+      - packages/cosmos/src/repositories/budgets.ts
+    dependencies: [S16-001]
+    acceptance_criteria:
+      - "Org budget pool with total ceiling"
+      - "Team allocations sum to <= org pool"
+      - "Project budgets draw from team allocation"
+      - "Concurrent run protection (optimistic locking)"
+      - "Dashboard shows org → team → project budget tree"
+    verify_command: "npm run test -- --grep budget-pool"
+
+  - id: S16-003
+    system: S16-enterprise
+    title: "Build chargeback reporting dashboard"
+    sprint: W7
+    priority: P1
+    description: |
+      Create chargeback page: cost breakdown by team, project, agent role,
+      and model tier. Time-series charts. Export as CSV for finance.
+      Powered by Cosmos aggregation queries.
+    spec_sections: [16, 23.2]
+    files_to_create:
+      - apps/web/app/chargeback/page.tsx
+      - apps/web/components/chargeback/CostBreakdownChart.tsx
+      - apps/web/components/chargeback/TeamCostTable.tsx
+      - apps/web/components/chargeback/ExportButton.tsx
+      - apps/api/src/routes/chargeback.ts
+    dependencies: [S16-002]
+    acceptance_criteria:
+      - "Cost breakdown by team, project, agent role, model"
+      - "Time-series chart (daily/weekly/monthly)"
+      - "CSV export for finance teams"
+      - "Totals match Azure Cost Management data"
+    verify_command: "npm run test -- --grep chargeback"
+
+  - id: S16-004
+    system: S16-enterprise
+    title: "Migrate Socket.IO to Azure SignalR Service"
+    sprint: W7
+    priority: P1
+    description: |
+      Replace Socket.IO with @microsoft/signalr SDK. Use the Azure
+      SignalR Service already provisioned in Bicep. Server-side hub
+      negotiation, client-side connection with auth token. Maintain
+      all existing channel semantics (run:status, agent:state, etc.).
+    spec_sections: [8, 18.2]
+    files_to_modify:
+      - apps/api/src/signalr/hub.ts
+      - apps/web/lib/signalr-client.ts
+      - apps/web/hooks/useSignalR.ts
+    dependencies: [S1-004]
+    acceptance_criteria:
+      - "Real-time uses Azure SignalR Service (not Socket.IO)"
+      - "All existing channels work: run:status, agent:state, token:delta, cost:alert"
+      - "Auth token passed for SignalR negotiation"
+      - "Auto-reconnect on disconnect"
+      - "Bicep SignalR resource actually used"
+    verify_command: "npm run test -- --grep signalr"
+
+  - id: S16-005
+    system: S16-enterprise
+    title: "Implement Application Insights instrumentation"
+    sprint: W7
+    priority: P1
+    description: |
+      Wire applicationinsights SDK into API server. Auto-collect:
+      HTTP requests, dependencies (Cosmos, Foundry), exceptions,
+      custom metrics (agent durations, routing decisions). Use the
+      APPLICATIONINSIGHTS_CONNECTION_STRING from Bicep output.
+    spec_sections: [23.2]
+    files_to_create:
+      - apps/api/src/telemetry/app-insights.ts
+    files_to_modify:
+      - apps/api/src/index.ts
+    dependencies: [S13-001]
+    acceptance_criteria:
+      - "HTTP requests auto-tracked in App Insights"
+      - "Cosmos DB calls tracked as dependencies"
+      - "Foundry API calls tracked as dependencies"
+      - "Custom metrics: agentDuration, routingDecision, costPerRun"
+      - "Exceptions logged with stack traces"
+    verify_command: "npm run test -- --grep app-insights"
