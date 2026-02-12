@@ -12,6 +12,9 @@ param environment string = 'dev'
 @description('Entra ID tenant ID for Key Vault')
 param tenantId string
 
+@description('Entra ID client ID for API auth')
+param entraClientId string = ''
+
 // ─── Naming ───────────────────────────────────────────────────
 
 var prefix = 'blueflame'
@@ -77,6 +80,11 @@ module containerApps 'modules/container-apps.bicep' = {
     environmentName: '${prefix}-env-${suffix}'
     apiAppName: '${prefix}-api-${suffix}'
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    cosmosEndpoint: cosmos.outputs.endpoint
+    cosmosKey: cosmos.outputs.primaryKey
+    appInsightsConnectionString: logAnalytics.outputs.appInsightsConnectionString
+    entraClientId: entraClientId
+    entraTenantId: tenantId
   }
 }
 

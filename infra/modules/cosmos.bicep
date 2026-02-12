@@ -71,3 +71,4 @@ resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
 output endpoint string = cosmosAccount.properties.documentEndpoint
 output accountName string = cosmosAccount.name
 output databaseName string = database.name
+output primaryKey string = cosmosAccount.listKeys().primaryMasterKey
