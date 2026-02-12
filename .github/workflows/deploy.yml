@@ -11,7 +11,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  API_IMAGE: ghcr.io/${{ github.repository }}/api
+  API_IMAGE: ghcr.io/${{ github.repository_owner }}/blueflame-api
 
 jobs:
   build:
@@ -37,39 +37,6 @@ jobs:
 
       - name: Test
         run: npx turbo test
-
-      - name: Upload web artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: apps/web/.next
-          retention-days: 7
-
-  deploy-web:
-    name: Deploy Web (Azure Static Web Apps)
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment: production
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download web artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: apps/web/.next
-
-      - name: Deploy to Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: upload
-          app_location: apps/web
-          output_location: .next
 
   deploy-api:
     name: Deploy API (Azure Container Apps)
@@ -112,7 +79,7 @@ jobs:
         uses: azure/container-apps-deploy-action@v1
         with:
           resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
-          containerAppName: blueflame-api
+          containerAppName: blueflame-api-dev
           imageToDeploy: ${{ env.API_IMAGE }}:${{ github.sha }}
           registryUrl: ${{ env.REGISTRY }}
           registryUsername: ${{ github.actor }}
