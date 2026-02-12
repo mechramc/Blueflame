@@ -17,3 +17,15 @@ export { AnthropicClient } from "./providers/anthropic.js";
 export { AzureOpenAIClient } from "./providers/azure-openai.js";
 export { GoogleClient } from "./providers/google.js";
 export { OpenAIDirectClient } from "./providers/openai-direct.js";
+export {
+	type SamplingConfig,
+	type SamplingResult,
+	computeVariance,
+	runSelfConsistency,
+	selectByMajorityVote,
+} from "./self-consistency.js";
+export {
+	type EnsembleResult,
+	EnsembleStrategy,
+	runEnsemble,
+} from "./ensemble.js";

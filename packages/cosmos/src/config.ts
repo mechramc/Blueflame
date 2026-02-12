@@ -46,6 +46,7 @@ export const CONTAINERS = {
 	agents: "agents",
 	constraints: "constraints",
 	documents: "documents",
+	failures: "failures",
 } as const;
 
 export type ContainerName = (typeof CONTAINERS)[keyof typeof CONTAINERS];

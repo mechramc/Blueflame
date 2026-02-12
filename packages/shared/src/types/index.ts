@@ -54,5 +54,21 @@ export type {
 	TestResults,
 } from "./failure.js";
 
+// Security constraint types
+export {
+	type CveCheckConfig,
+	type DependencyAuditConfig,
+	type LicenseComplianceConfig,
+	type SecretScanningConfig,
+	type SecurityConstraint,
+	type SecurityConstraintConfig,
+	CveCheckSchema,
+	DependencyAuditSchema,
+	LicenseComplianceSchema,
+	SecretScanningSchema,
+	SecurityConstraintConfigSchema,
+	SecurityConstraintSubtype,
+} from "./security-constraints.js";
+
 // State machine helpers
 export { RUN_TRANSITIONS } from "./run.js";

@@ -1,4 +1,4 @@
-@description('Azure Cosmos DB account with 7 containers for Blueflame')
+@description('Azure Cosmos DB account with 8 containers for Blueflame')
 param location string
 param tags object
 param accountName string
@@ -44,6 +44,7 @@ var containers = [
   { name: 'agents',       partitionKey: '/runId' }
   { name: 'constraints',  partitionKey: '/projectId' }
   { name: 'documents',    partitionKey: '/projectId' }
+  { name: 'failures',     partitionKey: '/projectId' }
 ]
 
 resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [

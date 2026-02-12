@@ -10,5 +10,8 @@ export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: 
 // Re-export all domain types
 export * from "./types/index.js";
 
+// Verifier templates
+export * from "./templates/index.js";
+
 // Utilities (server-only — not re-exported via barrel to avoid bundling node:crypto in browser)
 // Import directly: import { sha256 } from "@blueflame/shared/utils/hash"

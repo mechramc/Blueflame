@@ -47,6 +47,7 @@ export {
 	AgentsRepository,
 	ConstraintsRepository,
 	DocumentsRepository,
+	FailuresRepository,
 	LocksRepository,
 	PlansRepository,
 	RunsRepository,
