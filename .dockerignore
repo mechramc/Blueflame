@@ -12,10 +12,6 @@ infra
 docs
 scripts
 prompts
-apps/web/src
-apps/web/app
-apps/web/components
-apps/web/public
 **/*.test.ts
 **/__mocks__
 **/vitest.config.ts

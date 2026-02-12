@@ -12,6 +12,7 @@ concurrency:
 env:
   REGISTRY: blueflamecr.azurecr.io
   API_IMAGE: blueflamecr.azurecr.io/blueflame-api
+  WEB_IMAGE: blueflamecr.azurecr.io/blueflame-web
 
 jobs:
   build:
@@ -39,7 +40,7 @@ jobs:
         run: npx turbo test
 
   deploy-api:
-    name: Deploy API (Azure Container Apps)
+    name: Deploy API
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -67,9 +68,45 @@ jobs:
             ${{ env.API_IMAGE }}:${{ github.sha }}
             ${{ env.API_IMAGE }}:latest
 
-      - name: Deploy to Azure Container Apps
+      - name: Deploy to Container Apps
         run: |
           az containerapp update \
             --name blueflame-api-dev \
             --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --image ${{ env.API_IMAGE }}:${{ github.sha }}
+
+  deploy-web:
+    name: Deploy Web
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login --name blueflamecr
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.WEB_IMAGE }}:${{ github.sha }}
+            ${{ env.WEB_IMAGE }}:latest
+
+      - name: Deploy to Container Apps
+        run: |
+          az containerapp update \
+            --name blueflame-web-dev \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.WEB_IMAGE }}:${{ github.sha }}
