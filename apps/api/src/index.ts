@@ -81,9 +81,24 @@ app.use("/api/knowledge", knowledgeRouter);
 app.use("/api/github", githubActionsRouter);
 app.use("/api/demo", demoSeedRouter);
 
+// ─── Global Express error handler (prevents crash on unhandled route errors) ───
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+	console.error("[API] Unhandled route error:", err.message, err.stack);
+	res.status(500).json({ error: "Internal server error" });
+});
+
 const httpServer = createServer(app);
 
 createHub(httpServer);
+
+// ─── Process-level safety nets (log but don't crash) ───
+process.on("unhandledRejection", (reason) => {
+	console.error("[API] Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+	console.error("[API] Uncaught exception:", err.message, err.stack);
+});
 
 httpServer.listen(PORT, () => {
 	console.log(`Blueflame API listening on http://localhost:${PORT}`);

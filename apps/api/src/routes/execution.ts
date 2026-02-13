@@ -45,17 +45,22 @@ executionRouter.post("/start", async (req, res) => {
 		return;
 	}
 
-	const result = startExecution(plan, lock);
-	if (!result.ok) {
-		res.status(409).json({ error: result.error.message });
-		return;
-	}
+	try {
+		const result = await startExecution(plan, lock);
+		if (!result.ok) {
+			res.status(409).json({ error: result.error.message });
+			return;
+		}
 
-	res.status(201).json({
-		runId: result.value.runId,
-		status: result.value.status,
-		startedAt: result.value.startedAt,
-	});
+		res.status(201).json({
+			runId: result.value.runId,
+			status: result.value.status,
+			startedAt: result.value.startedAt,
+		});
+	} catch (error) {
+		console.error("[Execution] Start error:", error);
+		res.status(500).json({ error: "Failed to start execution" });
+	}
 });
 
 /**

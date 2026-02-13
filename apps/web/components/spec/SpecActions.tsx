@@ -71,16 +71,18 @@ export function SpecActions({
 						type="button"
 						className="rounded border border-[--border-bright] px-3 py-1 text-xs font-medium text-[--text-secondary] transition-colors hover:bg-[--bg-tertiary] hover:text-[--text-primary] disabled:opacity-50"
 					>
-						Regenerate
+						{specId ? "Regenerate" : "Generate"}
 					</button>
-					<button
-						onClick={onAccept}
-						disabled={disabled}
-						type="button"
-						className="rounded border border-[--accent] px-3 py-1 text-xs font-medium text-blue-400 transition-colors hover:bg-[--accent]/10 disabled:opacity-50"
-					>
-						Accept
-					</button>
+					{specId && (
+						<button
+							onClick={onAccept}
+							disabled={disabled}
+							type="button"
+							className="rounded border border-[--accent] px-3 py-1 text-xs font-medium text-blue-400 transition-colors hover:bg-[--accent]/10 disabled:opacity-50"
+						>
+							Accept
+						</button>
+					)}
 				</>
 			)}
 			{status === SpecStatus.Accepted && (

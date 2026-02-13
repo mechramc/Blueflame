@@ -6,7 +6,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useState } from "react";
 
 export default function Home() {
-	const { projects, isLoading, error, createProject } = useProjects();
+	const { projects, isLoading, error, createProject, deleteProject } = useProjects();
 	const [dialogOpen, setDialogOpen] = useState(false);
 
 	return (
@@ -75,7 +75,7 @@ export default function Home() {
 				{!isLoading && projects.length > 0 && (
 					<div className="space-y-3">
 						{projects.map((project) => (
-							<ProjectCard key={project.id} project={project} />
+							<ProjectCard key={project.id} project={project} onDelete={deleteProject} />
 						))}
 					</div>
 				)}

@@ -122,7 +122,7 @@ export function onBudgetAlert(callback: BudgetAlertCallback): void {
 /**
  * Start execution of an authorized plan.
  */
-export function startExecution(plan: TaskPlan, lock: PlanLock): Result<RunState> {
+export async function startExecution(plan: TaskPlan, lock: PlanLock): Promise<Result<RunState>> {
 	if (runs.has(plan.runId)) {
 		return { ok: false, error: new Error(`Run ${plan.runId} already exists`) };
 	}
@@ -162,6 +162,12 @@ export function startExecution(plan: TaskPlan, lock: PlanLock): Result<RunState>
 		projectId: plan.projectId,
 	}).catch(() => {});
 	notifyStatusChange(plan.runId, RunStatus.Executing);
+
+	// Auto-advance: kick off the first wave of ready tasks
+	const waveResult = await executeNextWave(plan.runId);
+	if (!waveResult.ok) {
+		console.error("[Orchestrator] First wave failed:", waveResult.error.message);
+	}
 
 	return { ok: true, value: runState };
 }

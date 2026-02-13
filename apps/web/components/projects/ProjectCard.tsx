@@ -2,9 +2,29 @@
 
 import type { Project } from "@blueflame/shared";
 import Link from "next/link";
+import { useState } from "react";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 
-export function ProjectCard({ project }: { project: Project }) {
+interface ProjectCardProps {
+	project: Project;
+	onDelete?: (projectId: string) => Promise<void>;
+}
+
+export function ProjectCard({ project, onDelete }: ProjectCardProps) {
+	const [confirmDelete, setConfirmDelete] = useState(false);
+	const [deleting, setDeleting] = useState(false);
+
+	async function handleDelete() {
+		if (!onDelete) return;
+		setDeleting(true);
+		try {
+			await onDelete(project.id);
+		} catch {
+			setDeleting(false);
+			setConfirmDelete(false);
+		}
+	}
+
 	return (
 		<div className="rounded border border-[--border] bg-[--bg-secondary] p-4 hover:border-[--border-bright] transition-colors group relative overflow-hidden">
 			<div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[--accent]" />
@@ -26,7 +46,7 @@ export function ProjectCard({ project }: { project: Project }) {
 						</div>
 					</div>
 				</div>
-				<div className="mt-4 flex flex-wrap gap-2">
+				<div className="mt-4 flex flex-wrap items-center gap-2">
 					<Link
 						href={`/project/${project.id}`}
 						className="inline-flex items-center gap-1.5 rounded border border-[--accent] bg-[--accent]/10 px-3 py-1.5 text-xs font-medium text-blue-400 hover:bg-[--accent]/20 transition-colors"
@@ -39,6 +59,39 @@ export function ProjectCard({ project }: { project: Project }) {
 					>
 						Failure Intelligence
 					</Link>
+
+					{onDelete && (
+						<div className="ml-auto">
+							{confirmDelete ? (
+								<span className="inline-flex items-center gap-1.5">
+									<span className="text-xs text-red-400">Delete?</span>
+									<button
+										type="button"
+										disabled={deleting}
+										onClick={handleDelete}
+										className="rounded border border-red-500/50 bg-red-500/10 px-2 py-1 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+									>
+										{deleting ? "Deleting..." : "Yes"}
+									</button>
+									<button
+										type="button"
+										onClick={() => setConfirmDelete(false)}
+										className="rounded border border-[--border-bright] px-2 py-1 text-xs font-medium text-[--text-secondary] hover:bg-[--bg-tertiary] transition-colors"
+									>
+										No
+									</button>
+								</span>
+							) : (
+								<button
+									type="button"
+									onClick={() => setConfirmDelete(true)}
+									className="rounded border border-[--border] px-2 py-1 text-xs font-medium text-[--text-muted] hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+								>
+									Delete
+								</button>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

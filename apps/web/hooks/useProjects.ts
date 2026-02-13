@@ -3,7 +3,7 @@
 import type { Project } from "@blueflame/shared";
 import { useCallback, useEffect, useState } from "react";
 
-import { apiGet, apiPost } from "@/lib/api-client";
+import { apiDelete, apiGet, apiPost } from "@/lib/api-client";
 
 interface UseProjectsResult {
 	projects: Project[];
@@ -11,6 +11,7 @@ interface UseProjectsResult {
 	error: string | null;
 	refresh: () => Promise<void>;
 	createProject: (name: string, description: string) => Promise<Project>;
+	deleteProject: (projectId: string) => Promise<void>;
 }
 
 export function useProjects(): UseProjectsResult {
@@ -44,5 +45,13 @@ export function useProjects(): UseProjectsResult {
 		[refresh],
 	);
 
-	return { projects, isLoading, error, refresh, createProject };
+	const deleteProject = useCallback(
+		async (projectId: string): Promise<void> => {
+			await apiDelete(`/api/projects/${projectId}`);
+			await refresh();
+		},
+		[refresh],
+	);
+
+	return { projects, isLoading, error, refresh, createProject, deleteProject };
 }

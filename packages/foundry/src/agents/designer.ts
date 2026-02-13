@@ -80,7 +80,7 @@ export async function streamDesignerResponse(
 			messages,
 			stream: true,
 			temperature: 0.7,
-			max_tokens: 1024,
+			max_tokens: 4096,
 		});
 
 		let fullResponse = "";
