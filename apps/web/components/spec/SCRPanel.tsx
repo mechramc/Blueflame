@@ -54,7 +54,7 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 			return;
 		}
 		if (editedContent === frozenContent) {
-			setError("No changes detected — modify the spec before submitting.");
+			setError("No changes detected — you must edit the spec YAML content in the textarea above before submitting an SCR. If you want to execute the spec as-is, use the Generate Plan button in the editor toolbar instead.");
 			return;
 		}
 
@@ -187,28 +187,33 @@ function IdleView({
 }: { onStartEdit: () => void; onClose?: () => void }) {
 	return (
 		<div className="px-4 py-3 space-y-2">
-			<div className="flex items-center justify-between">
-				<p className="text-xs text-[--text-muted]">
-					Modify the frozen spec content below and provide a reason for the change.
-				</p>
-				<div className="flex items-center gap-2 shrink-0">
+			<p className="text-xs font-medium text-amber-400">
+				Spec Change Request (SCR)
+			</p>
+			<p className="text-xs text-[--text-muted]">
+				This is for <strong>modifying the frozen spec</strong> (e.g. adding/changing criteria).
+				You will edit the spec YAML, provide a reason, then review the diff before approval.
+			</p>
+			<p className="text-xs text-[--text-muted]">
+				To <strong>execute the current spec as-is</strong>, use the <strong>Generate Plan</strong> button in the editor toolbar above.
+			</p>
+			<div className="flex items-center gap-2">
+				<button
+					type="button"
+					onClick={onStartEdit}
+					className="px-3 py-1.5 text-xs font-medium rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors"
+				>
+					Edit Frozen Spec
+				</button>
+				{onClose && (
 					<button
 						type="button"
-						onClick={onStartEdit}
-						className="px-3 py-1.5 text-xs font-medium rounded bg-[--accent] text-white hover:opacity-90 transition-opacity"
+						onClick={onClose}
+						className="px-3 py-1.5 text-xs font-medium rounded border border-[--border] text-[--text-muted] hover:bg-[--bg-tertiary]"
 					>
-						Edit Spec
+						Back
 					</button>
-					{onClose && (
-						<button
-							type="button"
-							onClick={onClose}
-							className="px-3 py-1.5 text-xs font-medium rounded border border-[--border] text-[--text-muted] hover:bg-[--bg-tertiary]"
-						>
-							Back
-						</button>
-					)}
-				</div>
+				)}
 			</div>
 		</div>
 	);
@@ -246,14 +251,14 @@ function EditingView({
 				/>
 			</label>
 			<label className="block">
-				<span className="text-xs font-medium text-[--text-secondary] block mb-1">
-					Modified spec content
+				<span className="text-xs font-medium text-amber-400 block mb-1">
+					Edit the spec YAML below (changes are required to submit)
 				</span>
 				<textarea
 					value={editedContent}
 					onChange={(e) => onContentChange(e.target.value)}
 					rows={8}
-					className="w-full px-3 py-2 text-xs font-mono bg-[--bg-secondary] border border-[--border] rounded text-[--text-primary] resize-y"
+					className="w-full px-3 py-2 text-xs font-mono bg-[--bg-secondary] border border-amber-500/30 rounded text-[--text-primary] resize-y focus:border-amber-500 focus:outline-none"
 				/>
 			</label>
 			<div className="flex gap-2 justify-end">

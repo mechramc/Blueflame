@@ -64,7 +64,7 @@ export function DevAuthProvider({ children }: { children: ReactNode }) {
 	return (
 		<DevAuthContext.Provider value={{ devRole, setDevRole, devUser }}>
 			{/* Dev mode banner */}
-			<div className="sticky top-0 z-50 flex items-center justify-between bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5">
+			<div className="flex items-center justify-between bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5">
 				<span className="text-xs font-medium text-amber-400">
 					Dev Mode — No Entra ID configured
 				</span>

@@ -251,6 +251,11 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 	const spawnedAgents: AgentState[] = [];
 
 	for (const task of readyTasks) {
+		// Re-check interrupt between task spawns in the same wave
+		if (run.interruptRequested) {
+			return pauseRun(runId);
+		}
+
 		// σ-routing: select model based on task sigma estimate
 		const decision = router.route(task.agentRole, task.sigmaEstimate);
 		routingLog.push(decision);
@@ -323,6 +328,15 @@ export async function completeTask(
 			"TASK_COMPLETED",
 			`Builder completed task ${taskId}, handing off to Verifier`,
 		);
+
+		// Check interrupt before spawning Verifier — stop immediately if requested
+		if (run.interruptRequested) {
+			task.status = TaskStatus.Completed;
+			checkpointRun(run);
+			pauseRun(runId);
+			return { ok: true, value: {} };
+		}
+
 		const verifierDecision = router.route(AgentRole.Verifier, task.sigmaEstimate);
 		routingLog.push(verifierDecision);
 		const verifier = await spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
@@ -392,6 +406,14 @@ export async function failTask(
 	// WF3 Fixer Loop: On Verifier failure, spawn Fixer if retries remain
 	const retryCount = run.retryCountByTask[taskId] ?? 0;
 	if (agentRole === AgentRole.Verifier && retryCount < MAX_FIXER_RETRIES) {
+		// Check interrupt before spawning Fixer — stop immediately if requested
+		if (run.interruptRequested) {
+			task.status = TaskStatus.Failed;
+			checkpointRun(run);
+			pauseRun(runId);
+			return { ok: true, value: { fixerSpawned: false } };
+		}
+
 		run.retryCountByTask[taskId] = retryCount + 1;
 
 		// Spawn Fixer agent
