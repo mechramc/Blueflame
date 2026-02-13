@@ -33,6 +33,16 @@
 		}
 	},
 	"files": {
-		"ignore": ["node_modules", "dist", ".next", "coverage", "*.min.js", "infra", ".turbo"]
+		"ignore": [
+			"node_modules",
+			"dist",
+			".next",
+			"coverage",
+			"*.min.js",
+			"infra",
+			".turbo",
+			".claude",
+			".vscode"
+		]
 	}
 }

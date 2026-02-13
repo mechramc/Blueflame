@@ -111,7 +111,9 @@ export async function getHistory(
 /**
  * Get history synchronously from cache (for testing).
  */
-export function getHistorySync(projectId: string): Array<{ role: "user" | "agent"; content: string }> {
+export function getHistorySync(
+	projectId: string,
+): Array<{ role: "user" | "agent"; content: string }> {
 	const conv = getConversationSync(projectId);
 	return conv.messages.map((m) => ({
 		role: m.role,

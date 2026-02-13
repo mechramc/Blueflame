@@ -1,8 +1,8 @@
 "use client";
 
+import { apiPost } from "@/lib/api-client";
 import type { SpecStatus } from "@blueflame/shared";
 import { useCallback, useEffect, useState } from "react";
-import { apiPost } from "@/lib/api-client";
 import { WorkflowProgressBar } from "./WorkflowProgressBar";
 
 interface ValidationPanelProps {
@@ -69,6 +69,7 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 	}, [specId, specContent]);
 
 	// Auto-validate on content change (debounced)
+	// biome-ignore lint/correctness/useExhaustiveDependencies: specContent triggers runValidation refresh via useCallback
 	useEffect(() => {
 		if (!specId) return;
 
@@ -93,9 +94,7 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 
 			<div className="flex-1 overflow-y-auto p-3 space-y-4">
 				{/* Loading state */}
-				{isValidating && (
-					<div className="text-xs text-[--accent] animate-pulse">Validating...</div>
-				)}
+				{isValidating && <div className="text-xs text-[--accent] animate-pulse">Validating...</div>}
 
 				{/* No spec yet */}
 				{!specId && (
@@ -109,9 +108,7 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 					<div>
 						<div className="flex items-center gap-2 mb-2">
 							<CheckIcon pass={validation.schema.valid} />
-							<span className="text-xs font-medium text-[--text-primary]">
-								Schema Check
-							</span>
+							<span className="text-xs font-medium text-[--text-primary]">Schema Check</span>
 						</div>
 						{validation.schema.valid ? (
 							<p className="text-[10px] text-emerald-400/80 ml-5">YAML structure valid</p>
@@ -132,14 +129,10 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 					<div>
 						<div className="flex items-center gap-2 mb-2">
 							<CheckIcon pass={validation.policy.valid} />
-							<span className="text-xs font-medium text-[--text-primary]">
-								Policy Check
-							</span>
+							<span className="text-xs font-medium text-[--text-primary]">Policy Check</span>
 						</div>
 						{validation.policy.violations.length === 0 ? (
-							<p className="text-[10px] text-emerald-400/80 ml-5">
-								All policies satisfied
-							</p>
+							<p className="text-[10px] text-emerald-400/80 ml-5">All policies satisfied</p>
 						) : (
 							<ul className="ml-5 space-y-1">
 								{validation.policy.violations.map((v) => (
@@ -162,9 +155,7 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 					<div>
 						<div className="flex items-center gap-2 mb-2">
 							<span className="text-xs text-[--accent]">$</span>
-							<span className="text-xs font-medium text-[--text-primary]">
-								Budget Estimate
-							</span>
+							<span className="text-xs font-medium text-[--text-primary]">Budget Estimate</span>
 						</div>
 						<div className="ml-5 space-y-1">
 							<div className="flex justify-between text-[10px]">
@@ -181,9 +172,7 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 							</div>
 							<div className="flex justify-between text-[10px]">
 								<span className="text-[--text-muted]">Model tier</span>
-								<span className="text-[--text-secondary]">
-									{validation.budget.modelTier}
-								</span>
+								<span className="text-[--text-secondary]">{validation.budget.modelTier}</span>
 							</div>
 						</div>
 					</div>

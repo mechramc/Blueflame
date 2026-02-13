@@ -7,7 +7,11 @@
 import type { NormalizedFailure, RootCauseAnalysis } from "@blueflame/shared";
 import { Router } from "express";
 import { db } from "../db.js";
-import { createHealingProject, getFailureClusters, shouldAutoHeal } from "../services/healing-engine.js";
+import {
+	createHealingProject,
+	getFailureClusters,
+	shouldAutoHeal,
+} from "../services/healing-engine.js";
 import {
 	attachRootCause,
 	authorizeRemediation,
@@ -230,11 +234,14 @@ remediationRouter.post("/:remediationId/auto-heal", async (req, res) => {
 
 	try {
 		// Load failures associated with this remediation's run
-		const failures = await db.failures.findByProject(rem.projectId) as unknown as NormalizedFailure[];
+		const failures = (await db.failures.findByProject(
+			rem.projectId,
+		)) as unknown as NormalizedFailure[];
 
 		if (!shouldAutoHeal(failures)) {
 			res.status(422).json({
-				error: "Auto-heal threshold not met — requires 3+ similar failures or infrastructure-level issues",
+				error:
+					"Auto-heal threshold not met — requires 3+ similar failures or infrastructure-level issues",
 				failureCount: failures.length,
 				clusters: await getFailureClusters(rem.projectId),
 			});
@@ -252,4 +259,3 @@ remediationRouter.post("/:remediationId/auto-heal", async (req, res) => {
 		res.status(500).json({ error: "Auto-heal failed" });
 	}
 });
-

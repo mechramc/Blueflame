@@ -25,9 +25,7 @@ const UpdateProjectSchema = z.object({
 /** GET /api/projects — list all projects */
 router.get("/", async (req, res) => {
 	const search = req.query.q as string | undefined;
-	const projects = search
-		? await db.projects.search(search)
-		: await db.projects.findAll();
+	const projects = search ? await db.projects.search(search) : await db.projects.findAll();
 	res.json({ projects });
 });
 

@@ -64,7 +64,10 @@ export interface AuditQueryFilters {
 /**
  * Query audit log entries with optional filters.
  */
-export function queryAuditLog(filters?: AuditQueryFilters): { entries: AuditLogEntry[]; total: number } {
+export function queryAuditLog(filters?: AuditQueryFilters): {
+	entries: AuditLogEntry[];
+	total: number;
+} {
 	let entries = [...memoryBuffer];
 
 	if (filters?.eventType) {

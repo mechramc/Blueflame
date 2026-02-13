@@ -76,10 +76,7 @@ export function validateSpecSchema(content: string): SchemaCheckResult {
 	// Check acceptance_criteria is an array
 	if ("acceptance_criteria" in parsed && !Array.isArray(parsed.acceptance_criteria)) {
 		errors.push("acceptance_criteria must be an array");
-	} else if (
-		Array.isArray(parsed.acceptance_criteria) &&
-		parsed.acceptance_criteria.length === 0
-	) {
+	} else if (Array.isArray(parsed.acceptance_criteria) && parsed.acceptance_criteria.length === 0) {
 		errors.push("acceptance_criteria must not be empty");
 	}
 
@@ -107,11 +104,19 @@ export function validateSpecPolicy(
 	try {
 		parsed = yamlParse(content) as Record<string, unknown>;
 	} catch {
-		return { valid: false, violations: [{ rule: "PARSE", message: "Cannot parse YAML for policy check", severity: "error" }] };
+		return {
+			valid: false,
+			violations: [
+				{ rule: "PARSE", message: "Cannot parse YAML for policy check", severity: "error" },
+			],
+		};
 	}
 
 	if (!parsed || typeof parsed !== "object") {
-		return { valid: false, violations: [{ rule: "FORMAT", message: "Spec must be a YAML object", severity: "error" }] };
+		return {
+			valid: false,
+			violations: [{ rule: "FORMAT", message: "Spec must be a YAML object", severity: "error" }],
+		};
 	}
 
 	// Policy: Title must be descriptive (> 5 chars)
@@ -133,7 +138,10 @@ export function validateSpecPolicy(
 	}
 
 	// Policy: Must have definition_of_done
-	if (!parsed.definition_of_done || (typeof parsed.definition_of_done === "string" && parsed.definition_of_done.trim().length === 0)) {
+	if (
+		!parsed.definition_of_done ||
+		(typeof parsed.definition_of_done === "string" && parsed.definition_of_done.trim().length === 0)
+	) {
 		violations.push({
 			rule: "DEFINITION_OF_DONE",
 			message: "Spec must include a definition of done",
@@ -144,7 +152,9 @@ export function validateSpecPolicy(
 	// Policy: Check against project-level constraints
 	if (projectConstraints && projectConstraints.length > 0) {
 		const constraintBlock = parsed.constraints as Record<string, unknown> | undefined;
-		const mustConstraints = Array.isArray(constraintBlock?.must) ? constraintBlock.must as string[] : [];
+		const mustConstraints = Array.isArray(constraintBlock?.must)
+			? (constraintBlock.must as string[])
+			: [];
 		const allConstraintText = mustConstraints.join(" ").toLowerCase();
 
 		for (const required of projectConstraints) {
@@ -179,7 +189,9 @@ export function estimateSpecBudget(content: string): BudgetEstimate {
 
 	// Estimate task count from deliverables + acceptance criteria
 	const deliverables = Array.isArray(parsed.deliverables) ? parsed.deliverables.length : 0;
-	const criteria = Array.isArray(parsed.acceptance_criteria) ? parsed.acceptance_criteria.length : 0;
+	const criteria = Array.isArray(parsed.acceptance_criteria)
+		? parsed.acceptance_criteria.length
+		: 0;
 
 	// Rough estimate: each deliverable = ~2 tasks (build + verify), each criterion = ~1 verification task
 	const taskCount = deliverables * 2 + criteria;
@@ -188,7 +200,12 @@ export function estimateSpecBudget(content: string): BudgetEstimate {
 	const estimatedCost = taskCount * 0.05;
 
 	// Model tier based on complexity
-	const modelTier = taskCount > 20 ? "high (o1/opus)" : taskCount > 10 ? "medium (gpt-4o/sonnet)" : "standard (gpt-4o-mini/haiku)";
+	const modelTier =
+		taskCount > 20
+			? "high (o1/opus)"
+			: taskCount > 10
+				? "medium (gpt-4o/sonnet)"
+				: "standard (gpt-4o-mini/haiku)";
 
 	return { estimatedCost, taskCount, modelTier };
 }

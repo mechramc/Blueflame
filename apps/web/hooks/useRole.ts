@@ -46,8 +46,7 @@ export function useRole(): UseRoleResult {
 			return {
 				role,
 				roles: [role],
-				hasMinimumRole: (minimumRole: UserRole) =>
-					roleLevel(role) >= roleLevel(minimumRole),
+				hasMinimumRole: (minimumRole: UserRole) => roleLevel(role) >= roleLevel(minimumRole),
 				isAuthenticated: true,
 				userName: devAuth.devUser.name,
 			};

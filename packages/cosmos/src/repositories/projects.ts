@@ -24,7 +24,8 @@ export class ProjectsRepository extends Repository<Project & { id: string }> {
 	/** Search projects by name or description */
 	async search(query: string): Promise<Project[]> {
 		return this.queryAll({
-			query: "SELECT * FROM c WHERE CONTAINS(LOWER(c.name), @q) OR CONTAINS(LOWER(c.description), @q) ORDER BY c.lastActivityAt DESC",
+			query:
+				"SELECT * FROM c WHERE CONTAINS(LOWER(c.name), @q) OR CONTAINS(LOWER(c.description), @q) ORDER BY c.lastActivityAt DESC",
 			parameters: [{ name: "@q", value: query.toLowerCase() }],
 		});
 	}

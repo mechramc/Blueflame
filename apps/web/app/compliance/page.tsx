@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { apiGet } from "@/lib/api-client";
 import type { AuditLogEntry } from "@blueflame/shared";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Compliance Dashboard — audit log viewer with filters and CSV export.

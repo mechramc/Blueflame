@@ -21,6 +21,7 @@ RUN npm ci --ignore-scripts
 COPY packages/shared/ packages/shared/
 COPY packages/cosmos/ packages/cosmos/
 COPY packages/foundry/ packages/foundry/
+COPY packages/github-app/ packages/github-app/
 COPY apps/api/ apps/api/
 
 # Build all packages (turbo handles dependency order)
@@ -52,6 +53,7 @@ COPY --from=builder /app/apps/api/dist/ apps/api/dist/
 COPY --from=builder /app/packages/shared/dist/ packages/shared/dist/
 COPY --from=builder /app/packages/cosmos/dist/ packages/cosmos/dist/
 COPY --from=builder /app/packages/foundry/dist/ packages/foundry/dist/
+COPY --from=builder /app/packages/github-app/dist/ packages/github-app/dist/
 
 EXPOSE 4000
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { useProjects } from "@/hooks/useProjects";
+import { useState } from "react";
 
 export default function Home() {
 	const { projects, isLoading, error, createProject } = useProjects();
@@ -48,7 +48,9 @@ export default function Home() {
 				{error && (
 					<div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-center">
 						<p className="text-sm text-red-400">{error}</p>
-						<p className="mt-1 text-xs text-[--text-muted]">Is the API running? Start it with npm run dev in apps/api</p>
+						<p className="mt-1 text-xs text-[--text-muted]">
+							Is the API running? Start it with npm run dev in apps/api
+						</p>
 					</div>
 				)}
 

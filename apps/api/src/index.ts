@@ -11,9 +11,9 @@ import express from "express";
 
 // Initialize Application Insights (no-op if connection string not set)
 initTelemetry();
+import { authenticate, isDevMode } from "./middleware/auth.js";
 import { chatRouter } from "./routes/chat.js";
 import { createHub } from "./signalr/hub.js";
-import { authenticate, isDevMode } from "./middleware/auth.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -47,16 +47,16 @@ import { authorizeRouter } from "./routes/authorize.js";
 import { budgetRouter } from "./routes/budget.js";
 import { chargebackRouter } from "./routes/chargeback.js";
 import { complianceRouter } from "./routes/compliance.js";
+import { deltaRouter } from "./routes/delta.js";
 import { demoSeedRouter } from "./routes/demo-seed.js";
 import { executionRouter } from "./routes/execution.js";
 import { failuresRouter } from "./routes/failures.js";
+import { githubActionsRouter } from "./routes/github-actions.js";
+import { knowledgeRouter } from "./routes/knowledge.js";
 import { plansRouter } from "./routes/plans.js";
 import { projectsRouter } from "./routes/projects.js";
 import { remediationRouter } from "./routes/remediation.js";
 import { specsRouter } from "./routes/specs.js";
-import { deltaRouter } from "./routes/delta.js";
-import { githubActionsRouter } from "./routes/github-actions.js";
-import { knowledgeRouter } from "./routes/knowledge.js";
 import { adoWebhookRouter } from "./webhooks/ado.js";
 import { webhookRouter } from "./webhooks/github.js";
 

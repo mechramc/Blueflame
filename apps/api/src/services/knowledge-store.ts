@@ -95,14 +95,20 @@ export async function findSimilarPatterns(context: string, limit = 10): Promise<
 	await ensureCacheLoaded();
 
 	const contextWords = new Set(
-		context.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
+		context
+			.toLowerCase()
+			.split(/\s+/)
+			.filter((w) => w.length > 2),
 	);
 
 	const scored: Array<{ entry: PatternEntry; score: number }> = [];
 
 	for (const entry of patternCache.values()) {
 		const entryWords = new Set(
-			`${entry.pattern} ${entry.context}`.toLowerCase().split(/\s+/).filter((w) => w.length > 2),
+			`${entry.pattern} ${entry.context}`
+				.toLowerCase()
+				.split(/\s+/)
+				.filter((w) => w.length > 2),
 		);
 
 		// Calculate word overlap score
@@ -130,9 +136,7 @@ export async function findSimilarPatterns(context: string, limit = 10): Promise<
 export async function getTopPatterns(limit = 20): Promise<PatternEntry[]> {
 	await ensureCacheLoaded();
 
-	return [...patternCache.values()]
-		.sort((a, b) => b.frequency - a.frequency)
-		.slice(0, limit);
+	return [...patternCache.values()].sort((a, b) => b.frequency - a.frequency).slice(0, limit);
 }
 
 /**
@@ -161,9 +165,10 @@ export async function extractPatternsFromRun(params: {
 			const pattern = await recordPattern({
 				pattern: task.title,
 				context: `Task ${task.id} (${task.agentRole ?? "unknown"}) ${task.status.toLowerCase()} in project execution`,
-				resolution: task.status === "COMPLETED"
-					? `Successfully completed via ${task.agentRole ?? "agent"}`
-					: `Failed — requires investigation or fixer loop`,
+				resolution:
+					task.status === "COMPLETED"
+						? `Successfully completed via ${task.agentRole ?? "agent"}`
+						: "Failed — requires investigation or fixer loop",
 				projectId: params.projectId,
 				source,
 			});

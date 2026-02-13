@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api-client";
 import type { ChargebackEntry } from "@blueflame/shared";
+import { useEffect, useState } from "react";
 
 /**
  * Chargeback Reporting Dashboard — cost breakdown by team, project, agent role, model tier.
@@ -87,9 +87,7 @@ export default function ChargebackPage() {
 				</div>
 				<div className="rounded border border-[--border] bg-[--bg-secondary] p-4">
 					<div className="text-xs text-[--text-muted] mb-1">Cost Pools</div>
-					<div className="text-2xl font-bold font-mono text-[--text-primary]">
-						{entries.length}
-					</div>
+					<div className="text-2xl font-bold font-mono text-[--text-primary]">{entries.length}</div>
 				</div>
 			</div>
 

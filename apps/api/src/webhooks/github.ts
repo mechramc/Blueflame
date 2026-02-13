@@ -12,7 +12,10 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { logAuditEvent } from "../services/audit-logger.js";
-import type { GitHubCheckRunPayload, GitHubWorkflowRunPayload } from "../services/failure-normalizer.js";
+import type {
+	GitHubCheckRunPayload,
+	GitHubWorkflowRunPayload,
+} from "../services/failure-normalizer.js";
 import { normalizeCheckRun, normalizeWorkflowRun } from "../services/failure-normalizer.js";
 import { verifyWebhookSignature } from "./verify-signature.js";
 
@@ -114,13 +117,16 @@ function handleWorkflowRunCompleted(payload: Record<string, unknown>): void {
 
 	// Only store failures (not successful runs)
 	if (conclusion !== "success") {
-		const normalized = normalizeWorkflowRun(
-			payload as unknown as GitHubWorkflowRunPayload,
-			{ runId: `gh-${ghRunId}`, projectId: "github-ingest" },
-		);
+		const normalized = normalizeWorkflowRun(payload as unknown as GitHubWorkflowRunPayload, {
+			runId: `gh-${ghRunId}`,
+			projectId: "github-ingest",
+		});
 
 		db.failures
-			.create(normalized as unknown as import("@blueflame/shared").NormalizedFailure, normalized.projectId)
+			.create(
+				normalized as unknown as import("@blueflame/shared").NormalizedFailure,
+				normalized.projectId,
+			)
 			.then(() => {
 				console.log(`[Webhook] Stored failure ${normalized.id} from workflow_run #${ghRunId}`);
 			})
@@ -151,13 +157,16 @@ function handleCheckRunCompleted(payload: Record<string, unknown>): void {
 
 	// Only store failures
 	if (conclusion !== "success" && conclusion !== "neutral" && conclusion !== "skipped") {
-		const normalized = normalizeCheckRun(
-			payload as unknown as GitHubCheckRunPayload,
-			{ runId: `gh-check-${checkId}`, projectId: "github-ingest" },
-		);
+		const normalized = normalizeCheckRun(payload as unknown as GitHubCheckRunPayload, {
+			runId: `gh-check-${checkId}`,
+			projectId: "github-ingest",
+		});
 
 		db.failures
-			.create(normalized as unknown as import("@blueflame/shared").NormalizedFailure, normalized.projectId)
+			.create(
+				normalized as unknown as import("@blueflame/shared").NormalizedFailure,
+				normalized.projectId,
+			)
 			.then(() => {
 				console.log(`[Webhook] Stored failure ${normalized.id} from check_run ${name}`);
 			})
@@ -178,7 +187,7 @@ function handlePRReview(payload: Record<string, unknown>): void {
 
 	logAuditEvent({
 		eventType: "GOVERNANCE",
-		actor: (review.user as Record<string, unknown>)?.login as string ?? "unknown",
+		actor: ((review.user as Record<string, unknown>)?.login as string) ?? "unknown",
 		action: "pr-review",
 		resource: `PR #${prNumber}`,
 		outcome: state === "approved" ? "ALLOWED" : "DENIED",

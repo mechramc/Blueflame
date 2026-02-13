@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { isDevMode } from "@/lib/api-client";
+import type { ReactNode } from "react";
 import { AuthProvider } from "./AuthProvider";
 import { DevAuthProvider } from "./DevAuthProvider";
 

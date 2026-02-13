@@ -50,8 +50,16 @@ export function clusterFailures(failures: NormalizedFailure[]): FailureCluster[]
  */
 function isInfrastructureFailure(pattern: string): boolean {
 	const infraPatterns = [
-		"timeout", "connection", "oom", "disk", "permission",
-		"quota", "rate-limit", "dns", "certificate", "auth",
+		"timeout",
+		"connection",
+		"oom",
+		"disk",
+		"permission",
+		"quota",
+		"rate-limit",
+		"dns",
+		"certificate",
+		"auth",
 	];
 	const lower = pattern.toLowerCase();
 	return infraPatterns.some((p) => lower.includes(p));

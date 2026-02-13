@@ -4,7 +4,6 @@
  * Trigger workflows and list runs via @blueflame/github-app.
  */
 
-import { Router } from "express";
 import {
 	type TriggerWorkflowParams,
 	createOctokitClient,
@@ -12,6 +11,7 @@ import {
 	getWorkflowRuns,
 	triggerWorkflow,
 } from "@blueflame/github-app";
+import { Router } from "express";
 import { Octokit } from "octokit";
 
 export const githubActionsRouter = Router();

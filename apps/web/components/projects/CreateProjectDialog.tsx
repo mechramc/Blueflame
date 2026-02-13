@@ -43,7 +43,10 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
 				<h2 className="text-lg font-semibold text-[--text-primary] mb-4">New Project</h2>
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label htmlFor="project-name" className="block text-xs font-medium text-[--text-secondary] mb-1">
+						<label
+							htmlFor="project-name"
+							className="block text-xs font-medium text-[--text-secondary] mb-1"
+						>
 							Project Name
 						</label>
 						<input
@@ -53,12 +56,14 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
 							onChange={(e) => setName(e.target.value)}
 							placeholder="e.g., Backend Refactor v3"
 							className="w-full rounded border border-[--border] bg-[--bg-primary] px-3 py-2 text-sm text-[--text-primary] placeholder:text-[--text-muted] focus:border-[--accent] focus:outline-none"
-							autoFocus
 							required
 						/>
 					</div>
 					<div>
-						<label htmlFor="project-desc" className="block text-xs font-medium text-[--text-secondary] mb-1">
+						<label
+							htmlFor="project-desc"
+							className="block text-xs font-medium text-[--text-secondary] mb-1"
+						>
 							Description
 						</label>
 						<textarea
