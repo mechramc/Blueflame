@@ -70,5 +70,23 @@ export {
 	SecurityConstraintSubtype,
 } from "./security-constraints.js";
 
+// Action events
+export type { ActionEvent } from "./action-event.js";
+
+// Audit
+export type { AuditEventType, AuditLogEntry, AuditOutcome } from "./audit.js";
+
+// Chargeback
+export type { ChargebackEntry } from "./chargeback.js";
+
+// Pending Fix (WF3 fixer loop)
+export type { PendingFix } from "./pending-fix.js";
+
+// Project
+export type { Project, ProjectStatus } from "./project.js";
+
+// Knowledge (WF7)
+export type { PatternEntry, PatternSource } from "./knowledge.js";
+
 // State machine helpers
 export { RUN_TRANSITIONS } from "./run.js";

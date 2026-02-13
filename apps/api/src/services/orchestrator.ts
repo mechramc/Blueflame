@@ -12,7 +12,7 @@
 
 import { SigmaRouter } from "@blueflame/foundry";
 import type { RoutingDecision } from "@blueflame/foundry";
-import type { AgentState, PlanLock, TaskPlan } from "@blueflame/shared";
+import type { ActionEvent, AgentState, PendingFix, PlanLock, TaskPlan } from "@blueflame/shared";
 import { AgentRole, AgentStatus, RunStatus, TaskStatus } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
 import {
@@ -21,7 +21,11 @@ import {
 	spawnAgent,
 	updateAgentStatus,
 } from "./agent-spawner.js";
+import { logAuditEvent } from "./audit-logger.js";
 import { allTasksTerminal, getReadyTasks, hasFailedTasks } from "./dag-executor.js";
+import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
+import { extractPatternsFromRun } from "./knowledge-store.js";
+import { db } from "../db.js";
 
 /** Shared σ-router instance */
 const router = new SigmaRouter();
@@ -50,10 +54,44 @@ export interface RunState {
 	startedAt: string;
 	completedAt: string | null;
 	interruptRequested: boolean;
+	events: ActionEvent[];
+	pendingFixes: PendingFix[];
+	retryCountByTask: Record<string, number>;
+}
+
+let eventCounter = 0;
+
+function pushEvent(run: RunState, agentId: string, role: string, action: string, detail: string) {
+	eventCounter += 1;
+	run.events.push({
+		id: `evt-${run.runId}-${eventCounter}`,
+		runId: run.runId,
+		timestamp: new Date().toISOString(),
+		agentId,
+		role,
+		action,
+		detail,
+	});
 }
 
 /** In-memory run store — hot state for active runs */
 const runs = new Map<string, RunState>();
+
+/**
+ * Checkpoint run state to Cosmos DB for persistence across restarts.
+ * Stores as a document in the "documents" container.
+ */
+function checkpointRun(run: RunState): void {
+	const doc = {
+		...run,
+		id: `runstate-${run.runId}`,
+		projectId: run.projectId,
+		type: "run-state",
+	};
+	db.documents
+		.upsert(doc as never, run.projectId)
+		.catch((err) => console.error("[orchestrator] Cosmos checkpoint failed:", err));
+}
 
 /** Callback for run status changes (wired to SignalR) */
 export type RunStatusCallback = (runId: string, status: RunStatus) => void;
@@ -99,9 +137,24 @@ export function startExecution(plan: TaskPlan, lock: PlanLock): Result<RunState>
 		startedAt: new Date().toISOString(),
 		completedAt: null,
 		interruptRequested: false,
+		events: [],
+		pendingFixes: [],
+		retryCountByTask: {},
 	};
 
 	runs.set(plan.runId, runState);
+	checkpointRun(runState);
+	pushEvent(runState, "orchestrator", "SYSTEM", "RUN_STARTED", `Execution started for run ${plan.runId}`);
+	logAuditEvent({
+		eventType: "AUTH",
+		actor: "orchestrator",
+		action: "run.start",
+		resource: plan.runId,
+		outcome: "ALLOWED",
+		details: `Execution started with ${plan.tasks.length} tasks`,
+		runId: plan.runId,
+		projectId: plan.projectId,
+	}).catch(() => {});
 	notifyStatusChange(plan.runId, RunStatus.Executing);
 
 	return { ok: true, value: runState };
@@ -155,6 +208,9 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 		// Mark agent as executing
 		await updateAgentStatus(agent.agentId, AgentStatus.Executing);
 
+		pushEvent(run, agent.agentId, task.agentRole, "AGENT_SPAWNED", `${task.agentRole} agent spawned for task ${task.id} (model: ${model})`);
+		pushEvent(run, agent.agentId, task.agentRole, "TASK_STARTED", `Task ${task.id} started`);
+
 		spawnedAgents.push(agent);
 	}
 
@@ -189,21 +245,28 @@ export async function completeTask(
 
 	// A2A handoff: Builder → Verifier (use task's σ for verifier routing)
 	if (task.agentRole === AgentRole.Builder) {
+		pushEvent(run, agentId, AgentRole.Builder, "TASK_COMPLETED", `Builder completed task ${taskId}, handing off to Verifier`);
 		const verifierDecision = router.route(AgentRole.Verifier, task.sigmaEstimate);
 		routingLog.push(verifierDecision);
 		const verifier = await spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
 		await updateAgentStatus(verifier.agentId, AgentStatus.Executing);
+		pushEvent(run, verifier.agentId, AgentRole.Verifier, "AGENT_SPAWNED", `Verifier spawned for task ${taskId}`);
 		return { ok: true, value: { verifierAgent: verifier } };
 	}
 
 	// Non-Builder roles (Verifier, Explainer, Planner) → mark task completed
 	task.status = TaskStatus.Completed;
+	pushEvent(run, agentId, task.agentRole, "TASK_COMPLETED", `Task ${taskId} completed`);
+	checkpointRun(run);
 
 	return { ok: true, value: {} };
 }
 
+/** Max retries for fixer loop */
+const MAX_FIXER_RETRIES = 3;
+
 /**
- * Fail a task.
+ * Fail a task. If it's a Verifier failure and retries remain, spawn a Fixer agent.
  */
 export async function failTask(
 	runId: string,
@@ -211,7 +274,8 @@ export async function failTask(
 	agentId: string,
 	tokensUsed: number,
 	costIncurred: number,
-): Promise<Result<void>> {
+	originalCode?: string,
+): Promise<Result<{ fixerSpawned?: boolean }>> {
 	const run = runs.get(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
@@ -224,7 +288,137 @@ export async function failTask(
 
 	await recordAgentUsage(agentId, tokensUsed, costIncurred);
 	await updateAgentStatus(agentId, AgentStatus.Failed);
+
+	// WF3 Fixer Loop: On Verifier failure, spawn Fixer if retries remain
+	const retryCount = run.retryCountByTask[taskId] ?? 0;
+	if (task.agentRole === AgentRole.Verifier && retryCount < MAX_FIXER_RETRIES) {
+		run.retryCountByTask[taskId] = retryCount + 1;
+
+		// Spawn Fixer agent
+		const fixerDecision = router.route(AgentRole.Builder, task.sigmaEstimate);
+		routingLog.push(fixerDecision);
+		const fixer = await spawnAgent(runId, AgentRole.Builder, taskId, fixerDecision.model);
+		await updateAgentStatus(fixer.agentId, AgentStatus.Executing);
+
+		pushEvent(run, agentId, AgentRole.Verifier, "TASK_FAILED", `Verifier failed task ${taskId} (retry ${retryCount + 1}/${MAX_FIXER_RETRIES})`);
+		pushEvent(run, fixer.agentId, AgentRole.Builder, "AGENT_SPAWNED", `Fixer spawned for task ${taskId} (retry ${retryCount + 1})`);
+
+		// Create pending fix record (fixer output will be filled when fixer completes)
+		const pendingFix: PendingFix = {
+			taskId,
+			fixerId: fixer.agentId,
+			originalCode: originalCode ?? "",
+			fixedCode: "",
+			explanation: "",
+			retryCount: retryCount + 1,
+			createdAt: new Date().toISOString(),
+		};
+		run.pendingFixes.push(pendingFix);
+
+		// Keep task in Running state (waiting for fixer)
+		task.status = TaskStatus.Running;
+		checkpointRun(run);
+
+		return { ok: true, value: { fixerSpawned: true } };
+	}
+
+	// No retries left or non-Verifier role — mark as failed permanently
 	task.status = TaskStatus.Failed;
+	pushEvent(run, agentId, task.agentRole, "TASK_FAILED", `Task ${taskId} failed permanently`);
+	checkpointRun(run);
+
+	return { ok: true, value: { fixerSpawned: false } };
+}
+
+/**
+ * Submit a fixer's proposed fix for human approval.
+ */
+export function submitFix(
+	runId: string,
+	taskId: string,
+	fixerId: string,
+	fixedCode: string,
+	explanation: string,
+): Result<PendingFix> {
+	const run = runs.get(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	const fix = run.pendingFixes.find((f) => f.taskId === taskId && f.fixerId === fixerId);
+	if (!fix) {
+		return { ok: false, error: new Error(`Pending fix not found for task ${taskId}`) };
+	}
+
+	fix.fixedCode = fixedCode;
+	fix.explanation = explanation;
+
+	pushEvent(run, fixerId, AgentRole.Builder, "FIX_PROPOSED", `Fixer proposed fix for task ${taskId}: ${explanation}`);
+	checkpointRun(run);
+
+	return { ok: true, value: fix };
+}
+
+/**
+ * Approve a fixer's proposed fix — re-run Verifier on the fixed code.
+ */
+export async function approveFix(
+	runId: string,
+	taskId: string,
+): Promise<Result<{ verifierAgent: AgentState }>> {
+	const run = runs.get(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	const task = run.plan.tasks.find((t) => t.id === taskId);
+	if (!task) {
+		return { ok: false, error: new Error(`Task not found: ${taskId}`) };
+	}
+
+	// Remove the pending fix
+	const fixIndex = run.pendingFixes.findIndex((f) => f.taskId === taskId);
+	if (fixIndex === -1) {
+		return { ok: false, error: new Error(`No pending fix for task ${taskId}`) };
+	}
+	run.pendingFixes.splice(fixIndex, 1);
+
+	// Re-spawn Verifier
+	const verifierDecision = router.route(AgentRole.Verifier, task.sigmaEstimate);
+	routingLog.push(verifierDecision);
+	const verifier = await spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
+	await updateAgentStatus(verifier.agentId, AgentStatus.Executing);
+
+	pushEvent(run, "human", "HUMAN", "FIX_APPROVED", `Fix approved for task ${taskId}, re-running Verifier`);
+	pushEvent(run, verifier.agentId, AgentRole.Verifier, "AGENT_SPAWNED", `Verifier re-spawned for task ${taskId}`);
+	checkpointRun(run);
+
+	return { ok: true, value: { verifierAgent: verifier } };
+}
+
+/**
+ * Reject a fixer's proposed fix — mark task as permanently failed.
+ */
+export function rejectFix(runId: string, taskId: string): Result<void> {
+	const run = runs.get(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	const task = run.plan.tasks.find((t) => t.id === taskId);
+	if (!task) {
+		return { ok: false, error: new Error(`Task not found: ${taskId}`) };
+	}
+
+	// Remove the pending fix
+	const fixIndex = run.pendingFixes.findIndex((f) => f.taskId === taskId);
+	if (fixIndex !== -1) {
+		run.pendingFixes.splice(fixIndex, 1);
+	}
+
+	task.status = TaskStatus.Failed;
+	pushEvent(run, "human", "HUMAN", "FIX_REJECTED", `Fix rejected for task ${taskId}, marking as failed`);
+	checkpointRun(run);
 
 	return { ok: true, value: undefined };
 }
@@ -247,9 +441,33 @@ export function requestInterrupt(runId: string): Result<void> {
 }
 
 /**
- * Get run state.
+ * Get run state. Falls back to Cosmos on cache miss.
  */
-export function getRun(runId: string): RunState | undefined {
+export async function getRun(runId: string): Promise<RunState | undefined> {
+	const cached = runs.get(runId);
+	if (cached) return cached;
+
+	// Try loading from Cosmos
+	try {
+		const docs = await db.documents.queryAll({
+			query: "SELECT * FROM c WHERE c.id = @id AND c.type = 'run-state'",
+			parameters: [{ name: "@id", value: `runstate-${runId}` }],
+		});
+		if (docs.length > 0) {
+			const run = docs[0] as unknown as RunState;
+			runs.set(runId, run);
+			return run;
+		}
+	} catch {
+		// Cosmos unavailable
+	}
+	return undefined;
+}
+
+/**
+ * Get run state synchronously (cache only, for internal use).
+ */
+export function getRunSync(runId: string): RunState | undefined {
 	return runs.get(runId);
 }
 
@@ -284,6 +502,7 @@ function checkBudget(run: RunState): Result<AgentState[]> {
 			}
 		}
 		run.status = RunStatus.Paused;
+		checkpointRun(run);
 		notifyStatusChange(run.runId, RunStatus.Paused);
 		return { ok: true, value: [] };
 	}
@@ -306,6 +525,7 @@ function pauseRun(runId: string): Result<AgentState[]> {
 
 	run.status = RunStatus.Paused;
 	run.interruptRequested = false;
+	checkpointRun(run);
 	notifyStatusChange(runId, RunStatus.Paused);
 
 	return { ok: true, value: [] };
@@ -318,7 +538,55 @@ function completeRun(run: RunState): void {
 		run.status = RunStatus.Completed;
 	}
 	run.completedAt = new Date().toISOString();
+	checkpointRun(run);
 	notifyStatusChange(run.runId, run.status);
+
+	// WF7: Extract learned patterns from completed tasks
+	extractPatternsFromRun({
+		projectId: run.projectId,
+		tasks: run.plan.tasks.map((t) => ({ id: t.id, title: t.description, status: t.status })),
+		wasSuccessful: run.status === RunStatus.Completed,
+	}).catch((err) =>
+		console.error(`[Orchestrator] WF7 pattern extraction failed for run ${run.runId}:`, err),
+	);
+
+	// WF5: Check for autonomous healing on partial runs with failures
+	if (run.status === RunStatus.Partial) {
+		triggerAutoHealIfNeeded(run).catch((err) =>
+			console.error(`[Orchestrator] Auto-heal check failed for run ${run.runId}:`, err),
+		);
+	}
+}
+
+/**
+ * WF5: Check if systematic failures warrant autonomous healing.
+ * Fires asynchronously after run completion — does not block.
+ */
+async function triggerAutoHealIfNeeded(run: RunState): Promise<void> {
+	try {
+		const failures = await db.failures.findByProject(run.projectId);
+		const normalized = failures as unknown as import("@blueflame/shared").NormalizedFailure[];
+
+		if (shouldAutoHeal(normalized)) {
+			const healingProject = await createHealingProject(normalized, run.projectId);
+			console.log(
+				`[Orchestrator] WF5 auto-heal triggered: created project ${healingProject.id} ` +
+				`from ${normalized.length} failures in project ${run.projectId}`,
+			);
+
+			logAuditEvent({
+				actor: "healing-engine",
+				eventType: "AGENT",
+				action: "auto-heal",
+				resource: healingProject.id,
+				outcome: "ALLOWED",
+				details: `Auto-healing triggered: ${normalized.length} failures → project ${healingProject.id}`,
+				projectId: run.projectId,
+			});
+		}
+	} catch (err) {
+		console.error("[Orchestrator] Auto-heal evaluation error:", err);
+	}
 }
 
 function notifyStatusChange(runId: string, status: RunStatus): void {

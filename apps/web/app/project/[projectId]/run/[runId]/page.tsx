@@ -11,7 +11,9 @@ import {
 import type { ActionEvent } from "@/components/dashboard/ActionStream";
 import type { AgentCardData } from "@/components/dashboard/AgentStatusCard";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import type { BudgetDecision, PlanTask } from "@blueflame/shared";
+import { FixerDiffView } from "@/components/dashboard/FixerDiffView";
+import { apiGet, apiPost } from "@/lib/api-client";
+import type { BudgetDecision, PendingFix, PlanTask } from "@blueflame/shared";
 
 interface RunApiResponse {
 	status: string;
@@ -19,6 +21,7 @@ interface RunApiResponse {
 	agents?: AgentCardData[];
 	events?: ActionEvent[];
 	violation?: ConstraintViolation;
+	pendingFixes?: PendingFix[];
 }
 
 interface BudgetApiResponse {
@@ -42,6 +45,7 @@ export default function RunPage() {
 	const [currentSpend, setCurrentSpend] = useState(0);
 	const [ceiling, setCeiling] = useState(0);
 	const [percentUsed, setPercentUsed] = useState(0);
+	const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
 	const [showPauseModal, setShowPauseModal] = useState(false);
 
 	// Animation states
@@ -57,15 +61,12 @@ export default function RunPage() {
 
 	const fetchStatus = useCallback(async () => {
 		try {
-			const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-			const [runRes, budgetRes] = await Promise.all([
-				fetch(`${apiBase}/api/execution/${runId}`),
-				fetch(`${apiBase}/api/budget/${runId}`),
+			const [data, budgetData] = await Promise.all([
+				apiGet<RunApiResponse>(`/api/execution/${runId}`).catch(() => null),
+				apiGet<BudgetApiResponse>(`/api/budget/${runId}`).catch(() => null),
 			]);
 
-			if (runRes.ok) {
-				const data = (await runRes.json()) as RunApiResponse;
+			if (data) {
 				if (data.plan?.tasks) {
 					// Detect spec changes — tasks whose status changed
 					const changed: string[] = [];
@@ -127,14 +128,16 @@ export default function RunPage() {
 				if (data.violation) {
 					setViolation(data.violation);
 				}
+				if (data.pendingFixes) {
+					setPendingFixes(data.pendingFixes);
+				}
 			}
 
-			if (budgetRes.ok) {
-				const data = (await budgetRes.json()) as BudgetApiResponse;
-				setCurrentSpend(data.currentSpend);
-				setCeiling(data.ceiling);
-				setPercentUsed(data.percentUsed);
-				if (data.pauseTriggered) {
+			if (budgetData) {
+				setCurrentSpend(budgetData.currentSpend);
+				setCeiling(budgetData.ceiling);
+				setPercentUsed(budgetData.percentUsed);
+				if (budgetData.pauseTriggered) {
 					setShowPauseModal(true);
 				}
 			}
@@ -149,22 +152,33 @@ export default function RunPage() {
 		return () => clearInterval(interval);
 	}, [fetchStatus]);
 
+	const handleApproveFix = useCallback(
+		async (taskId: string) => {
+			await apiPost(`/api/execution/${runId}/approve-fix`, { taskId }).catch(() => {});
+			fetchStatus();
+		},
+		[runId, fetchStatus],
+	);
+
+	const handleRejectFix = useCallback(
+		async (taskId: string) => {
+			await apiPost(`/api/execution/${runId}/reject-fix`, { taskId }).catch(() => {});
+			fetchStatus();
+		},
+		[runId, fetchStatus],
+	);
+
 	const handleBudgetDecision = useCallback(
 		async (decision: BudgetDecision, topUpAmount?: number) => {
 			setShowPauseModal(false);
-			const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-			await fetch(`${apiBase}/api/budget/${runId}/decision`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ decision, topUpAmount }),
-			});
+			await apiPost(`/api/budget/${runId}/decision`, { decision, topUpAmount }).catch(() => {});
 			fetchStatus();
 		},
 		[runId, fetchStatus],
 	);
 
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen bg-[--bg-primary]">
 			<DashboardLayout
 				runId={runId}
 				agents={agents}
@@ -178,6 +192,19 @@ export default function RunPage() {
 				recentlyChangedTaskIds={recentlyChangedTaskIds}
 				preservedTaskIds={preservedTaskIds}
 			/>
+			{/* Fixer Diff Views */}
+			{pendingFixes.length > 0 && (
+				<div className="px-6 pb-4 space-y-3">
+					{pendingFixes.map((fix) => (
+						<FixerDiffView
+							key={`${fix.taskId}-${fix.retryCount}`}
+							fix={fix}
+							onApprove={handleApproveFix}
+							onReject={handleRejectFix}
+						/>
+					))}
+				</div>
+			)}
 			{showPauseModal && (
 				<PauseDecisionModal
 					currentSpend={currentSpend}

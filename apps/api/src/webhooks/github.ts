@@ -10,6 +10,10 @@
  */
 
 import { Router } from "express";
+import { db } from "../db.js";
+import { logAuditEvent } from "../services/audit-logger.js";
+import type { GitHubCheckRunPayload, GitHubWorkflowRunPayload } from "../services/failure-normalizer.js";
+import { normalizeCheckRun, normalizeWorkflowRun } from "../services/failure-normalizer.js";
 import { verifyWebhookSignature } from "./verify-signature.js";
 
 export const webhookRouter = Router();
@@ -104,10 +108,35 @@ function handleWorkflowRunCompleted(payload: Record<string, unknown>): void {
 
 	const conclusion = workflowRun.conclusion as string;
 	const headBranch = workflowRun.head_branch as string;
-	const runId = workflowRun.id as number;
+	const ghRunId = workflowRun.id as number;
 
-	// Log for now — orchestrator integration in production
-	console.log(`[Webhook] workflow_run completed: #${runId} on ${headBranch} → ${conclusion}`);
+	console.log(`[Webhook] workflow_run completed: #${ghRunId} on ${headBranch} → ${conclusion}`);
+
+	// Only store failures (not successful runs)
+	if (conclusion !== "success") {
+		const normalized = normalizeWorkflowRun(
+			payload as unknown as GitHubWorkflowRunPayload,
+			{ runId: `gh-${ghRunId}`, projectId: "github-ingest" },
+		);
+
+		db.failures
+			.create(normalized as unknown as import("@blueflame/shared").NormalizedFailure, normalized.projectId)
+			.then(() => {
+				console.log(`[Webhook] Stored failure ${normalized.id} from workflow_run #${ghRunId}`);
+			})
+			.catch((err) => {
+				console.error("[Webhook] Failed to store workflow_run failure:", err);
+			});
+
+		logAuditEvent({
+			eventType: "AGENT",
+			actor: "github-webhook",
+			action: "ingest-failure",
+			resource: `workflow_run/${ghRunId}`,
+			outcome: "ALLOWED",
+			details: `Ingested ${conclusion} workflow_run #${ghRunId} on ${headBranch}`,
+		}).catch(() => {});
+	}
 }
 
 function handleCheckRunCompleted(payload: Record<string, unknown>): void {
@@ -116,8 +145,26 @@ function handleCheckRunCompleted(payload: Record<string, unknown>): void {
 
 	const conclusion = checkRun.conclusion as string;
 	const name = checkRun.name as string;
+	const checkId = checkRun.id as number;
 
 	console.log(`[Webhook] check_run completed: ${name} → ${conclusion}`);
+
+	// Only store failures
+	if (conclusion !== "success" && conclusion !== "neutral" && conclusion !== "skipped") {
+		const normalized = normalizeCheckRun(
+			payload as unknown as GitHubCheckRunPayload,
+			{ runId: `gh-check-${checkId}`, projectId: "github-ingest" },
+		);
+
+		db.failures
+			.create(normalized as unknown as import("@blueflame/shared").NormalizedFailure, normalized.projectId)
+			.then(() => {
+				console.log(`[Webhook] Stored failure ${normalized.id} from check_run ${name}`);
+			})
+			.catch((err) => {
+				console.error("[Webhook] Failed to store check_run failure:", err);
+			});
+	}
 }
 
 function handlePRReview(payload: Record<string, unknown>): void {
@@ -128,4 +175,13 @@ function handlePRReview(payload: Record<string, unknown>): void {
 	const prNumber = (payload.pull_request as Record<string, unknown>)?.number;
 
 	console.log(`[Webhook] PR review: #${prNumber} → ${state}`);
+
+	logAuditEvent({
+		eventType: "GOVERNANCE",
+		actor: (review.user as Record<string, unknown>)?.login as string ?? "unknown",
+		action: "pr-review",
+		resource: `PR #${prNumber}`,
+		outcome: state === "approved" ? "ALLOWED" : "DENIED",
+		details: `PR #${prNumber} review: ${state}`,
+	}).catch(() => {});
 }

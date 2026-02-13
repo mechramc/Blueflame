@@ -56,8 +56,20 @@ export function NavHeader() {
 				</nav>
 			</div>
 
-			{/* Right: connection status */}
-			<div className="flex items-center gap-2">
+			{/* Right: enterprise links + connection status */}
+			<div className="flex items-center gap-3">
+				<nav className="flex items-center gap-0.5 text-xs border-r border-[--border] pr-3 mr-1">
+					<NavItem
+						href="/compliance"
+						label="Compliance"
+						active={pathname === "/compliance"}
+					/>
+					<NavItem
+						href="/chargeback"
+						label="Chargeback"
+						active={pathname === "/chargeback"}
+					/>
+				</nav>
 				<span className="flex items-center gap-1.5 text-[10px] text-[--text-muted]">
 					<span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
 					Connected

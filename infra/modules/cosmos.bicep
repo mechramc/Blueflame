@@ -45,6 +45,8 @@ var containers = [
   { name: 'constraints',  partitionKey: '/projectId' }
   { name: 'documents',    partitionKey: '/projectId' }
   { name: 'failures',     partitionKey: '/projectId' }
+  // Future: migrate to /orgId for multi-tenant and portfolio-level partitioning
+  { name: 'projects',     partitionKey: '/id' }
 ]
 
 resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [

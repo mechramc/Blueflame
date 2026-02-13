@@ -47,6 +47,8 @@ export const CONTAINERS = {
 	constraints: "constraints",
 	documents: "documents",
 	failures: "failures",
+	// Future: migrate to /orgId for multi-tenant and portfolio-level partitioning
+	projects: "projects",
 } as const;
 
 export type ContainerName = (typeof CONTAINERS)[keyof typeof CONTAINERS];

@@ -8,6 +8,7 @@ import { Router } from "express";
 import { getHistory } from "../services/conversation.js";
 import { freezeSpec } from "../services/spec-freeze.js";
 import { acceptSpec, createSpecFromYaml, getLatestSpec } from "../services/spec-generation.js";
+import { validateSpec } from "../services/spec-validation.js";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.post("/generate", async (req, res) => {
 		return;
 	}
 
-	const history = getHistory(projectId);
+	const history = await getHistory(projectId);
 	if (history.length === 0) {
 		res.status(400).json({ error: "No conversation history found for this project" });
 		return;
@@ -88,6 +89,23 @@ router.put("/:specId/freeze", async (req, res) => {
 		return;
 	}
 	res.json({ spec: result.value });
+});
+
+/**
+ * POST /api/specs/:specId/validate
+ * Validates spec content: schema, policy, budget estimate.
+ * Body: { content: string }
+ */
+router.post("/:specId/validate", (req, res) => {
+	const { content } = req.body as { content: string };
+
+	if (!content) {
+		res.status(400).json({ error: "content is required" });
+		return;
+	}
+
+	const result = validateSpec(content);
+	res.json(result);
 });
 
 export const specsRouter = router;

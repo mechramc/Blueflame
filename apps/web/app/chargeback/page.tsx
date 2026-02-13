@@ -1,74 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { apiGet } from "@/lib/api-client";
+import type { ChargebackEntry } from "@blueflame/shared";
+
 /**
  * Chargeback Reporting Dashboard — cost breakdown by team, project, agent role, model tier.
- *
- * Source: Blueflame-Spec-v3-ACAR.md Section 16 (Enterprise Budgeting)
  */
-
-/** Chargeback entry from the API */
-export interface ChargebackDisplayEntry {
-	poolId: string;
-	poolName: string;
-	tier: "ORG" | "TEAM" | "PROJECT";
-	totalSpend: number;
-	taskCount: number;
-	topModels: Array<{ model: string; cost: number }>;
-	topRoles: Array<{ role: string; cost: number }>;
-}
-
-// Demo data
-const DEMO_ENTRIES: ChargebackDisplayEntry[] = [
-	{
-		poolId: "pool-team-1",
-		poolName: "Frontend Team",
-		tier: "TEAM",
-		totalSpend: 245.5,
-		taskCount: 156,
-		topModels: [
-			{ model: "gpt-4o", cost: 150.0 },
-			{ model: "gpt-4o-mini", cost: 65.5 },
-			{ model: "claude-sonnet-4-5", cost: 30.0 },
-		],
-		topRoles: [
-			{ role: "Builder", cost: 180.0 },
-			{ role: "Verifier", cost: 45.5 },
-			{ role: "Explainer", cost: 20.0 },
-		],
-	},
-	{
-		poolId: "pool-team-2",
-		poolName: "Backend Team",
-		tier: "TEAM",
-		totalSpend: 412.75,
-		taskCount: 287,
-		topModels: [
-			{ model: "gpt-4o", cost: 280.0 },
-			{ model: "claude-sonnet-4-5", cost: 82.75 },
-			{ model: "gpt-4o-mini", cost: 50.0 },
-		],
-		topRoles: [
-			{ role: "Builder", cost: 300.0 },
-			{ role: "Verifier", cost: 72.75 },
-			{ role: "Fixer", cost: 40.0 },
-		],
-	},
-	{
-		poolId: "pool-team-3",
-		poolName: "Platform Team",
-		tier: "TEAM",
-		totalSpend: 89.0,
-		taskCount: 45,
-		topModels: [
-			{ model: "gpt-4o-mini", cost: 60.0 },
-			{ model: "gpt-4o", cost: 29.0 },
-		],
-		topRoles: [
-			{ role: "Builder", cost: 55.0 },
-			{ role: "Verifier", cost: 34.0 },
-		],
-	},
-];
 
 function BarChart({ items, max }: { items: Array<{ label: string; value: number }>; max: number }) {
 	return (
@@ -94,8 +32,29 @@ function BarChart({ items, max }: { items: Array<{ label: string; value: number 
 }
 
 export default function ChargebackPage() {
-	const totalSpend = DEMO_ENTRIES.reduce((sum, e) => sum + e.totalSpend, 0);
-	const totalTasks = DEMO_ENTRIES.reduce((sum, e) => sum + e.taskCount, 0);
+	const [entries, setEntries] = useState<ChargebackEntry[]>([]);
+	const [totals, setTotals] = useState({ spend: 0, tasks: 0 });
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		async function fetchData() {
+			setIsLoading(true);
+			try {
+				const data = await apiGet<{
+					entries: ChargebackEntry[];
+					totals: { spend: number; tasks: number };
+				}>("/api/chargeback");
+				setEntries(data.entries);
+				setTotals(data.totals);
+			} catch (err) {
+				setError(err instanceof Error ? err.message : "Failed to load chargeback data");
+			} finally {
+				setIsLoading(false);
+			}
+		}
+		fetchData();
+	}, []);
 
 	return (
 		<div className="max-w-7xl mx-auto p-6">
@@ -106,39 +65,54 @@ export default function ChargebackPage() {
 				</p>
 			</div>
 
+			{error && (
+				<div className="rounded border border-red-500/30 bg-red-500/10 p-3 mb-4">
+					<p className="text-sm text-red-400">{error}</p>
+				</div>
+			)}
+
 			{/* Summary cards */}
 			<div className="grid grid-cols-3 gap-4 mb-6" data-testid="chargeback-summary">
 				<div className="rounded border border-[--border] bg-[--bg-secondary] p-4">
 					<div className="text-xs text-[--text-muted] mb-1">Total Spend</div>
 					<div className="text-2xl font-bold font-mono text-emerald-400">
-						${totalSpend.toFixed(2)}
+						${totals.spend.toFixed(2)}
 					</div>
 				</div>
 				<div className="rounded border border-[--border] bg-[--bg-secondary] p-4">
 					<div className="text-xs text-[--text-muted] mb-1">Total Tasks</div>
 					<div className="text-2xl font-bold font-mono text-[--text-primary]">
-						{totalTasks.toLocaleString()}
+						{totals.tasks.toLocaleString()}
 					</div>
 				</div>
 				<div className="rounded border border-[--border] bg-[--bg-secondary] p-4">
-					<div className="text-xs text-[--text-muted] mb-1">Teams</div>
+					<div className="text-xs text-[--text-muted] mb-1">Cost Pools</div>
 					<div className="text-2xl font-bold font-mono text-[--text-primary]">
-						{DEMO_ENTRIES.length}
+						{entries.length}
 					</div>
 				</div>
 			</div>
 
+			{/* Empty state */}
+			{!isLoading && entries.length === 0 && (
+				<div className="rounded border border-[--border] bg-[--bg-secondary] p-12 text-center">
+					<p className="text-sm text-[--text-secondary]">No cost data yet</p>
+					<p className="text-xs text-[--text-muted] mt-1">
+						Cost data will appear after running agents
+					</p>
+				</div>
+			)}
+
 			{/* Team cards */}
 			<div className="grid gap-4" data-testid="chargeback-teams">
-				{DEMO_ENTRIES.map((entry) => {
-					const maxModelCost = Math.max(...entry.topModels.map((m) => m.cost));
-					const maxRoleCost = Math.max(...entry.topRoles.map((r) => r.cost));
+				{entries.map((entry) => {
+					const maxModelCost = Math.max(0, ...entry.topModels.map((m) => m.cost));
+					const maxRoleCost = Math.max(0, ...entry.topRoles.map((r) => r.cost));
 
 					return (
 						<div
 							key={entry.poolId}
 							className="rounded border border-[--border] bg-[--bg-primary] p-4"
-							data-testid={`team-${entry.poolId}`}
 						>
 							<div className="flex items-center justify-between mb-4">
 								<div>
@@ -151,9 +125,11 @@ export default function ChargebackPage() {
 									<div className="text-lg font-bold font-mono text-emerald-400">
 										${entry.totalSpend.toFixed(2)}
 									</div>
-									<div className="text-[10px] text-[--text-muted]">
-										${(entry.totalSpend / entry.taskCount).toFixed(3)}/task avg
-									</div>
+									{entry.taskCount > 0 && (
+										<div className="text-[10px] text-[--text-muted]">
+											${(entry.totalSpend / entry.taskCount).toFixed(3)}/task avg
+										</div>
+									)}
 								</div>
 							</div>
 

@@ -9,8 +9,9 @@
  */
 
 import { FailureSource, FailureType } from "@blueflame/shared";
-import type { NormalizedFailure } from "@blueflame/shared";
+import type { NormalizedFailure, Project } from "@blueflame/shared";
 import { Router } from "express";
+import { db } from "../db.js";
 import { addMessage, clearConversation } from "../services/conversation.js";
 import { clearAllFailures, storeFailure } from "../services/failure-store.js";
 import {
@@ -41,8 +42,11 @@ demoSeedRouter.use((_req, res, next) => {
  */
 demoSeedRouter.post("/seed", async (_req, res) => {
 	try {
+		// 0. Seed project
+		await seedProject();
+
 		// 1. Seed conversation history
-		seedConversation();
+		await seedConversation();
 
 		// 2. Seed spec
 		await seedSpec();
@@ -56,6 +60,7 @@ demoSeedRouter.post("/seed", async (_req, res) => {
 		res.json({
 			seeded: true,
 			data: {
+				projects: 1,
 				conversations: 4,
 				specs: 1,
 				failures: 3,
@@ -90,10 +95,33 @@ demoSeedRouter.post("/reset", (_req, res) => {
 	res.json({ reset: true });
 });
 
-function seedConversation() {
+async function seedProject() {
+	const now = new Date().toISOString();
+	const project: Project & { id: string } = {
+		id: PROJECT_ID,
+		name: "TaskFlow — Real-time Task Management",
+		description:
+			"Full-stack task management app with real-time updates, role-based access control, and a Kanban board view.",
+		status: "active",
+		createdBy: "system",
+		createdAt: now,
+		updatedAt: now,
+		specCount: 1,
+		runCount: 1,
+		lastActivityAt: now,
+	};
+
+	// Upsert: try create, if conflict update
+	const result = await db.projects.create(project, PROJECT_ID);
+	if (!result.ok) {
+		await db.projects.update(project, PROJECT_ID);
+	}
+}
+
+async function seedConversation() {
 	clearConversation(PROJECT_ID);
 
-	addMessage(PROJECT_ID, {
+	await addMessage(PROJECT_ID, {
 		id: "msg-seed-1",
 		projectId: PROJECT_ID,
 		role: "user",
@@ -102,7 +130,7 @@ function seedConversation() {
 		createdAt: "2026-02-11T08:00:00Z",
 	});
 
-	addMessage(PROJECT_ID, {
+	await addMessage(PROJECT_ID, {
 		id: "msg-seed-2",
 		projectId: PROJECT_ID,
 		role: "agent",
@@ -111,7 +139,7 @@ function seedConversation() {
 		createdAt: "2026-02-11T08:00:05Z",
 	});
 
-	addMessage(PROJECT_ID, {
+	await addMessage(PROJECT_ID, {
 		id: "msg-seed-3",
 		projectId: PROJECT_ID,
 		role: "user",
@@ -120,7 +148,7 @@ function seedConversation() {
 		createdAt: "2026-02-11T08:01:00Z",
 	});
 
-	addMessage(PROJECT_ID, {
+	await addMessage(PROJECT_ID, {
 		id: "msg-seed-4",
 		projectId: PROJECT_ID,
 		role: "agent",

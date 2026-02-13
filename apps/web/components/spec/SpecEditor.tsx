@@ -19,6 +19,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 interface SpecEditorProps {
 	projectId: string;
+	onSpecChange?: (specId: string | null, content: string, status: SpecStatus) => void;
 }
 
 interface SpecData {
@@ -42,12 +43,17 @@ risks: []
 definition_of_done: ""
 `;
 
-export function SpecEditor({ projectId }: SpecEditorProps) {
+export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 	const [content, setContent] = useState(PLACEHOLDER_YAML);
 	const [status, setStatus] = useState<SpecStatus>(SpecStatus.Draft);
 	const [specId, setSpecId] = useState<string | null>(null);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	// Notify parent of spec state changes
+	useEffect(() => {
+		onSpecChange?.(specId, content, status);
+	}, [specId, content, status, onSpecChange]);
 
 	// Load existing spec on mount
 	useEffect(() => {

@@ -50,6 +50,7 @@ export {
 	FailuresRepository,
 	LocksRepository,
 	PlansRepository,
+	ProjectsRepository,
 	RunsRepository,
 	SpecsRepository,
 } from "./repositories/index.js";

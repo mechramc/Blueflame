@@ -1,37 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { apiGet } from "@/lib/api-client";
+import type { AuditLogEntry } from "@blueflame/shared";
 
 /**
  * Compliance Dashboard — audit log viewer with filters and CSV export.
- *
- * Displays authorization events, agent actions, and governance decisions
- * in a filterable, searchable table with CSV export capability.
- *
- * Source: Blueflame-Spec-v3-ACAR.md Section 13 (Enterprise Governance)
  */
 
-/** Audit log entry */
-export interface AuditLogEntry {
-	id: string;
-	timestamp: string;
-	eventType: "AUTH" | "AGENT" | "BUDGET" | "GOVERNANCE" | "ROUTING";
-	actor: string;
-	action: string;
-	resource: string;
-	outcome: "ALLOWED" | "DENIED" | "WARNING";
-	details: string;
-	runId?: string;
-	projectId?: string;
-}
-
-/** Filter state */
 interface AuditFilters {
 	eventType: string;
 	outcome: string;
 	search: string;
-	dateFrom: string;
-	dateTo: string;
 }
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
@@ -47,66 +27,6 @@ const OUTCOME_COLORS: Record<string, string> = {
 	DENIED: "text-red-400",
 	WARNING: "text-amber-400",
 };
-
-// Demo audit log data
-const DEMO_ENTRIES: AuditLogEntry[] = [
-	{
-		id: "audit-001",
-		timestamp: "2026-02-12T10:00:00Z",
-		eventType: "AUTH",
-		actor: "admin@contoso.com",
-		action: "plan.authorize",
-		resource: "LOCK-001",
-		outcome: "ALLOWED",
-		details: "Plan authorized with $50 budget ceiling",
-		runId: "run-001",
-		projectId: "proj-001",
-	},
-	{
-		id: "audit-002",
-		timestamp: "2026-02-12T10:01:00Z",
-		eventType: "ROUTING",
-		actor: "system",
-		action: "sigma.route",
-		resource: "TASK-001",
-		outcome: "ALLOWED",
-		details: "\u03C3=0.15 \u2192 Routine tier \u2192 gpt-4o-mini (Azure)",
-		runId: "run-001",
-	},
-	{
-		id: "audit-003",
-		timestamp: "2026-02-12T10:02:00Z",
-		eventType: "AGENT",
-		actor: "Builder",
-		action: "code.generate",
-		resource: "TASK-001",
-		outcome: "ALLOWED",
-		details: "Generated 3 files, 245 lines",
-		runId: "run-001",
-	},
-	{
-		id: "audit-004",
-		timestamp: "2026-02-12T10:05:00Z",
-		eventType: "BUDGET",
-		actor: "system",
-		action: "budget.warning",
-		resource: "run-001",
-		outcome: "WARNING",
-		details: "Budget at 82% ($41 of $50)",
-		runId: "run-001",
-	},
-	{
-		id: "audit-005",
-		timestamp: "2026-02-12T10:10:00Z",
-		eventType: "GOVERNANCE",
-		actor: "system",
-		action: "constraint.check",
-		resource: "LOCK-001",
-		outcome: "DENIED",
-		details: "SECRET_SCANNING: API key detected in generated code",
-		runId: "run-001",
-	},
-];
 
 function formatDate(iso: string): string {
 	return new Date(iso).toLocaleString();
@@ -149,24 +69,37 @@ export default function CompliancePage() {
 		eventType: "",
 		outcome: "",
 		search: "",
-		dateFrom: "",
-		dateTo: "",
 	});
+	const [entries, setEntries] = useState<AuditLogEntry[]>([]);
+	const [total, setTotal] = useState(0);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-	const filtered = DEMO_ENTRIES.filter((entry) => {
-		if (filters.eventType && entry.eventType !== filters.eventType) return false;
-		if (filters.outcome && entry.outcome !== filters.outcome) return false;
-		if (filters.search) {
-			const s = filters.search.toLowerCase();
-			const match =
-				entry.action.toLowerCase().includes(s) ||
-				entry.details.toLowerCase().includes(s) ||
-				entry.actor.toLowerCase().includes(s) ||
-				entry.resource.toLowerCase().includes(s);
-			if (!match) return false;
+	const fetchEntries = useCallback(async () => {
+		setIsLoading(true);
+		setError(null);
+		try {
+			const params = new URLSearchParams();
+			if (filters.eventType) params.set("eventType", filters.eventType);
+			if (filters.outcome) params.set("outcome", filters.outcome);
+			if (filters.search) params.set("search", filters.search);
+
+			const qs = params.toString();
+			const data = await apiGet<{ entries: AuditLogEntry[]; total: number }>(
+				`/api/compliance/audit-log${qs ? `?${qs}` : ""}`,
+			);
+			setEntries(data.entries);
+			setTotal(data.total);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to load audit log");
+		} finally {
+			setIsLoading(false);
 		}
-		return true;
-	});
+	}, [filters]);
+
+	useEffect(() => {
+		fetchEntries();
+	}, [fetchEntries]);
 
 	return (
 		<div className="max-w-7xl mx-auto p-6">
@@ -179,7 +112,7 @@ export default function CompliancePage() {
 				</div>
 				<button
 					type="button"
-					onClick={() => exportCsv(filtered)}
+					onClick={() => exportCsv(entries)}
 					className="px-4 py-2 text-sm font-medium bg-[--accent] text-white rounded hover:opacity-90 transition-opacity"
 				>
 					Export CSV
@@ -221,9 +154,15 @@ export default function CompliancePage() {
 				/>
 			</div>
 
-			{/* Results count */}
+			{/* Status */}
+			{error && (
+				<div className="rounded border border-red-500/30 bg-red-500/10 p-3 mb-4">
+					<p className="text-sm text-red-400">{error}</p>
+				</div>
+			)}
+
 			<div className="text-xs text-[--text-muted] mb-2">
-				{filtered.length} of {DEMO_ENTRIES.length} entries
+				{isLoading ? "Loading..." : `${entries.length} of ${total} entries`}
 			</div>
 
 			{/* Table */}
@@ -241,7 +180,14 @@ export default function CompliancePage() {
 						</tr>
 					</thead>
 					<tbody>
-						{filtered.map((entry) => (
+						{entries.length === 0 && !isLoading && (
+							<tr>
+								<td colSpan={7} className="px-4 py-8 text-center text-sm text-[--text-muted]">
+									No audit entries yet. Events will appear as you interact with the system.
+								</td>
+							</tr>
+						)}
+						{entries.map((entry) => (
 							<tr
 								key={entry.id}
 								className="border-t border-[--border] hover:bg-[--bg-secondary]/50 transition-colors"

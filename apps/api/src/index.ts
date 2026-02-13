@@ -13,6 +13,7 @@ import express from "express";
 initTelemetry();
 import { chatRouter } from "./routes/chat.js";
 import { createHub } from "./signalr/hub.js";
+import { authenticate, isDevMode } from "./middleware/auth.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -20,6 +21,7 @@ const PORT = process.env.PORT ?? 4000;
 app.use(cors());
 app.use(express.json());
 
+// Health endpoint — no auth required
 app.get("/health", (_req, res) => {
 	res.json({
 		status: "ok",
@@ -28,21 +30,42 @@ app.get("/health", (_req, res) => {
 		telemetry: isTelemetryEnabled(),
 		cosmos: !!process.env.COSMOS_ENDPOINT,
 		entra: !!process.env.ENTRA_CLIENT_ID,
+		devMode: isDevMode,
 		uptime: process.uptime(),
+	});
+});
+
+// Auth info endpoint — returns current auth mode and user info
+app.get("/api/auth/me", authenticate, (req, res) => {
+	res.json({
+		devMode: isDevMode,
+		user: req.user,
 	});
 });
 
 import { authorizeRouter } from "./routes/authorize.js";
 import { budgetRouter } from "./routes/budget.js";
+import { chargebackRouter } from "./routes/chargeback.js";
+import { complianceRouter } from "./routes/compliance.js";
 import { demoSeedRouter } from "./routes/demo-seed.js";
 import { executionRouter } from "./routes/execution.js";
 import { failuresRouter } from "./routes/failures.js";
 import { plansRouter } from "./routes/plans.js";
+import { projectsRouter } from "./routes/projects.js";
 import { remediationRouter } from "./routes/remediation.js";
 import { specsRouter } from "./routes/specs.js";
+import { deltaRouter } from "./routes/delta.js";
+import { githubActionsRouter } from "./routes/github-actions.js";
+import { knowledgeRouter } from "./routes/knowledge.js";
 import { adoWebhookRouter } from "./webhooks/ado.js";
 import { webhookRouter } from "./webhooks/github.js";
 
+// Apply auth middleware to all /api routes
+app.use("/api", authenticate);
+
+app.use("/api/projects", projectsRouter);
+app.use("/api/compliance", complianceRouter);
+app.use("/api/chargeback", chargebackRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/specs", specsRouter);
 app.use("/api/plans", plansRouter);
@@ -53,6 +76,9 @@ app.use("/api/webhooks", adoWebhookRouter);
 app.use("/api/failures", failuresRouter);
 app.use("/api/budget", budgetRouter);
 app.use("/api/remediation", remediationRouter);
+app.use("/api/specs", deltaRouter);
+app.use("/api/knowledge", knowledgeRouter);
+app.use("/api/github", githubActionsRouter);
 app.use("/api/demo", demoSeedRouter);
 
 const httpServer = createServer(app);

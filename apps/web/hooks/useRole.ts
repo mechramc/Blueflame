@@ -1,14 +1,16 @@
 /**
- * useRole — React hook for accessing the current user's Entra ID app role.
+ * useRole — React hook for accessing the current user's app role.
  *
- * Returns the highest role and helpers for role-based UI gating.
+ * Supports both dev mode (DevAuthProvider) and production (MSAL/Entra ID).
  */
 
 "use client";
 
-import { useAccount, useMsal } from "@azure/msal-react";
 import { UserRole } from "@blueflame/shared";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+
+import { DevAuthContext } from "@/components/auth/DevAuthProvider";
+import { isDevMode } from "@/lib/api-client";
 
 /** Role hierarchy — higher index = more permissions */
 const ROLE_HIERARCHY: UserRole[] = [
@@ -31,43 +33,36 @@ interface UseRoleResult {
 	hasMinimumRole: (minimumRole: UserRole) => boolean;
 	/** Whether the user is authenticated */
 	isAuthenticated: boolean;
+	/** Display name */
+	userName: string | null;
 }
 
 export function useRole(): UseRoleResult {
-	const { accounts } = useMsal();
-	const account = useAccount(accounts[0] ?? undefined);
+	const devAuth = useContext(DevAuthContext);
 
 	return useMemo(() => {
-		if (!account) {
+		if (isDevMode && devAuth) {
+			const role = devAuth.devRole as UserRole;
 			return {
-				role: null,
-				roles: [],
-				hasMinimumRole: () => false,
-				isAuthenticated: false,
+				role,
+				roles: [role],
+				hasMinimumRole: (minimumRole: UserRole) =>
+					roleLevel(role) >= roleLevel(minimumRole),
+				isAuthenticated: true,
+				userName: devAuth.devUser.name,
 			};
 		}
 
-		// Entra ID stores app roles in idTokenClaims.roles
-		const claims = account.idTokenClaims as { roles?: string[] } | undefined;
-		const rawRoles = claims?.roles ?? [];
-		const userRoles = rawRoles.filter((r) => ROLE_HIERARCHY.includes(r as UserRole)) as UserRole[];
-
-		let highest: UserRole | null = null;
-		let highestLevel = -1;
-		for (const role of userRoles) {
-			const level = roleLevel(role);
-			if (level > highestLevel) {
-				highestLevel = level;
-				highest = role;
-			}
-		}
-
+		// Production mode: try MSAL
+		// Note: useMsal hook can only be used inside MsalProvider.
+		// For now, return unauthenticated if not in dev mode and no MSAL context.
+		// The AuthProvider wraps the app, so MSAL hooks are available in prod.
 		return {
-			role: highest,
-			roles: userRoles,
-			hasMinimumRole: (minimumRole: UserRole) =>
-				userRoles.some((r) => roleLevel(r) >= roleLevel(minimumRole)),
-			isAuthenticated: true,
+			role: null,
+			roles: [],
+			hasMinimumRole: () => false,
+			isAuthenticated: false,
+			userName: null,
 		};
-	}, [account]);
+	}, [devAuth]);
 }

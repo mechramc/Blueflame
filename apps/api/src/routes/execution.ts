@@ -3,14 +3,18 @@
  */
 
 import { Router } from "express";
+import { getAgentsByRunId } from "../services/agent-spawner.js";
 import { getLockByRunId } from "../services/authorization.js";
 import {
+	approveFix,
 	completeTask,
 	executeNextWave,
 	failTask,
 	getRun,
+	rejectFix,
 	requestInterrupt,
 	startExecution,
+	submitFix,
 } from "../services/orchestrator.js";
 import { getPlanByRunId } from "../services/planning.js";
 
@@ -72,7 +76,7 @@ executionRouter.post("/:runId/advance", async (req, res) => {
 		return;
 	}
 
-	const run = getRun(runId);
+	const run = await getRun(runId);
 	res.json({
 		runId,
 		status: run?.status,
@@ -177,14 +181,16 @@ executionRouter.post("/:runId/interrupt", (req, res) => {
  * GET /api/execution/:runId
  * Get current run state.
  */
-executionRouter.get("/:runId", (req, res) => {
+executionRouter.get("/:runId", async (req, res) => {
 	const { runId } = req.params;
-	const run = getRun(runId);
+	const run = await getRun(runId);
 
 	if (!run) {
 		res.status(404).json({ error: `Run not found: ${runId}` });
 		return;
 	}
+
+	const agents = getAgentsByRunId(runId);
 
 	res.json({
 		runId: run.runId,
@@ -192,10 +198,83 @@ executionRouter.get("/:runId", (req, res) => {
 		lockId: run.lockId,
 		startedAt: run.startedAt,
 		completedAt: run.completedAt,
-		tasks: run.plan.tasks.map((t) => ({
-			id: t.id,
-			status: t.status,
-			agentRole: t.agentRole,
+		plan: { tasks: run.plan.tasks },
+		agents: agents.map((a) => ({
+			agentId: a.agentId,
+			role: a.role,
+			status: a.status,
+			taskId: a.taskId,
+			model: a.model,
+			tokensUsed: a.tokensUsed,
+			costIncurred: a.costIncurred,
+			sigmaValue: a.sigmaValue,
 		})),
+		events: run.events,
+		pendingFixes: run.pendingFixes ?? [],
 	});
+});
+
+/**
+ * POST /api/execution/:runId/submit-fix
+ * Body: { taskId, fixerId, fixedCode, explanation }
+ * Submit a fixer agent's proposed fix.
+ */
+executionRouter.post("/:runId/submit-fix", (req, res) => {
+	const { runId } = req.params;
+	const { taskId, fixerId, fixedCode, explanation } = req.body as {
+		taskId: string;
+		fixerId: string;
+		fixedCode: string;
+		explanation: string;
+	};
+
+	const result = submitFix(runId, taskId, fixerId, fixedCode, explanation);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+
+	res.json({ fix: result.value });
+});
+
+/**
+ * POST /api/execution/:runId/approve-fix
+ * Body: { taskId }
+ * Approve a pending fix and re-run Verifier.
+ */
+executionRouter.post("/:runId/approve-fix", async (req, res) => {
+	const { runId } = req.params;
+	const { taskId } = req.body as { taskId: string };
+
+	const result = await approveFix(runId, taskId);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+
+	res.json({
+		taskId,
+		verifierAgent: {
+			agentId: result.value.verifierAgent.agentId,
+			role: result.value.verifierAgent.role,
+		},
+	});
+});
+
+/**
+ * POST /api/execution/:runId/reject-fix
+ * Body: { taskId }
+ * Reject a pending fix and mark task as permanently failed.
+ */
+executionRouter.post("/:runId/reject-fix", (req, res) => {
+	const { runId } = req.params;
+	const { taskId } = req.body as { taskId: string };
+
+	const result = rejectFix(runId, taskId);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+
+	res.json({ taskId, status: "rejected" });
 });

@@ -1,11 +1,15 @@
 /**
  * Budget Monitor — watches run cost against budget ceiling.
  *
+ * Uses in-memory cache with Cosmos DB write-through.
+ * Budget state persisted to "documents" container with type "budget-state".
+ *
  * Emits WARNING at 80% and PAUSE at 95% of budget ceiling.
  * Integrates with orchestrator to pause execution and SignalR for alerts.
  */
 
 import { BudgetDecision } from "@blueflame/shared";
+import { db } from "../db.js";
 import { getRunCost } from "./cost-tracker.js";
 
 /** Budget state for a run */
@@ -25,7 +29,7 @@ export enum BudgetAlertLevel {
 	Critical = "CRITICAL",
 }
 
-/** In-memory budget state per run */
+/** In-memory budget state per run — backed by Cosmos */
 const budgetStates = new Map<string, BudgetState>();
 
 /** Callback for budget alerts (wired to SignalR) */
@@ -45,6 +49,21 @@ export type PauseTriggerCallback = (runId: string) => void;
 let pauseCallback: PauseTriggerCallback | null = null;
 
 /**
+ * Persist budget state to Cosmos (fire-and-forget).
+ */
+function persistBudgetState(state: BudgetState, projectId: string): void {
+	const doc = {
+		id: `budget-${state.runId}`,
+		projectId,
+		type: "budget-state",
+		...state,
+	};
+	db.documents
+		.upsert(doc as never, projectId)
+		.catch((err) => console.error("[budget-monitor] Cosmos persist failed:", err));
+}
+
+/**
  * Register callbacks for budget events.
  */
 export function onBudgetAlert(callback: BudgetAlertCallback): void {
@@ -56,9 +75,9 @@ export function onPauseTrigger(callback: PauseTriggerCallback): void {
 }
 
 /**
- * Initialize budget tracking for a run.
+ * Initialize budget tracking for a run. Persists to Cosmos.
  */
-export function initBudget(runId: string, ceiling: number): BudgetState {
+export function initBudget(runId: string, ceiling: number, projectId?: string): BudgetState {
 	const state: BudgetState = {
 		runId,
 		ceiling,
@@ -68,16 +87,17 @@ export function initBudget(runId: string, ceiling: number): BudgetState {
 		pauseTriggered: false,
 	};
 	budgetStates.set(runId, state);
+	if (projectId) {
+		persistBudgetState(state, projectId);
+	}
 	return state;
 }
 
 /**
  * Check and update budget status for a run.
  * Should be called after each cost recording.
- *
- * @returns The current alert level
  */
-export function checkBudget(runId: string): BudgetAlertLevel {
+export function checkBudget(runId: string, projectId?: string): BudgetAlertLevel {
 	const state = budgetStates.get(runId);
 	if (!state) return BudgetAlertLevel.Normal;
 
@@ -88,6 +108,7 @@ export function checkBudget(runId: string): BudgetAlertLevel {
 	// Critical: 95%+ → trigger pause
 	if (state.percentUsed >= 95 && !state.pauseTriggered) {
 		state.pauseTriggered = true;
+		if (projectId) persistBudgetState(state, projectId);
 		if (alertCallback) {
 			alertCallback(
 				runId,
@@ -106,6 +127,7 @@ export function checkBudget(runId: string): BudgetAlertLevel {
 	// Warning: 80%+ → emit warning (once)
 	if (state.percentUsed >= 80 && !state.warningEmitted) {
 		state.warningEmitted = true;
+		if (projectId) persistBudgetState(state, projectId);
 		if (alertCallback) {
 			alertCallback(
 				runId,
@@ -126,13 +148,43 @@ export function checkBudget(runId: string): BudgetAlertLevel {
 }
 
 /**
- * Get budget state for a run.
+ * Get budget state for a run. Falls back to Cosmos on cache miss.
  */
-export function getBudgetState(runId: string): BudgetState | undefined {
-	const state = budgetStates.get(runId);
+export async function getBudgetState(
+	runId: string,
+	projectId?: string,
+): Promise<BudgetState | undefined> {
+	let state = budgetStates.get(runId);
+
+	// Try loading from Cosmos on cache miss
+	if (!state && projectId) {
+		try {
+			const result = await db.documents.read(`budget-${runId}`, projectId);
+			if (result.ok) {
+				state = result.value as unknown as BudgetState;
+				budgetStates.set(runId, state);
+			}
+		} catch {
+			// Cosmos unavailable
+		}
+	}
+
 	if (!state) return undefined;
 
 	// Refresh spend from cost tracker
+	state.currentSpend = getRunCost(runId);
+	state.percentUsed = state.ceiling > 0 ? (state.currentSpend / state.ceiling) * 100 : 0;
+
+	return state;
+}
+
+/**
+ * Get budget state synchronously (cache only).
+ */
+export function getBudgetStateSync(runId: string): BudgetState | undefined {
+	const state = budgetStates.get(runId);
+	if (!state) return undefined;
+
 	state.currentSpend = getRunCost(runId);
 	state.percentUsed = state.ceiling > 0 ? (state.currentSpend / state.ceiling) * 100 : 0;
 
@@ -146,6 +198,7 @@ export function handleBudgetDecision(
 	runId: string,
 	decision: BudgetDecision,
 	topUpAmount?: number,
+	projectId?: string,
 ): BudgetState | undefined {
 	const state = budgetStates.get(runId);
 	if (!state) return undefined;
@@ -170,7 +223,26 @@ export function handleBudgetDecision(
 
 	// Recalculate percent
 	state.percentUsed = state.ceiling > 0 ? (state.currentSpend / state.ceiling) * 100 : 0;
+
+	if (projectId) persistBudgetState(state, projectId);
 	return state;
+}
+
+/**
+ * Load budget state from Cosmos for a project.
+ */
+export async function loadBudgetStatesFromCosmos(projectId: string): Promise<void> {
+	try {
+		const docs = await db.documents.findByType(projectId, "budget-state");
+		for (const doc of docs) {
+			const state = doc as unknown as BudgetState;
+			if (state.runId && !budgetStates.has(state.runId)) {
+				budgetStates.set(state.runId, state);
+			}
+		}
+	} catch {
+		// Cosmos unavailable
+	}
 }
 
 /**

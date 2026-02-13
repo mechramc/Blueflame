@@ -9,4 +9,5 @@ export { FailuresRepository } from "./failures.js";
 export { LocksRepository } from "./locks.js";
 export { PlansRepository } from "./plans.js";
 export { RunsRepository } from "./runs.js";
+export { ProjectsRepository } from "./projects.js";
 export { SpecsRepository } from "./specs.js";

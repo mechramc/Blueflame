@@ -30,7 +30,7 @@ function getDesignerConfig(): DesignerConfig {
  *
  * The agent response is streamed via SignalR to room `run:<projectId>`.
  */
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
 	const { projectId, message } = req.body as {
 		projectId: string;
 		message: string;
@@ -48,7 +48,7 @@ router.post("/", (req, res) => {
 		content: message,
 		createdAt: new Date().toISOString(),
 	};
-	addMessage(projectId, userMsg);
+	await addMessage(projectId, userMsg);
 
 	const agentMsgId = `msg-${Date.now()}-agent`;
 
@@ -58,7 +58,7 @@ router.post("/", (req, res) => {
 	// Stream asynchronously
 	const hub = getHub();
 	const config = getDesignerConfig();
-	const history = getHistory(projectId);
+	const history = await getHistory(projectId);
 
 	void streamDesignerResponse(config, history, {
 		onToken(token) {
@@ -76,7 +76,7 @@ router.post("/", (req, res) => {
 				content: fullResponse,
 				createdAt: new Date().toISOString(),
 			};
-			addMessage(projectId, agentMsg);
+			void addMessage(projectId, agentMsg);
 
 			hub.to(`run:${projectId}`).emit("run:status", {
 				runId: projectId,
@@ -99,9 +99,9 @@ router.post("/", (req, res) => {
  * GET /api/chat/:projectId
  * Returns the conversation history for a project.
  */
-router.get("/:projectId", (req, res) => {
+router.get("/:projectId", async (req, res) => {
 	const { projectId } = req.params;
-	const history = getHistory(projectId);
+	const history = await getHistory(projectId);
 	res.json({ projectId, messages: history });
 });
 

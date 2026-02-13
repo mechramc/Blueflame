@@ -3,6 +3,7 @@
  */
 
 import { Router } from "express";
+import { requireRole } from "../middleware/auth.js";
 import { authorizePlan, getLockByRunId } from "../services/authorization.js";
 import { getPlanByRunId } from "../services/planning.js";
 
@@ -10,21 +11,23 @@ const router = Router();
 
 /**
  * POST /api/authorize
- * Body: { runId: string, budgetCeiling: number, authorizedBy: string, userRoles: string[], constraints?: Constraint[] }
+ * Body: { runId: string, budgetCeiling: number, constraints?: Constraint[] }
  * Creates an immutable PlanLock and authorizes agent execution.
+ * Requires Authorizer role. authorizedBy and userRoles come from req.user.
  */
-router.post("/", async (req, res) => {
-	const { runId, budgetCeiling, authorizedBy, userRoles, constraints } = req.body as {
+router.post("/", requireRole("Blueflame_Authorizer"), async (req, res) => {
+	const { runId, budgetCeiling, constraints } = req.body as {
 		runId: string;
 		budgetCeiling: number;
-		authorizedBy: string;
-		userRoles: string[];
 		constraints?: [];
 	};
 
-	if (!runId || !budgetCeiling || !authorizedBy || !userRoles) {
+	const authorizedBy = req.user?.name ?? req.user?.preferred_username ?? "unknown";
+	const userRoles = req.user?.roles ?? [];
+
+	if (!runId || !budgetCeiling) {
 		res.status(400).json({
-			error: "runId, budgetCeiling, authorizedBy, and userRoles are required",
+			error: "runId and budgetCeiling are required",
 		});
 		return;
 	}

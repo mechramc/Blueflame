@@ -4,8 +4,10 @@
  * Source: Blueflame-Spec-v3-ACAR.md Section 10.5
  */
 
-import type { RootCauseAnalysis } from "@blueflame/shared";
+import type { NormalizedFailure, RootCauseAnalysis } from "@blueflame/shared";
 import { Router } from "express";
+import { db } from "../db.js";
+import { createHealingProject, getFailureClusters, shouldAutoHeal } from "../services/healing-engine.js";
 import {
 	attachRootCause,
 	authorizeRemediation,
@@ -68,11 +70,32 @@ remediationRouter.get("/", (req, res) => {
 });
 
 /**
+ * GET /api/remediation/clusters/:projectId
+ * Get failure clusters for a project (transparency into healing decisions).
+ * MUST be registered before /:remediationId to avoid route shadowing.
+ */
+remediationRouter.get("/clusters/:projectId", async (req, res) => {
+	const { projectId } = req.params;
+
+	try {
+		const clusters = await getFailureClusters(projectId);
+		res.json({
+			projectId,
+			clusters,
+			autoHealEligible: clusters.some((c) => c.count >= 3 || c.isInfrastructure),
+		});
+	} catch (error) {
+		console.error("[Remediation] Clusters error:", error);
+		res.status(500).json({ error: "Failed to retrieve failure clusters" });
+	}
+});
+
+/**
  * GET /api/remediation/:remediationId
  */
-remediationRouter.get("/:remediationId", (req, res) => {
+remediationRouter.get("/:remediationId", async (req, res) => {
 	const { remediationId } = req.params;
-	const rem = getRemediation(remediationId);
+	const rem = await getRemediation(remediationId);
 
 	if (!rem) {
 		res.status(404).json({ error: `Remediation not found: ${remediationId}` });
@@ -191,3 +214,42 @@ remediationRouter.post("/:remediationId/fail", (req, res) => {
 
 	res.json(rem);
 });
+
+/**
+ * POST /api/remediation/:remediationId/auto-heal
+ * Manually trigger autonomous healing from a remediation's failures.
+ */
+remediationRouter.post("/:remediationId/auto-heal", async (req, res) => {
+	const { remediationId } = req.params;
+	const rem = await getRemediation(remediationId);
+
+	if (!rem) {
+		res.status(404).json({ error: `Remediation not found: ${remediationId}` });
+		return;
+	}
+
+	try {
+		// Load failures associated with this remediation's run
+		const failures = await db.failures.findByProject(rem.projectId) as unknown as NormalizedFailure[];
+
+		if (!shouldAutoHeal(failures)) {
+			res.status(422).json({
+				error: "Auto-heal threshold not met — requires 3+ similar failures or infrastructure-level issues",
+				failureCount: failures.length,
+				clusters: await getFailureClusters(rem.projectId),
+			});
+			return;
+		}
+
+		const healingProject = await createHealingProject(failures, rem.projectId);
+		res.status(201).json({
+			healingProjectId: healingProject.id,
+			healingProjectName: healingProject.name,
+			description: healingProject.description,
+		});
+	} catch (error) {
+		console.error("[Remediation] Auto-heal error:", error);
+		res.status(500).json({ error: "Auto-heal failed" });
+	}
+});
+

@@ -15,6 +15,7 @@ import {
 	FailuresRepository,
 	LocksRepository,
 	PlansRepository,
+	ProjectsRepository,
 	RunsRepository,
 	SpecsRepository,
 	getContainer,
@@ -28,6 +29,7 @@ let _agents: AgentsRepository | null = null;
 let _constraints: ConstraintsRepository | null = null;
 let _documents: DocumentsRepository | null = null;
 let _failures: FailuresRepository | null = null;
+let _projects: ProjectsRepository | null = null;
 
 function lazySpecs() {
 	if (!_specs) _specs = new SpecsRepository(getContainer("specs"));
@@ -61,6 +63,10 @@ function lazyFailures() {
 	if (!_failures) _failures = new FailuresRepository(getContainer("failures"));
 	return _failures;
 }
+function lazyProjects() {
+	if (!_projects) _projects = new ProjectsRepository(getContainer("projects"));
+	return _projects;
+}
 
 export const db = {
 	get specs() {
@@ -86,6 +92,9 @@ export const db = {
 	},
 	get failures() {
 		return lazyFailures();
+	},
+	get projects() {
+		return lazyProjects();
 	},
 };
 

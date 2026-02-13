@@ -4,7 +4,7 @@ import { BudgetDecision } from "@blueflame/shared";
 
 import {
 	checkBudget,
-	getBudgetState,
+	getBudgetStateSync,
 	handleBudgetDecision,
 	initBudget,
 } from "../services/budget-monitor.js";
@@ -15,7 +15,7 @@ export const budgetRouter = Router();
 /** GET /api/budget/:runId — get budget state + cost breakdown */
 budgetRouter.get("/:runId", (req, res) => {
 	const { runId } = req.params;
-	const state = getBudgetState(runId);
+	const state = getBudgetStateSync(runId);
 	if (!state) {
 		res.status(404).json({ error: "Budget not found for run" });
 		return;
@@ -50,7 +50,7 @@ budgetRouter.post("/init", (req, res) => {
 budgetRouter.post("/:runId/check", (req, res) => {
 	const { runId } = req.params;
 	const level = checkBudget(runId);
-	const state = getBudgetState(runId);
+	const state = getBudgetStateSync(runId);
 	res.json({ level, state });
 });
 
