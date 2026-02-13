@@ -23,7 +23,12 @@ export default function ProjectPage() {
 		<div className="h-[calc(100vh-44px)] flex">
 			{/* Chat Panel — 35% */}
 			<div className="w-[35%] h-full border-r border-[--border] overflow-hidden">
-				<ChatPanel projectId={projectId} />
+				<ChatPanel
+					projectId={projectId}
+					specFrozen={specStatus === SpecStatus.Frozen}
+					frozenSpecId={specStatus === SpecStatus.Frozen ? specId : null}
+					frozenContent={specStatus === SpecStatus.Frozen ? specContent : ""}
+				/>
 			</div>
 
 			{/* Spec Editor — 40% */}

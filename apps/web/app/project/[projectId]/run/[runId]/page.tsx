@@ -230,8 +230,47 @@ export default function RunPage() {
 		[runId, fetchStatus],
 	);
 
+	const handleStopExecution = useCallback(async () => {
+		await apiPost(`/api/execution/${runId}/interrupt`).catch(() => {});
+		fetchStatus();
+	}, [runId, fetchStatus]);
+
+	const isRunning = runStatus === "EXECUTING" || runStatus === "RUNNING";
+
 	return (
-		<div className="h-screen bg-[--bg-primary] flex flex-col">
+		<div className="h-full bg-[--bg-primary] flex flex-col">
+			{/* Run header with status and stop button */}
+			<div className="flex items-center justify-between border-b border-[--border] px-4 py-2 shrink-0">
+				<div className="flex items-center gap-3">
+					<span className="text-xs font-medium text-[--text-secondary]">
+						Run: <span className="text-[--text-primary] font-mono">{runId.slice(0, 20)}</span>
+					</span>
+					<span
+						className={`text-xs px-2 py-0.5 rounded font-medium ${
+							isRunning
+								? "bg-blue-500/20 text-blue-400"
+								: runStatus === "COMPLETED"
+									? "bg-emerald-500/20 text-emerald-400"
+									: runStatus === "PARTIAL"
+										? "bg-amber-500/20 text-amber-400"
+										: runStatus === "PAUSED"
+											? "bg-yellow-500/20 text-yellow-400"
+											: "bg-red-500/20 text-red-400"
+						}`}
+					>
+						{runStatus}
+					</span>
+				</div>
+				{isRunning && (
+					<button
+						type="button"
+						onClick={handleStopExecution}
+						className="rounded border border-red-500/50 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+					>
+						Stop Execution
+					</button>
+				)}
+			</div>
 			<div className="flex-1 min-h-0">
 				<RunDashboardPanes
 					runId={runId}

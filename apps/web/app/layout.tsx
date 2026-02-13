@@ -30,9 +30,9 @@ export default function RootLayout({
 		<html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
 			<body className="min-h-screen font-sans antialiased">
 				<AuthWrapper>
-					<div className="flex flex-col min-h-screen">
+					<div className="flex flex-col h-screen overflow-hidden">
 						<NavHeader />
-						<main className="flex-1 animate-fade-in">{children}</main>
+						<main className="flex-1 min-h-0 animate-fade-in">{children}</main>
 					</div>
 				</AuthWrapper>
 			</body>

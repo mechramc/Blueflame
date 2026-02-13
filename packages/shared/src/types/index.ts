@@ -90,3 +90,14 @@ export type { PatternEntry, PatternSource } from "./knowledge.js";
 
 // State machine helpers
 export { RUN_TRANSITIONS } from "./run.js";
+
+// SCR (Spec Change Request) types
+export { SCRSeverity, SCRStatus } from "./scr.js";
+export type {
+	BaselineSnapshot,
+	DiffPack,
+	DiffPackItem,
+	SpecChangeRequest,
+	TaskPatch,
+	TaskPatchEntry,
+} from "./scr.js";

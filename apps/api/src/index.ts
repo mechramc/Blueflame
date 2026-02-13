@@ -56,6 +56,7 @@ import { knowledgeRouter } from "./routes/knowledge.js";
 import { plansRouter } from "./routes/plans.js";
 import { projectsRouter } from "./routes/projects.js";
 import { remediationRouter } from "./routes/remediation.js";
+import { scrRouter } from "./routes/scr.js";
 import { specsRouter } from "./routes/specs.js";
 import { adoWebhookRouter } from "./webhooks/ado.js";
 import { webhookRouter } from "./webhooks/github.js";
@@ -79,6 +80,7 @@ app.use("/api/remediation", remediationRouter);
 app.use("/api/specs", deltaRouter);
 app.use("/api/knowledge", knowledgeRouter);
 app.use("/api/github", githubActionsRouter);
+app.use("/api/scr", scrRouter);
 app.use("/api/demo", demoSeedRouter);
 
 // ─── Global Express error handler (prevents crash on unhandled route errors) ───

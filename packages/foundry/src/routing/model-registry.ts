@@ -20,13 +20,16 @@ const registry = new Map<string, ProviderConfig>();
 
 /** Build the default registry */
 function initDefaults(): void {
-	const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT ?? "";
-	const azureKey = process.env.AZURE_OPENAI_API_KEY ?? "";
+	const azureEndpoint = process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "";
+	const azureKey = process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "";
 	const anthropicKey = process.env.ANTHROPIC_API_KEY ?? "";
+
+	// If FOUNDRY_DEPLOYMENT is set, use it for all Azure tiers (single-deployment setup)
+	const foundryDeployment = process.env.FOUNDRY_DEPLOYMENT;
 
 	const azureMini: ProviderConfig = {
 		provider: ProviderType.AzureOpenAI,
-		model: "gpt-4o-mini",
+		model: foundryDeployment ?? "gpt-4o-mini",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
 		apiVersion: "2024-10-21",
@@ -34,7 +37,7 @@ function initDefaults(): void {
 
 	const azure4o: ProviderConfig = {
 		provider: ProviderType.AzureOpenAI,
-		model: "gpt-4o",
+		model: foundryDeployment ?? "gpt-4o",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
 		apiVersion: "2024-10-21",
@@ -120,9 +123,9 @@ export function getProviderConfig(role: AgentRole, tier: ExecutionTier): Provide
 	// Ultimate fallback: gpt-4o on Azure
 	return {
 		provider: ProviderType.AzureOpenAI,
-		model: "gpt-4o",
-		endpoint: process.env.AZURE_OPENAI_ENDPOINT ?? "",
-		apiKey: process.env.AZURE_OPENAI_API_KEY ?? "",
+		model: process.env.FOUNDRY_DEPLOYMENT ?? "gpt-4o",
+		endpoint: process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "",
+		apiKey: process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "",
 		apiVersion: "2024-10-21",
 	};
 }

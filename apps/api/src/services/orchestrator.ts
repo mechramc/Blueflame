@@ -12,7 +12,14 @@
 
 import { SigmaRouter } from "@blueflame/foundry";
 import type { RoutingDecision } from "@blueflame/foundry";
-import type { ActionEvent, AgentState, PendingFix, PlanLock, TaskPlan } from "@blueflame/shared";
+import type {
+	ActionEvent,
+	AgentState,
+	PendingFix,
+	PlanLock,
+	TaskPatch,
+	TaskPlan,
+} from "@blueflame/shared";
 import { AgentRole, AgentStatus, RunStatus, TaskStatus } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
 import { db } from "../db.js";
@@ -287,6 +294,8 @@ export async function completeTask(
 	tokensUsed: number,
 	costIncurred: number,
 	sigmaValue?: number,
+	/** Which agent role just completed (Builder, Verifier, etc.) */
+	completingRole?: AgentRole,
 ): Promise<Result<{ verifierAgent?: AgentState }>> {
 	const run = runs.get(runId);
 	if (!run) {
@@ -302,8 +311,11 @@ export async function completeTask(
 	await recordAgentUsage(agentId, tokensUsed, costIncurred, sigmaValue);
 	await updateAgentStatus(agentId, AgentStatus.Completed);
 
+	// Use explicit completingRole if provided, otherwise fall back to task.agentRole
+	const agentRole = completingRole ?? task.agentRole;
+
 	// A2A handoff: Builder → Verifier (use task's σ for verifier routing)
-	if (task.agentRole === AgentRole.Builder) {
+	if (agentRole === AgentRole.Builder) {
 		pushEvent(
 			run,
 			agentId,
@@ -333,7 +345,7 @@ export async function completeTask(
 
 	// Non-Builder roles (Verifier, Explainer, Planner) → mark task completed
 	task.status = TaskStatus.Completed;
-	pushEvent(run, agentId, task.agentRole, "TASK_COMPLETED", `Task ${taskId} completed`);
+	pushEvent(run, agentId, agentRole, "TASK_COMPLETED", `Task ${taskId} completed`);
 	checkpointRun(run);
 
 	// Auto-advance: try to execute next wave of ready tasks
@@ -358,6 +370,8 @@ export async function failTask(
 	costIncurred: number,
 	originalCode?: string,
 	errorMessage?: string,
+	/** Which agent role just failed (Builder, Verifier, etc.) */
+	failingRole?: AgentRole,
 ): Promise<Result<{ fixerSpawned?: boolean }>> {
 	const run = runs.get(runId);
 	if (!run) {
@@ -372,9 +386,12 @@ export async function failTask(
 	await recordAgentUsage(agentId, tokensUsed, costIncurred);
 	await updateAgentStatus(agentId, AgentStatus.Failed);
 
+	// Use explicit failingRole if provided, otherwise fall back to task.agentRole
+	const agentRole = failingRole ?? task.agentRole;
+
 	// WF3 Fixer Loop: On Verifier failure, spawn Fixer if retries remain
 	const retryCount = run.retryCountByTask[taskId] ?? 0;
-	if (task.agentRole === AgentRole.Verifier && retryCount < MAX_FIXER_RETRIES) {
+	if (agentRole === AgentRole.Verifier && retryCount < MAX_FIXER_RETRIES) {
 		run.retryCountByTask[taskId] = retryCount + 1;
 
 		// Spawn Fixer agent
@@ -411,6 +428,11 @@ export async function failTask(
 		task.status = TaskStatus.Running;
 		checkpointRun(run);
 
+		// Fire-and-forget: execute fixer via LLM
+		executeTask(run, task, fixer).catch((err) => {
+			console.error(`[Orchestrator] Fixer execution failed for ${taskId}:`, err);
+		});
+
 		return { ok: true, value: { fixerSpawned: true } };
 	}
 
@@ -419,8 +441,13 @@ export async function failTask(
 	const failDetail = errorMessage
 		? `Task ${taskId} failed: ${errorMessage}`
 		: `Task ${taskId} failed permanently`;
-	pushEvent(run, agentId, task.agentRole, "TASK_FAILED", failDetail);
+	pushEvent(run, agentId, agentRole, "TASK_FAILED", failDetail);
 	checkpointRun(run);
+
+	// Auto-advance: check if all tasks are terminal → complete the run
+	executeNextWave(runId).catch((err) => {
+		console.error(`[Orchestrator] Auto-advance failed after task ${taskId} failure:`, err);
+	});
 
 	return { ok: true, value: { fixerSpawned: false } };
 }
@@ -506,6 +533,11 @@ export async function approveFix(
 	);
 	checkpointRun(run);
 
+	// Fire-and-forget: execute verifier via LLM
+	executeTask(run, task, verifier).catch((err) => {
+		console.error(`[Orchestrator] Verifier re-execution failed for ${taskId}:`, err);
+	});
+
 	return { ok: true, value: { verifierAgent: verifier } };
 }
 
@@ -588,6 +620,106 @@ export async function getRun(runId: string): Promise<RunState | undefined> {
  */
 export function getRunSync(runId: string): RunState | undefined {
 	return runs.get(runId);
+}
+
+/** Apply individual patch entries to a run's task list */
+function applyPatchEntries(run: RunState, patch: TaskPatch): void {
+	for (const entry of patch.invalidateTasks) {
+		const task = run.plan.tasks.find((t) => t.id === entry.taskId);
+		if (task) {
+			task.status = TaskStatus.Pending;
+			pushEvent(
+				run,
+				"orchestrator",
+				"SYSTEM",
+				"TASK_INVALIDATED",
+				`Task ${entry.taskId} invalidated for delta execution: ${entry.reason}`,
+			);
+		}
+	}
+	for (const entry of patch.cancelTasks) {
+		const task = run.plan.tasks.find((t) => t.id === entry.taskId);
+		if (task) {
+			task.status = TaskStatus.Deferred;
+			pushEvent(
+				run,
+				"orchestrator",
+				"SYSTEM",
+				"TASK_CANCELLED",
+				`Task ${entry.taskId} cancelled: ${entry.reason}`,
+			);
+		}
+	}
+	for (const entry of patch.addTasks) {
+		if (entry.newTask) {
+			run.plan.tasks.push({ ...entry.newTask, status: TaskStatus.Pending });
+			pushEvent(
+				run,
+				"orchestrator",
+				"SYSTEM",
+				"TASK_ADDED",
+				`New task ${entry.taskId} added for delta execution: ${entry.reason}`,
+			);
+		}
+	}
+	for (const entry of patch.updateTasks) {
+		const task = run.plan.tasks.find((t) => t.id === entry.taskId);
+		if (task && entry.updates) {
+			Object.assign(task, entry.updates);
+			task.status = TaskStatus.Pending;
+			pushEvent(
+				run,
+				"orchestrator",
+				"SYSTEM",
+				"TASK_UPDATED",
+				`Task ${entry.taskId} updated for delta execution: ${entry.reason}`,
+			);
+		}
+	}
+}
+
+/**
+ * Apply a TaskPatch to an existing run for delta execution.
+ * Patches the plan in-place: invalidates, cancels, adds, and updates tasks.
+ * Does NOT call executeNextWave — caller must do that after patching.
+ */
+export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
+	const run = runs.get(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	const isPatchable =
+		run.status === RunStatus.Completed ||
+		run.status === RunStatus.Partial ||
+		run.status === RunStatus.Paused;
+	if (!isPatchable) {
+		return {
+			ok: false,
+			error: new Error(
+				`Run must be COMPLETED, PARTIAL, or PAUSED for delta execution (current: ${run.status})`,
+			),
+		};
+	}
+
+	applyPatchEntries(run, patch);
+
+	// Resume the run
+	run.status = RunStatus.Executing;
+	run.interruptRequested = false;
+	run.completedAt = null;
+
+	pushEvent(
+		run,
+		"orchestrator",
+		"SYSTEM",
+		"DELTA_EXECUTION_STARTED",
+		`Delta execution started: ${patch.invalidateTasks.length} invalidated, ${patch.addTasks.length} added, ${patch.cancelTasks.length} cancelled`,
+	);
+	checkpointRun(run);
+	notifyStatusChange(runId, RunStatus.Executing);
+
+	return { ok: true, value: undefined };
 }
 
 /**

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 /**
  * Top navigation header — frosted glass style with gradient Blueflame wordmark.
  * Shows contextual breadcrumb nav and connection status.
+ * Persists last runId per project so the Run link remains accessible from Spec page.
  */
 export function NavHeader() {
 	const pathname = usePathname();
@@ -13,7 +15,20 @@ export function NavHeader() {
 	const projectMatch = pathname.match(/\/project\/([^/]+)/);
 	const projectId = projectMatch?.[1];
 	const runMatch = pathname.match(/\/run\/([^/]+)/);
-	const runId = runMatch?.[1];
+	const urlRunId = runMatch?.[1];
+	const [storedRunId, setStoredRunId] = useState<string | null>(null);
+
+	// Persist last runId per project in localStorage
+	useEffect(() => {
+		if (projectId && urlRunId) {
+			localStorage.setItem(`bf-last-run-${projectId}`, urlRunId);
+			setStoredRunId(urlRunId);
+		} else if (projectId) {
+			setStoredRunId(localStorage.getItem(`bf-last-run-${projectId}`));
+		}
+	}, [projectId, urlRunId]);
+
+	const runId = urlRunId ?? storedRunId;
 
 	return (
 		<header className="sticky top-0 z-40 border-b border-[--border] bg-[--bg-primary]/80 backdrop-blur-xl px-4 py-2 flex items-center justify-between">

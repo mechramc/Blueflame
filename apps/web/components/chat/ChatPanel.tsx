@@ -3,6 +3,7 @@
 import type { ChatMessage } from "@blueflame/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSocket } from "../../lib/signalr-client";
+import { SCRPanel } from "../spec/SCRPanel";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
@@ -11,6 +12,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 interface ChatPanelProps {
 	projectId: string;
+	/** When true, spec is frozen — disable chat input to prevent spec changes */
+	specFrozen?: boolean;
+	/** Frozen spec ID for SCR panel */
+	frozenSpecId?: string | null;
+	/** Frozen spec content for SCR panel */
+	frozenContent?: string;
 }
 
 /**
@@ -22,7 +29,7 @@ interface ChatPanelProps {
  * - GET /api/chat/:projectId — loads conversation history
  * - Socket.IO run:status — receives streaming tokens from Designer agent
  */
-export function ChatPanel({ projectId }: ChatPanelProps) {
+export function ChatPanel({ projectId, specFrozen = false, frozenSpecId, frozenContent = "" }: ChatPanelProps) {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [isTyping, setIsTyping] = useState(false);
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -203,7 +210,23 @@ export function ChatPanel({ projectId }: ChatPanelProps) {
 			</div>
 
 			{/* Input */}
-			<ChatInput onSend={handleSend} disabled={isTyping} />
+			{specFrozen ? (
+				frozenSpecId ? (
+					<SCRPanel
+						projectId={projectId}
+						frozenSpecId={frozenSpecId}
+						frozenContent={frozenContent}
+					/>
+				) : (
+					<div className="border-t border-[--border] bg-[--bg-primary]/80 backdrop-blur-xl px-4 py-3">
+						<p className="text-xs text-[--text-muted] text-center">
+							Spec is frozen. Click <strong>Generate Plan &amp; Execute</strong> to launch a run.
+						</p>
+					</div>
+				)
+			) : (
+				<ChatInput onSend={handleSend} disabled={isTyping} />
+			)}
 		</div>
 	);
 }
