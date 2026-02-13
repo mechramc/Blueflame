@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**Enterprise Adaptability** — Implementation complete for all enterprise streams (S12–S16). Demo recording and submission remaining.
+**Integration & End-to-End Wiring** — All 12 gap resolution phases complete. Full build passes. Spec→Plan→Execute UI flow wired. Currently testing end-to-end user workflows.
 
 ## Sprint Progress
 
@@ -95,21 +95,44 @@
 | S16-001/002: Enterprise budget manager | S16 | P0 | **DONE** |
 | S16-003: Chargeback dashboard (/chargeback) | S16 | P1 | **DONE** |
 
+### Session 10–11 — Gap Resolution (All 12 Phases)
+| Task | Phase | Status |
+|------|-------|--------|
+| Auth wiring + dev role picker | Phase 1 | **DONE** |
+| Projects CRUD API + Cosmos container | Phase 2 | **DONE** |
+| Dynamic home page (project list) | Phase 3 | **DONE** |
+| Run dashboard API contract fix | Phase 4 | **DONE** |
+| Navigation links (Compliance/Chargeback) | Phase 5 | **DONE** |
+| Compliance dashboard backend | Phase 6 | **DONE** |
+| Chargeback dashboard backend | Phase 7 | **DONE** |
+| Persist in-memory state to Cosmos | Phase 8 | **DONE** |
+| Spec validation panel + workflow bar | Phase 9 | **DONE** |
+| WF3 Build-to-Verify fixer loop | Phase 10 | **DONE** |
+| WF5 Autonomous healing + WF6 Delta API | Phase 11 | **DONE** |
+| WF7 Knowledge + WF8 GitHub Actions | Phase 12 | **DONE** |
+| Spec→Plan→Execute button (SpecActions) | UI wiring | **DONE** |
+| CI lint fixes (Biome ignore, imports) | CI/CD | **DONE** |
+| Dockerfile: add github-app package | CI/CD | **DONE** |
+| Cosmos `projects` container creation | Runtime | **DONE** |
+| Azure OpenAI gpt-4o model deployment | Runtime | **DONE** (user action) |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
 | S16-004: Azure SignalR migration | P1 | Deferred (Socket.IO adequate) |
 | S16-005: Application Insights SDK | P1 | Deferred (OTel spans cover this) |
+| End-to-end testing (Spec→Plan→Execute flow) | P0 | In progress |
 | Demo recording (7 workflows) | P0 | Not started |
 | Submission package | P0 | Not started |
 
 ## Task Progress
 - **MVP Complete**: 34/34 (all S1–S11 + demo wiring + UI redesign)
 - **Enterprise Streams**: 15/18 complete (S12–S16, 2 deferred, 1 skipped)
-- **WF6 Delta Detection**: 2/2 complete (S14-001 + S14-002)
+- **Gap Resolution**: 12/12 phases complete (all 13 gaps resolved)
+- **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
 - **Demo/Submit**: 0/2
-- **Grand Total**: 49/54 complete (2 deferred, 2 demo remaining, 1 skipped)
-- **Critical path**: Demo recording → submission package
+- **Grand Total**: 64/69 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
 
@@ -145,7 +168,8 @@
 | 2026-02-12 | Defer AppInsights SDK (S16-005) | OTel spans already provide instrumentation |
 
 ## Blockers
-- None currently identified
+- **E2E flow not yet verified**: Spec→Plan→Execute button is wired but hasn't been tested end-to-end in browser
+- **Staged changes uncommitted**: CI/CD fixes + SpecActions button fix staged but not yet committed
 
 ## Risks
 | Risk | Impact | Mitigation | Status |

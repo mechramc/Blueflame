@@ -9,86 +9,96 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-12
-- **Session**: 9 (final update)
+- **Session**: 11
 
 ## Current State
-- **Phase**: Production-Ready — Fully deployed to Azure
-- **Last completed task**: Full stack deployed — API + Web on Azure Container Apps
-- **Next task**: Paste BSL license text, demo recording, submission package
+- **Phase**: Integration & E2E Testing — All 12 gap resolution phases complete
+- **Last completed task**: Fixed SpecActions.tsx "Generate Plan & Execute" button to match actual API contracts
+- **Next task**: Test Spec→Plan→Execute flow end-to-end in browser, then commit staged changes
 - **Branch**: `main`
-- **Repo is green**: YES (build, lint, test all pass — 613 tests)
-- **CI/CD**: Fully green — 3 parallel jobs (Build & Test, Deploy API, Deploy Web)
-- **Last commit**: `70f89c6` — feat(deploy): deploy web frontend as Container App
+- **Repo is green**: YES (full build passes — 6/6 turbo tasks)
+- **CI/CD**: Last push had lint/deploy fixes staged but not yet committed
+- **Last commit**: `4baf28e` — Image refs added
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
-- **Health**: `cosmos:true, entra:true, telemetry:false`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Session 9)
+## What Just Happened (Sessions 10–11)
 
-### Production-Ready Migration — In-Memory → Azure → Live Deployment
+### Gap Resolution — All 12 Phases Complete
 
-Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real ADO client, Docker support, Azure deployment infrastructure, and deployed the full stack live.
+Resolved all 13 integration gaps identified in the gap analysis. Every phase verified via build. ~61 files changed, ~3400 lines added.
 
-#### Phase 0+1: Cosmos DB Migration
-- Created `apps/api/src/db.ts` singleton with all 8 repositories (lazy init pattern)
-- Migrated 9 services to async Cosmos operations with fire-and-forget persistence
-- Created `__mocks__/db.ts` for test isolation
-- Updated all test files with `vi.mock("../db.js")`
-- Added `Cancelled` and `Unknown` to `FailureType` enum
-- Fixed ESM import hoisting issue: `dotenv.config()` runs after imports, so `db.ts` uses lazy getters to defer Cosmos client init until first access
+#### Phase 1: Auth Wiring + Dev Role Picker
+- Dev bypass in `auth.ts` when `ENTRA_TENANT_ID` not set (reads `X-Dev-Role` header)
+- `DevAuthProvider.tsx` with role picker dropdown + yellow banner
+- `api-client.ts` with `apiGet`/`apiPost`/`apiPut` (sets `X-Dev-Role` header in dev mode)
+- `useRole.ts` hook reads from DevAuth context in dev mode
 
-#### Phase 2: Telemetry → Application Insights
-- Updated `packages/foundry/src/tracing/telemetry.ts` with dual output
-- In-memory spans (for dashboard) + App Insights export when connection string set
-- `initTelemetry()` called at API startup, gated behind `APPLICATIONINSIGHTS_CONNECTION_STRING`
-- +4 tests
+#### Phase 2: Projects CRUD API
+- `Project` type in shared, `ProjectsRepository` in cosmos
+- `projects.ts` route with GET/POST/PUT/DELETE + Zod validation
+- Projects container added to Cosmos Bicep + created in Azure
 
-#### Phase 3: ADO Client — Real SDK
-- Rewrote `ado-client.ts` with `IAdoClient` interface
-- `SimulatedAdoClient` (in-memory) + `RealAdoClient` (azure-devops-node-api SDK)
-- Factory function `createAdoClientFromEnv()` picks based on `ADO_PAT`
-- +2 tests
+#### Phase 3: Dynamic Home Page
+- Rewrote `page.tsx` to fetch from `/api/projects`
+- `ProjectCard`, `CreateProjectDialog`, `ProjectStatusBadge` components
+- `useProjects` hook with fetch/cache/create
 
-#### Phase 4: Docker + Health Endpoint
-- Created `apps/api/Dockerfile` (multi-stage, node:20-alpine)
-- Created `.dockerignore` (excludes web source, tests, docs, infra)
-- Enhanced `/health` endpoint with Cosmos/telemetry/Entra status + uptime
+#### Phase 4: Run Dashboard API Contract Fix
+- Fixed `GET /api/execution/:runId` response shape
+- Added `events: ActionEvent[]` to RunState in orchestrator
+- Event emission on task spawn, agent spawn, task complete, task fail, budget warning
 
-#### Phase 5: Full Azure Deployment (Live!)
-- Created Azure infrastructure via CLI:
-  - 8 Cosmos DB containers (specs, plans, locks, runs, agents, constraints, documents, failures)
-  - Container Apps Environment (`blueflame-cae-dev`) with Log Analytics
-  - Container App (`blueflame-api-dev`) — API with Cosmos, Entra, App Insights
-  - Container App (`blueflame-web-dev`) — Next.js SSR frontend
-  - Azure Container Registry (`blueflamecr`) with admin credentials
-  - Service Principal granted AcrPush + AcrPull roles
-  - Application Insights connected
-- CI/CD pipeline: push to main → build/test → Docker build API + Web in parallel → ACR → Container Apps
-- Tried Azure Static Web Apps first (SSR warm-up timeout) → switched to Container Apps
-- Fixed multiple Docker build issues (workspace package.json resolution, .dockerignore, turbo filter)
-- Switched from GHCR (ephemeral tokens) to ACR (persistent credentials)
-- Fixed Biome lint errors (noAssignInExpressions, noNonNullAssertion across 6 files)
-- Fixed Dashboard test type errors (missing PlanTask fields, AgentRole enum)
+#### Phase 5: Navigation
+- Added Compliance and Chargeback links to NavHeader right side
 
-#### BSL 1.1 Licensing
-- Created `LICENSE` with Murai Labs parameters (change date 2030-02-12, Apache 2.0)
-- Created `COMMERCIAL_LICENSE.md` for enterprise licensing funnel
-- User to paste full BSL 1.1 legal text into LICENSE
+#### Phase 6: Compliance Backend
+- `logAuditEvent()` service storing to Cosmos documents container
+- `GET /api/compliance/audit-log` with filters
+- Wired compliance page to real API (removed DEMO_ENTRIES)
 
-### Session 9 Metrics
-- **Tests**: 540 → 613 (+73)
-- **Commits**: ~12 (Phase 0+1, Phase 2+3+4, Phase 5, + multiple deploy fixes)
-- **Phases completed**: 0, 1, 2, 3, 4, 5
-- **Azure resources created**: 5 (Cosmos containers, CAE, Container App, ACR, Log Analytics)
-- **Pipeline**: Fully green end-to-end
+#### Phase 7: Chargeback Backend
+- `getAggregatedCosts()` in cost-tracker service
+- `GET /api/chargeback` endpoint
+- Wired chargeback page to real API (removed DEMO_ENTRIES)
 
-### Key Fixes & Lessons
-- **ESM import hoisting**: `dotenv.config()` runs after imports → lazy getter pattern for db.ts
-- **GHCR token expiry**: GitHub Actions GITHUB_TOKEN is ephemeral → switched to ACR
-- **Docker workspace resolution**: `npm ci` needs ALL workspace `package.json` files even if not building them
-- **MSYS path mangling**: `/projectId` → `C:/Program Files/Git/projectId` on Windows Git Bash → use `MSYS_NO_PATHCONV=1`
-- **Verify infra before declaring ready**: Cosmos account existing ≠ containers existing
+#### Phase 8: Persist State to Cosmos
+- Write-through cache pattern: in-memory Map + async Cosmos upsert
+- `getXSync()` fallback methods for callback contexts
+- Applied to: conversation, remediation, cost-tracker, orchestrator, budget-monitor
+
+#### Phase 9: Spec Validation Panel
+- `ValidationPanel.tsx` with schema check, policy check, budget estimate
+- `WorkflowProgressBar.tsx` (Drafting → Human Review → Validating → Frozen)
+- `POST /api/specs/:specId/validate` endpoint
+- 3-panel layout on spec page (Chat 35% / Editor 40% / Validation 25%)
+
+#### Phase 10: WF3 Fixer Loop
+- Orchestrator spawns Fixer agent on Verifier FAIL (max 3 retries)
+- `FixerDiffView.tsx` with approve/reject buttons
+- `POST /:runId/approve-fix` and `POST /:runId/reject-fix` endpoints
+
+#### Phase 11: WF5 Healing + WF6 Delta API
+- `POST /api/specs/:specId/delta` endpoint (uses existing delta engine)
+- `healing-engine.ts` with failure clustering and auto-heal project creation
+- Auto-heal trigger in orchestrator `completeRun()`
+
+#### Phase 12: WF7 Knowledge + WF8 GitHub Actions
+- `knowledge-store.ts` with pattern recording and similarity search
+- `GET/POST /api/knowledge/patterns`, `POST /api/knowledge/search`
+- `github-actions.ts` route for dispatch and run listing
+- Real GitHub webhook handlers (replaced console.log stubs)
+
+### Integration & Runtime Fixes
+- **Dockerfile**: Added missing `packages/github-app/` copy
+- **Biome**: Added `.claude` and `.vscode` to ignore list, fixed import ordering
+- **Cosmos**: Created `projects` container in Azure via `createIfNotExists`
+- **Azure OpenAI**: User deployed `gpt-4o` model in Azure AI Foundry
+- **SpecActions.tsx**: Added "Generate Plan & Execute" button with correct API contracts:
+  - `POST /api/plans/generate` with `{ specId, runId, projectId }`
+  - `POST /api/authorize` with `{ runId, budgetCeiling: 50 }`
+  - `POST /api/execution/start` with `{ runId }`
 
 ## Prior Sessions Summary
 
@@ -97,51 +107,67 @@ Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real A
 - **Session 6**: S11 Failure Intelligence (5 tasks) + Demo wiring (7 tasks)
 - **Session 7**: UI redesign (30+ components) + env fix + enterprise planning (20 tasks defined)
 - **Session 8**: ALL enterprise streams implemented (15/18 tasks, 2 deferred, +87 tests)
-- **Session 9**: Production migration + full Azure deployment (live API)
+- **Session 9**: Production migration + full Azure deployment (live API + Web)
+- **Sessions 10–11**: All 12 gap resolution phases + integration fixes + E2E testing started
 
 ## What To Pick Up Next
 
-### Immediate (Session 10)
-1. **Paste BSL 1.1 license text** into `LICENSE` (user action — template at https://spdx.org/licenses/BUSL-1.1.html)
-2. **Add CORS** on API for web frontend origin (if needed)
-3. **Configure Entra ID redirect URIs** for production web URL
-4. **Demo recording** — 7 workflow demonstrations
-5. **Submission package** — README, architecture diagram, demo video, ACAR paper
+### Immediate (Session 12)
+1. **Commit staged changes from VS Code** — CI/CD fixes + SpecActions button fix
+2. **Test Spec→Plan→Execute flow** — Create project → chat → generate spec → accept → freeze → click "Generate Plan & Execute" → verify run dashboard populates
+3. **Verify run dashboard** — Task DAG, agent cards, action stream, budget bar should show real data
+4. **Add "Runs" navigation** — Consider adding a runs list page per project (currently Run tab only appears when viewing a specific run)
+5. **Demo recording** — 7 workflow demonstrations
+6. **Submission package** — README, architecture diagram, demo video
 
 ### What's Deferred (OK to skip)
 - **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical
 - **S16-005: Application Insights SDK** — OTel spans already provide instrumentation
 
-## Blockers
-- None
+## Staged But Uncommitted Changes
+The following changes are staged and ready to commit from VS Code:
+- `biome.json` — Added `.claude` and `.vscode` to ignore
+- `apps/api/Dockerfile` — Added github-app package copy
+- `apps/api/src/index.ts` — Fixed import ordering
+- `apps/web/components/spec/SpecActions.tsx` — Fixed API contracts for plan/authorize/execute
+- Various files auto-formatted by `biome check --fix`
+
+## Type Gotchas (Learned the Hard Way)
+- `FailedStep.name` (not `stepName`)
+- `PlanTask.description` (not `title`)
+- `AuditOutcome = "ALLOWED" | "DENIED" | "WARNING"` (not "success"/"failure")
+- `logAuditEvent()` takes `LogAuditEventParams` (action, outcome, details), not full `AuditLogEntry`
+- `GitHubAppConfig.appId` is `string` (not number)
+- `createOctokitClient` needs `{ appId, privateKey, installationId, owner, repo }`
 
 ## Azure Resources (Production)
 | Resource | Name | Status |
 |----------|------|--------|
 | Resource Group | `blueflame-rg` | Active |
-| Cosmos DB | `blueflame-cosmos-dev` (8 containers) | Active |
+| Cosmos DB | `blueflame-cosmos-dev` (8 containers + projects) | Active |
 | Container Apps Env | `blueflame-cae-dev` | Active |
 | Container App (API) | `blueflame-api-dev` | Running |
 | Container App (Web) | `blueflame-web-dev` | Running |
 | Container Registry | `blueflamecr.azurecr.io` | Active |
 | Log Analytics | `blueflame-logs-dev` | Active |
-| App Insights | Connected (InstrumentationKey: e583b932...) | Active |
-| OpenAI | `blueflame-openai-dev` | Active |
+| App Insights | Connected | Active |
+| OpenAI | `blueflame-openai-dev` (gpt-4o deployed) | Active |
 
 ## Key Files Reference
-- `Blueflame-Spec-v3-ACAR.md` — Source of truth (24 sections)
-- `tasks.yaml` — Full task list (S1–S16)
-- `docs/STATUS.md` — Updated with all enterprise tasks complete
-- **DB Singleton**: `apps/api/src/db.ts` (lazy getters, all 8 Cosmos repos)
-- **DB Mock**: `apps/api/src/__mocks__/db.ts` (in-memory test isolation)
-- **Routing**: `packages/foundry/src/routing/` (sigma-router, model-registry, 4 providers)
-- **Tracing**: `packages/foundry/src/tracing/telemetry.ts` (spans + App Insights export)
-- **Dockerfile**: `apps/api/Dockerfile` (multi-stage node:20-alpine)
-- **Deploy**: `.github/workflows/deploy.yml` (Docker → ACR → Container Apps, API + Web parallel)
-- **Web Dockerfile**: `apps/web/Dockerfile` (standalone Next.js output)
-- **Infra**: `infra/main.bicep` + `infra/modules/*.bicep` (7 Azure modules)
-- **ADO Client**: `apps/api/src/services/ado-client.ts` (simulated + real SDK)
-- **Demo Seed**: `apps/api/src/routes/demo-seed.ts` (gated behind NODE_ENV !== 'production')
+- `Blueflame-Spec-v3-ACAR.md` — Source of truth
+- `docs/STATUS.md` — Sprint progress dashboard
+- `docs/EXECUTION-PLAN-GAP-RESOLUTION.md` — 12-phase gap resolution plan (all complete)
+- **DB Singleton**: `apps/api/src/db.ts` (lazy getters, 9 Cosmos repos)
+- **Auth**: `apps/api/src/middleware/auth.ts` (Entra + dev bypass)
+- **DevAuth**: `apps/web/components/auth/DevAuthProvider.tsx`
+- **API Client**: `apps/web/lib/api-client.ts` (apiGet/apiPost/apiPut with dev role header)
+- **SpecActions**: `apps/web/components/spec/SpecActions.tsx` (plan→authorize→execute flow)
+- **Orchestrator**: `apps/api/src/services/orchestrator.ts` (run state, events, fixer loop, auto-heal)
+- **Knowledge Store**: `apps/api/src/services/knowledge-store.ts`
+- **Healing Engine**: `apps/api/src/services/healing-engine.ts`
+- **Dockerfile (API)**: `apps/api/Dockerfile`
+- **Dockerfile (Web)**: `apps/web/Dockerfile`
+- **Deploy**: `.github/workflows/deploy.yml`
 
 ## Test Counts
 | Scope | Count |
@@ -158,13 +184,12 @@ Migrated all API services from `new Map()` to Cosmos DB, added telemetry, real A
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
 - PlanLock is immutable — never modify existing locks
 - Biome auto-fix needed after creating new files (`npx biome check --fix .`)
-- Dashboard UI components need `afterEach(cleanup)` in tests (jsdom doesn't auto-cleanup)
 - CSS uses custom properties (`--bg-primary`, `--accent`, etc.) — not direct Tailwind colors
 - `dotenv` loads `.env` from repo root in API via `import.meta.dirname`
 - `db.ts` uses lazy getters — Cosmos client initializes on first access, NOT at import time
 - Docker build context is repo root, Dockerfile at `apps/api/Dockerfile`
-- `.dockerignore` must allow all workspace `package.json` files (npm ci needs them)
 - ACR admin credentials are persistent; GHCR tokens are ephemeral (don't use GHCR)
-- Container App env vars set via `az containerapp update --set-env-vars` (not in workflow)
 - On Windows/MSYS: use `MSYS_NO_PATHCONV=1` prefix for az CLI commands with `/` paths
+- Express route ordering: static routes before catch-all `/:id` routes
+- Authorize endpoint requires `Blueflame_Authorizer` role (dev mode: set `X-Dev-Role` header)
 - **Licensing**: BSL 1.1 — treat as commercially owned, not open source
