@@ -21,6 +21,7 @@ interface SCRPanelProps {
 	projectId: string;
 	frozenSpecId: string;
 	frozenContent: string;
+	onClose?: () => void;
 }
 
 type SCRStep = "idle" | "editing" | "reviewing" | "approved" | "executing";
@@ -31,7 +32,7 @@ const SEVERITY_STYLES: Record<string, { bg: string; text: string }> = {
 	MAJOR: { bg: "bg-red-500/10", text: "text-red-400" },
 };
 
-export function SCRPanel({ projectId, frozenSpecId, frozenContent }: SCRPanelProps) {
+export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SCRPanelProps) {
 	const router = useRouter();
 	const [step, setStep] = useState<SCRStep>("idle");
 	const [editedContent, setEditedContent] = useState(frozenContent);
@@ -134,7 +135,7 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent }: SCRPanelPro
 				</div>
 			)}
 
-			{step === "idle" && <IdleView onStartEdit={handleStartEdit} />}
+			{step === "idle" && <IdleView onStartEdit={handleStartEdit} onClose={onClose} />}
 
 			{step === "editing" && (
 				<EditingView
@@ -180,19 +181,35 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent }: SCRPanelPro
 
 // ─── Sub-views ───────────────────────────────────────────────
 
-function IdleView({ onStartEdit }: { onStartEdit: () => void }) {
+function IdleView({
+	onStartEdit,
+	onClose,
+}: { onStartEdit: () => void; onClose?: () => void }) {
 	return (
-		<div className="px-4 py-3 flex items-center justify-between">
-			<p className="text-xs text-[--text-muted]">
-				Spec is frozen. Changes require a formal Spec Change Request.
-			</p>
-			<button
-				type="button"
-				onClick={onStartEdit}
-				className="px-3 py-1.5 text-xs font-medium rounded bg-[--accent] text-white hover:opacity-90 transition-opacity shrink-0"
-			>
-				Request Change
-			</button>
+		<div className="px-4 py-3 space-y-2">
+			<div className="flex items-center justify-between">
+				<p className="text-xs text-[--text-muted]">
+					Modify the frozen spec content below and provide a reason for the change.
+				</p>
+				<div className="flex items-center gap-2 shrink-0">
+					<button
+						type="button"
+						onClick={onStartEdit}
+						className="px-3 py-1.5 text-xs font-medium rounded bg-[--accent] text-white hover:opacity-90 transition-opacity"
+					>
+						Edit Spec
+					</button>
+					{onClose && (
+						<button
+							type="button"
+							onClick={onClose}
+							className="px-3 py-1.5 text-xs font-medium rounded border border-[--border] text-[--text-muted] hover:bg-[--bg-tertiary]"
+						>
+							Back
+						</button>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }

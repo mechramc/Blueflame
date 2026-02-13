@@ -32,6 +32,7 @@ interface ChatPanelProps {
 export function ChatPanel({ projectId, specFrozen = false, frozenSpecId, frozenContent = "" }: ChatPanelProps) {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [isTyping, setIsTyping] = useState(false);
+	const [showSCR, setShowSCR] = useState(false);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const streamBufferRef = useRef("");
 	const streamMsgIdRef = useRef<string | null>(null);
@@ -211,17 +212,27 @@ export function ChatPanel({ projectId, specFrozen = false, frozenSpecId, frozenC
 
 			{/* Input */}
 			{specFrozen ? (
-				frozenSpecId ? (
+				showSCR && frozenSpecId ? (
 					<SCRPanel
 						projectId={projectId}
 						frozenSpecId={frozenSpecId}
 						frozenContent={frozenContent}
+						onClose={() => setShowSCR(false)}
 					/>
 				) : (
-					<div className="border-t border-[--border] bg-[--bg-primary]/80 backdrop-blur-xl px-4 py-3">
+					<div className="border-t border-[--border] bg-[--bg-primary]/80 backdrop-blur-xl px-4 py-3 space-y-2">
 						<p className="text-xs text-[--text-muted] text-center">
-							Spec is frozen. Click <strong>Generate Plan &amp; Execute</strong> to launch a run.
+							Spec is frozen. Use <strong>Generate Plan</strong> in the editor to start a run.
 						</p>
+						{frozenSpecId && (
+							<button
+								type="button"
+								onClick={() => setShowSCR(true)}
+								className="block mx-auto text-xs text-[--accent] hover:underline"
+							>
+								Need to change the spec? Request a change (SCR)
+							</button>
+						)}
 					</div>
 				)
 			) : (
