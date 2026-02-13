@@ -78,9 +78,7 @@ export function ExecutionActivityBanner({
 				<span className="text-yellow-400 text-lg">&#9208;</span>
 				<div>
 					<span className="text-sm font-semibold text-yellow-400">Paused</span>
-					<span className="text-xs text-[--text-muted] ml-2">
-						Awaiting budget decision
-					</span>
+					<span className="text-xs text-[--text-muted] ml-2">Awaiting budget decision</span>
 				</div>
 			</div>
 		);

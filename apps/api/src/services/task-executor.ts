@@ -56,9 +56,11 @@ export async function executeTask(run: RunState, task: PlanTask, agent: AgentSta
 			`[TaskExecutor] Unhandled error executing ${task.agentRole} for task ${task.id}:`,
 			err,
 		);
+		const errMsg = err instanceof Error ? err.message : String(err);
 		// Import lazily to avoid circular dependency at module load
-		const { failTask } = await import("./orchestrator.js");
-		await failTask(run.runId, task.id, agent.agentId, 0, 0);
+		const { failTask, setTaskOutput } = await import("./orchestrator.js");
+		setTaskOutput(run.runId, task.id, { files: [], error: errMsg });
+		await failTask(run.runId, task.id, agent.agentId, 0, 0, undefined, errMsg);
 	}
 }
 
@@ -66,9 +68,11 @@ export async function executeTask(run: RunState, task: PlanTask, agent: AgentSta
 async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentState): Promise<void> {
 	const spec = await getSpec(run.plan.specId, run.projectId);
 	if (!spec) {
-		console.error(`[TaskExecutor] Spec not found: ${run.plan.specId}`);
-		const { failTask } = await import("./orchestrator.js");
-		await failTask(run.runId, task.id, agent.agentId, 0, 0);
+		const errMsg = `Spec not found: ${run.plan.specId}`;
+		console.error(`[TaskExecutor] ${errMsg}`);
+		const { failTask, setTaskOutput } = await import("./orchestrator.js");
+		setTaskOutput(run.runId, task.id, { files: [], error: errMsg });
+		await failTask(run.runId, task.id, agent.agentId, 0, 0, undefined, errMsg);
 		return;
 	}
 
@@ -92,12 +96,18 @@ async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentSta
 	const estimatedTokens = Math.ceil(outputLength / 4) + 500; // rough: 4 chars/token + prompt overhead
 	const estimatedCost = (estimatedTokens / 1000) * COST_PER_1K_TOKENS;
 
-	const { completeTask, failTask, pushEventExternal } = await import("./orchestrator.js");
+	const { completeTask, failTask, pushEventExternal, setTaskOutput } = await import(
+		"./orchestrator.js"
+	);
 
 	if (result.ok) {
 		console.log(
 			`[TaskExecutor] Builder completed task ${task.id}: ${result.value.files.length} files generated`,
 		);
+		setTaskOutput(run.runId, task.id, {
+			files: result.value.files,
+			commitMessage: result.value.commitMessage,
+		});
 		pushEventExternal(
 			run.runId,
 			agent.agentId,
@@ -114,8 +124,18 @@ async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentSta
 			task.sigmaEstimate,
 		);
 	} else {
-		console.error(`[TaskExecutor] Builder failed task ${task.id}:`, result.error.error);
-		await failTask(run.runId, task.id, agent.agentId, estimatedTokens, estimatedCost);
+		const errMsg = result.error.error;
+		console.error(`[TaskExecutor] Builder failed task ${task.id}:`, errMsg);
+		setTaskOutput(run.runId, task.id, { files: [], error: errMsg });
+		await failTask(
+			run.runId,
+			task.id,
+			agent.agentId,
+			estimatedTokens,
+			estimatedCost,
+			undefined,
+			errMsg,
+		);
 	}
 }
 
@@ -127,9 +147,11 @@ async function executeVerifierTask(
 ): Promise<void> {
 	const spec = await getSpec(run.plan.specId, run.projectId);
 	if (!spec) {
-		console.error(`[TaskExecutor] Spec not found for verifier: ${run.plan.specId}`);
-		const { failTask } = await import("./orchestrator.js");
-		await failTask(run.runId, task.id, agent.agentId, 0, 0);
+		const errMsg = `Spec not found for verifier: ${run.plan.specId}`;
+		console.error(`[TaskExecutor] ${errMsg}`);
+		const { failTask, setTaskOutput } = await import("./orchestrator.js");
+		setTaskOutput(run.runId, task.id, { files: [], error: errMsg });
+		await failTask(run.runId, task.id, agent.agentId, 0, 0, undefined, errMsg);
 		return;
 	}
 
@@ -169,7 +191,7 @@ async function executeVerifierTask(
 	const estimatedTokens = Math.ceil(outputLength / 4) + 300;
 	const estimatedCost = (estimatedTokens / 1000) * COST_PER_1K_TOKENS;
 
-	const { completeTask, failTask } = await import("./orchestrator.js");
+	const { completeTask, failTask, setTaskOutput } = await import("./orchestrator.js");
 
 	if (result.ok && result.value.overallResult !== "FAIL") {
 		console.log(`[TaskExecutor] Verifier passed task ${task.id}: ${result.value.summary}`);
@@ -184,7 +206,16 @@ async function executeVerifierTask(
 	} else {
 		const errorMsg = result.ok ? result.value.summary : result.error.error;
 		console.error(`[TaskExecutor] Verifier failed task ${task.id}:`, errorMsg);
-		await failTask(run.runId, task.id, agent.agentId, estimatedTokens, estimatedCost);
+		setTaskOutput(run.runId, task.id, { files: [], error: `Verifier: ${errorMsg}` });
+		await failTask(
+			run.runId,
+			task.id,
+			agent.agentId,
+			estimatedTokens,
+			estimatedCost,
+			undefined,
+			errorMsg,
+		);
 	}
 }
 

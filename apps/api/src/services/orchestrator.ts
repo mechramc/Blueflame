@@ -44,6 +44,13 @@ export function clearRoutingLog(): void {
 	routingLog.length = 0;
 }
 
+/** Output stored per task (generated files, errors) */
+export interface TaskOutput {
+	files: Array<{ path: string; content: string; action: string }>;
+	error?: string;
+	commitMessage?: string;
+}
+
 /** Run state tracked by orchestrator */
 export interface RunState {
 	runId: string;
@@ -58,6 +65,7 @@ export interface RunState {
 	events: ActionEvent[];
 	pendingFixes: PendingFix[];
 	retryCountByTask: Record<string, number>;
+	taskOutputs: Record<string, TaskOutput>;
 }
 
 let eventCounter = 0;
@@ -88,6 +96,16 @@ export function pushEventExternal(
 	const run = runs.get(runId);
 	if (run) {
 		pushEvent(run, agentId, role, action, detail);
+	}
+}
+
+/**
+ * Store task output (generated files, errors) for a given task.
+ */
+export function setTaskOutput(runId: string, taskId: string, output: TaskOutput): void {
+	const run = runs.get(runId);
+	if (run) {
+		run.taskOutputs[taskId] = output;
 	}
 }
 
@@ -157,6 +175,7 @@ export async function startExecution(plan: TaskPlan, lock: PlanLock): Promise<Re
 		events: [],
 		pendingFixes: [],
 		retryCountByTask: {},
+		taskOutputs: {},
 	};
 
 	runs.set(plan.runId, runState);
@@ -338,6 +357,7 @@ export async function failTask(
 	tokensUsed: number,
 	costIncurred: number,
 	originalCode?: string,
+	errorMessage?: string,
 ): Promise<Result<{ fixerSpawned?: boolean }>> {
 	const run = runs.get(runId);
 	if (!run) {
@@ -363,13 +383,10 @@ export async function failTask(
 		const fixer = await spawnAgent(runId, AgentRole.Builder, taskId, fixerDecision.model);
 		await updateAgentStatus(fixer.agentId, AgentStatus.Executing);
 
-		pushEvent(
-			run,
-			agentId,
-			AgentRole.Verifier,
-			"TASK_FAILED",
-			`Verifier failed task ${taskId} (retry ${retryCount + 1}/${MAX_FIXER_RETRIES})`,
-		);
+		const retryDetail = errorMessage
+			? `Verifier failed task ${taskId}: ${errorMessage} (retry ${retryCount + 1}/${MAX_FIXER_RETRIES})`
+			: `Verifier failed task ${taskId} (retry ${retryCount + 1}/${MAX_FIXER_RETRIES})`;
+		pushEvent(run, agentId, AgentRole.Verifier, "TASK_FAILED", retryDetail);
 		pushEvent(
 			run,
 			fixer.agentId,
@@ -399,7 +416,10 @@ export async function failTask(
 
 	// No retries left or non-Verifier role — mark as failed permanently
 	task.status = TaskStatus.Failed;
-	pushEvent(run, agentId, task.agentRole, "TASK_FAILED", `Task ${taskId} failed permanently`);
+	const failDetail = errorMessage
+		? `Task ${taskId} failed: ${errorMessage}`
+		: `Task ${taskId} failed permanently`;
+	pushEvent(run, agentId, task.agentRole, "TASK_FAILED", failDetail);
 	checkpointRun(run);
 
 	return { ok: true, value: { fixerSpawned: false } };

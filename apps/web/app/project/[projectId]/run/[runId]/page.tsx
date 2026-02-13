@@ -10,8 +10,9 @@ import {
 } from "@/components/constraints/ConstraintViolationToast";
 import type { ActionEvent } from "@/components/dashboard/ActionStream";
 import type { AgentCardData } from "@/components/dashboard/AgentStatusCard";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import type { TaskOutput } from "@/components/dashboard/FileTreePane";
 import { FixerDiffView } from "@/components/dashboard/FixerDiffView";
+import { RunDashboardPanes } from "@/components/dashboard/RunDashboardPanes";
 import { apiGet, apiPost } from "@/lib/api-client";
 import type { BudgetDecision, PendingFix, PlanTask } from "@blueflame/shared";
 
@@ -22,6 +23,7 @@ interface RunApiResponse {
 	events?: ActionEvent[];
 	violation?: ConstraintViolation;
 	pendingFixes?: PendingFix[];
+	taskOutputs?: Record<string, TaskOutput>;
 }
 
 interface BudgetApiResponse {
@@ -115,6 +117,7 @@ export default function RunPage() {
 	const [ceiling, setCeiling] = useState(0);
 	const [percentUsed, setPercentUsed] = useState(0);
 	const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
+	const [taskOutputs, setTaskOutputs] = useState<Record<string, TaskOutput>>({});
 	const [showPauseModal, setShowPauseModal] = useState(false);
 
 	// Animation states
@@ -171,6 +174,7 @@ export default function RunPage() {
 			if (data.events) setEvents(data.events);
 			if (data.violation) setViolation(data.violation);
 			if (data.pendingFixes) setPendingFixes(data.pendingFixes);
+			if (data.taskOutputs) setTaskOutputs(data.taskOutputs);
 		},
 		[applyTaskAnimations, applyAgentAnimations],
 	);
@@ -227,21 +231,24 @@ export default function RunPage() {
 	);
 
 	return (
-		<div className="min-h-screen bg-[--bg-primary]">
-			<DashboardLayout
-				runId={runId}
-				runStatus={runStatus}
-				agents={agents}
-				tasks={tasks}
-				events={events}
-				currentSpend={currentSpend}
-				ceiling={ceiling}
-				percentUsed={percentUsed}
-				justAuthorized={justAuthorized}
-				newReinforcementIds={newReinforcementIds}
-				recentlyChangedTaskIds={recentlyChangedTaskIds}
-				preservedTaskIds={preservedTaskIds}
-			/>
+		<div className="h-screen bg-[--bg-primary] flex flex-col">
+			<div className="flex-1 min-h-0">
+				<RunDashboardPanes
+					runId={runId}
+					runStatus={runStatus}
+					agents={agents}
+					tasks={tasks}
+					events={events}
+					currentSpend={currentSpend}
+					ceiling={ceiling}
+					percentUsed={percentUsed}
+					taskOutputs={taskOutputs}
+					justAuthorized={justAuthorized}
+					newReinforcementIds={newReinforcementIds}
+					recentlyChangedTaskIds={recentlyChangedTaskIds}
+					preservedTaskIds={preservedTaskIds}
+				/>
+			</div>
 			{/* Fixer Diff Views */}
 			{pendingFixes.length > 0 && (
 				<div className="px-6 pb-4 space-y-3">

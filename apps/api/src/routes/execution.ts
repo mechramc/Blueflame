@@ -216,6 +216,7 @@ executionRouter.get("/:runId", async (req, res) => {
 		})),
 		events: run.events,
 		pendingFixes: run.pendingFixes ?? [],
+		taskOutputs: run.taskOutputs ?? {},
 	});
 });
 
