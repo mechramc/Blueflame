@@ -54,7 +54,9 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 			return;
 		}
 		if (editedContent === frozenContent) {
-			setError("No changes detected — you must edit the spec YAML content in the textarea above before submitting an SCR. If you want to execute the spec as-is, use the Generate Plan button in the editor toolbar instead.");
+			setError(
+				"No changes detected — you must edit the spec YAML content in the textarea above before submitting an SCR. If you want to execute the spec as-is, use the Generate Plan button in the editor toolbar instead.",
+			);
 			return;
 		}
 
@@ -181,21 +183,17 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 
 // ─── Sub-views ───────────────────────────────────────────────
 
-function IdleView({
-	onStartEdit,
-	onClose,
-}: { onStartEdit: () => void; onClose?: () => void }) {
+function IdleView({ onStartEdit, onClose }: { onStartEdit: () => void; onClose?: () => void }) {
 	return (
 		<div className="px-4 py-3 space-y-2">
-			<p className="text-xs font-medium text-amber-400">
-				Spec Change Request (SCR)
+			<p className="text-xs font-medium text-amber-400">Spec Change Request (SCR)</p>
+			<p className="text-xs text-[--text-muted]">
+				This is for <strong>modifying the frozen spec</strong> (e.g. adding/changing criteria). You
+				will edit the spec YAML, provide a reason, then review the diff before approval.
 			</p>
 			<p className="text-xs text-[--text-muted]">
-				This is for <strong>modifying the frozen spec</strong> (e.g. adding/changing criteria).
-				You will edit the spec YAML, provide a reason, then review the diff before approval.
-			</p>
-			<p className="text-xs text-[--text-muted]">
-				To <strong>execute the current spec as-is</strong>, use the <strong>Generate Plan</strong> button in the editor toolbar above.
+				To <strong>execute the current spec as-is</strong>, use the <strong>Generate Plan</strong>{" "}
+				button in the editor toolbar above.
 			</p>
 			<div className="flex items-center gap-2">
 				<button

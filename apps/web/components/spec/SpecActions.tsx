@@ -143,9 +143,7 @@ export function SpecActions({
 					)}
 
 					{execStep === "generating" && (
-						<span className="text-xs text-[--text-muted] animate-pulse">
-							Generating plan...
-						</span>
+						<span className="text-xs text-[--text-muted] animate-pulse">Generating plan...</span>
 					)}
 
 					{/* Step 2: Approve & Lock */}
@@ -170,9 +168,7 @@ export function SpecActions({
 					)}
 
 					{execStep === "locking" && (
-						<span className="text-xs text-[--text-muted] animate-pulse">
-							Locking plan...
-						</span>
+						<span className="text-xs text-[--text-muted] animate-pulse">Locking plan...</span>
 					)}
 
 					{/* Step 3: Start Execution */}
@@ -197,9 +193,7 @@ export function SpecActions({
 					)}
 
 					{execStep === "starting" && (
-						<span className="text-xs text-[--text-muted] animate-pulse">
-							Starting execution...
-						</span>
+						<span className="text-xs text-[--text-muted] animate-pulse">Starting execution...</span>
 					)}
 
 					{launchError && <span className="text-xs text-red-400">{launchError}</span>}

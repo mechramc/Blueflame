@@ -29,7 +29,12 @@ interface ChatPanelProps {
  * - GET /api/chat/:projectId — loads conversation history
  * - Socket.IO run:status — receives streaming tokens from Designer agent
  */
-export function ChatPanel({ projectId, specFrozen = false, frozenSpecId, frozenContent = "" }: ChatPanelProps) {
+export function ChatPanel({
+	projectId,
+	specFrozen = false,
+	frozenSpecId,
+	frozenContent = "",
+}: ChatPanelProps) {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [isTyping, setIsTyping] = useState(false);
 	const [showSCR, setShowSCR] = useState(false);
