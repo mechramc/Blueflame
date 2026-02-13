@@ -15,7 +15,12 @@
       "Bash(find:*)",
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
-      "Bash(npx biome:*)"
+      "Bash(npx biome:*)",
+      "Bash(curl:*)",
+      "Bash(node -e:*)",
+      "Bash(tasklist:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }

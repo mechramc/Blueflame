@@ -150,6 +150,8 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 				</div>
 				<SpecActions
 					status={status}
+					projectId={projectId}
+					specId={specId}
 					onAccept={handleAccept}
 					onFreeze={handleFreeze}
 					onGenerateSpec={handleGenerateSpec}

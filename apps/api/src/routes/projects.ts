@@ -63,13 +63,17 @@ router.post("/", requireRole("Blueflame_Editor"), async (req, res) => {
 		lastActivityAt: now,
 	};
 
-	const result = await db.projects.create(project, id);
-	if (!result.ok) {
+	try {
+		const result = await db.projects.create(project, id);
+		if (!result.ok) {
+			res.status(500).json({ error: "Failed to create project" });
+			return;
+		}
+		res.status(201).json({ project: result.value });
+	} catch (error) {
+		console.error("[Projects] Create error:", error);
 		res.status(500).json({ error: "Failed to create project" });
-		return;
 	}
-
-	res.status(201).json({ project: result.value });
 });
 
 /** PUT /api/projects/:projectId — update a project */
