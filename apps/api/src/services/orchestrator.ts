@@ -33,6 +33,7 @@ import { logAuditEvent } from "./audit-logger.js";
 import { allTasksTerminal, getReadyTasks, hasFailedTasks } from "./dag-executor.js";
 import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
 import { extractPatternsFromRun } from "./knowledge-store.js";
+import { incrementProjectStat } from "./spec-generation.js";
 import { executeTask } from "./task-executor.js";
 
 /** Shared σ-router instance */
@@ -187,6 +188,12 @@ export async function startExecution(plan: TaskPlan, lock: PlanLock): Promise<Re
 
 	runs.set(plan.runId, runState);
 	checkpointRun(runState);
+
+	// Increment project runCount
+	incrementProjectStat(plan.projectId, "runCount").catch((err) =>
+		console.error("[Orchestrator] Failed to increment runCount:", err),
+	);
+
 	pushEvent(
 		runState,
 		"orchestrator",
@@ -747,6 +754,51 @@ export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
 /**
  * Clear all runs (for testing).
  */
+/**
+ * Retry failed tasks — resets FAILED tasks to PENDING and resumes execution.
+ */
+export async function retryFailedTasks(runId: string): Promise<Result<{ retriedCount: number }>> {
+	const run = runs.get(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	const failedTasks = run.plan.tasks.filter((t) => t.status === TaskStatus.Failed);
+	if (failedTasks.length === 0) {
+		return { ok: false, error: new Error("No failed tasks to retry") };
+	}
+
+	// Reset failed tasks to PENDING and clear retry counts
+	for (const task of failedTasks) {
+		task.status = TaskStatus.Pending;
+		run.retryCountByTask[task.id] = 0;
+	}
+
+	// Clear pending fixes for these tasks
+	run.pendingFixes = run.pendingFixes.filter((f) => !failedTasks.some((t) => t.id === f.taskId));
+
+	run.status = RunStatus.Executing;
+	run.interruptRequested = false;
+	run.completedAt = null;
+	checkpointRun(run);
+
+	pushEvent(
+		run,
+		"orchestrator",
+		"SYSTEM",
+		"RETRY_FAILED",
+		`Retrying ${failedTasks.length} failed task(s)`,
+	);
+
+	// Resume execution
+	const waveResult = await executeNextWave(runId);
+	if (!waveResult.ok) {
+		console.error("[Orchestrator] Retry wave failed:", waveResult.error.message);
+	}
+
+	return { ok: true, value: { retriedCount: failedTasks.length } };
+}
+
 export function clearAllRuns(): void {
 	runs.clear();
 	statusCallback = null;

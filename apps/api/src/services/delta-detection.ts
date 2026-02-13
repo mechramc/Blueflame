@@ -196,6 +196,35 @@ export function detectChanges(oldSpec: OutputSpec, newSpec: OutputSpec): SpecCha
 		});
 	}
 
+	// Content-level comparison: if structured fields found nothing but raw YAML differs,
+	// detect content change. This handles edits made in the SCR textarea where the YAML
+	// is modified but structured fields (acceptanceCriteria, deliverables) aren't parsed.
+	if (changes.length === 0 && oldSpec.content && newSpec.content) {
+		const oldContent = (oldSpec.content ?? "").trim();
+		const newContent = (newSpec.content ?? "").trim();
+		if (oldContent !== newContent) {
+			// Extract meaningful diff lines for display
+			const oldLines = oldContent.split("\n");
+			const newLines = newContent.split("\n");
+			const addedLines = newLines.filter((l) => !oldLines.includes(l));
+			const removedLines = oldLines.filter((l) => !newLines.includes(l));
+
+			changes.push({
+				type: DeltaChangeType.MetadataChanged,
+				path: "content",
+				oldValue:
+					removedLines.length > 0
+						? removedLines.slice(0, 5).join("\n") + (removedLines.length > 5 ? "\n..." : "")
+						: "(no lines removed)",
+				newValue:
+					addedLines.length > 0
+						? addedLines.slice(0, 5).join("\n") + (addedLines.length > 5 ? "\n..." : "")
+						: "(no lines added)",
+				affectedCriteriaIds: [],
+			});
+		}
+	}
+
 	return changes;
 }
 
@@ -233,6 +262,11 @@ export function computeTaskImpacts(
 
 	const impacts: TaskImpactEntry[] = [];
 
+	// If changes are content-level (no specific criteria IDs), all tasks need rebuild
+	const hasContentChange = changes.some(
+		(c) => c.path === "content" && c.affectedCriteriaIds.length === 0,
+	);
+
 	for (const task of existingTasks) {
 		const taskCriteria = task.acceptanceCriteriaIds;
 		const relatedChanges = changes.filter((c) =>
@@ -258,6 +292,15 @@ export function computeTaskImpacts(
 				impact: TaskImpact.Rebuild,
 				relatedChanges,
 				reason: "Acceptance criteria modified or partially removed",
+			});
+		} else if (hasContentChange) {
+			// Content-level change without structured criteria linkage —
+			// conservatively mark all tasks for rebuild
+			impacts.push({
+				taskId: task.id,
+				impact: TaskImpact.Rebuild,
+				relatedChanges: changes,
+				reason: "Spec content changed — task may be affected",
 			});
 		} else {
 			impacts.push({

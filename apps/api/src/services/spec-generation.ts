@@ -49,6 +49,12 @@ export async function createSpecFromYaml(
 	if (!result.ok) {
 		throw new Error(`Failed to create spec: ${result.error.message}`);
 	}
+
+	// Increment project specCount
+	incrementProjectStat(projectId, "specCount").catch((err) =>
+		console.error("[SpecGeneration] Failed to increment specCount:", err),
+	);
+
 	return result.value;
 }
 
@@ -117,6 +123,24 @@ export async function acceptSpec(
 export function clearAllSpecs(): void {
 	specCounter = 0;
 }
+
+/**
+ * Increment a numeric stat on a project document (fire-and-forget).
+ */
+async function incrementProjectStat(
+	projectId: string,
+	field: "specCount" | "runCount",
+): Promise<void> {
+	const result = await db.projects.read(projectId, projectId);
+	if (!result.ok) return;
+	const project = result.value;
+	project[field] = (project[field] ?? 0) + 1;
+	project.lastActivityAt = new Date().toISOString();
+	await db.projects.update(project, projectId);
+}
+
+/** Exported for use by orchestrator */
+export { incrementProjectStat };
 
 /**
  * Simple YAML field extractor (no dependency on yaml parser for MVP).

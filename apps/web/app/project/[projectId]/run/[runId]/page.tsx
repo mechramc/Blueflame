@@ -235,7 +235,14 @@ export default function RunPage() {
 		fetchStatus();
 	}, [runId, fetchStatus]);
 
+	const handleRetryFailed = useCallback(async () => {
+		await apiPost(`/api/execution/${runId}/retry-failed`).catch(() => {});
+		fetchStatus();
+	}, [runId, fetchStatus]);
+
 	const isRunning = runStatus === "EXECUTING" || runStatus === "RUNNING";
+	const failedTasks = tasks.filter((t) => t.status === "FAILED");
+	const isPartial = runStatus === "PARTIAL";
 
 	return (
 		<div className="h-full bg-[--bg-primary] flex flex-col">
@@ -251,26 +258,58 @@ export default function RunPage() {
 								? "bg-blue-500/20 text-blue-400"
 								: runStatus === "COMPLETED"
 									? "bg-emerald-500/20 text-emerald-400"
-									: runStatus === "PARTIAL"
+									: isPartial
 										? "bg-amber-500/20 text-amber-400"
 										: runStatus === "PAUSED"
 											? "bg-yellow-500/20 text-yellow-400"
 											: "bg-red-500/20 text-red-400"
 						}`}
 					>
-						{runStatus}
+						{isPartial
+							? `PARTIAL — ${failedTasks.length} task${failedTasks.length !== 1 ? "s" : ""} failed`
+							: runStatus}
 					</span>
 				</div>
-				{isRunning && (
-					<button
-						type="button"
-						onClick={handleStopExecution}
-						className="rounded border border-red-500/50 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
-					>
-						Stop Execution
-					</button>
-				)}
+				<div className="flex items-center gap-2">
+					{isPartial && (
+						<button
+							type="button"
+							onClick={handleRetryFailed}
+							className="rounded border border-amber-500/50 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20 hover:text-amber-300"
+						>
+							Retry Failed Tasks
+						</button>
+					)}
+					{isRunning && (
+						<button
+							type="button"
+							onClick={handleStopExecution}
+							className="rounded border border-red-500/50 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+						>
+							Stop Execution
+						</button>
+					)}
+				</div>
 			</div>
+
+			{/* Failed tasks banner */}
+			{isPartial && failedTasks.length > 0 && (
+				<div className="border-b border-amber-500/30 bg-amber-500/5 px-4 py-2">
+					<p className="text-xs font-medium text-amber-400 mb-1">
+						{failedTasks.length} task{failedTasks.length !== 1 ? "s" : ""} failed after all retries:
+					</p>
+					<div className="flex flex-wrap gap-2">
+						{failedTasks.map((t) => (
+							<span
+								key={t.id}
+								className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded"
+							>
+								{t.id}: {t.description.slice(0, 60)}
+							</span>
+						))}
+					</div>
+				</div>
+			)}
 			<div className="flex-1 min-h-0">
 				<RunDashboardPanes
 					runId={runId}

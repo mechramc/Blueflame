@@ -13,6 +13,7 @@ import {
 	getRun,
 	rejectFix,
 	requestInterrupt,
+	retryFailedTasks,
 	startExecution,
 	submitFix,
 } from "../services/orchestrator.js";
@@ -140,19 +141,32 @@ executionRouter.post("/:runId/complete-task", async (req, res) => {
  */
 executionRouter.post("/:runId/fail-task", async (req, res) => {
 	const { runId } = req.params;
-	const { taskId, agentId, tokensUsed, costIncurred } = req.body as {
-		taskId: string;
-		agentId: string;
-		tokensUsed: number;
-		costIncurred: number;
-	};
+	const { taskId, agentId, tokensUsed, costIncurred, originalCode, errorMessage, failingRole } =
+		req.body as {
+			taskId: string;
+			agentId: string;
+			tokensUsed: number;
+			costIncurred: number;
+			originalCode?: string;
+			errorMessage?: string;
+			failingRole?: string;
+		};
 
 	if (!runId || !taskId || !agentId) {
 		res.status(400).json({ error: "runId, taskId, and agentId are required" });
 		return;
 	}
 
-	const result = await failTask(runId, taskId, agentId, tokensUsed ?? 0, costIncurred ?? 0);
+	const result = await failTask(
+		runId,
+		taskId,
+		agentId,
+		tokensUsed ?? 0,
+		costIncurred ?? 0,
+		originalCode,
+		errorMessage,
+		failingRole as import("@blueflame/shared").AgentRole | undefined,
+	);
 	if (!result.ok) {
 		res.status(400).json({ error: result.error.message });
 		return;
@@ -218,6 +232,20 @@ executionRouter.get("/:runId", async (req, res) => {
 		pendingFixes: run.pendingFixes ?? [],
 		taskOutputs: run.taskOutputs ?? {},
 	});
+});
+
+/**
+ * POST /api/execution/:runId/retry-failed
+ * Reset failed tasks to PENDING and resume execution.
+ */
+executionRouter.post("/:runId/retry-failed", async (req, res) => {
+	const { runId } = req.params;
+	const result = await retryFailedTasks(runId);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+	res.json({ runId, retriedCount: result.value.retriedCount });
 });
 
 /**
