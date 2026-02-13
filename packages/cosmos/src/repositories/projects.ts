@@ -17,7 +17,8 @@ export class ProjectsRepository extends Repository<Project & { id: string }> {
 	/** Find all active projects, ordered by last activity */
 	async findAll(): Promise<Project[]> {
 		return this.queryAll({
-			query: "SELECT * FROM c WHERE NOT IS_DEFINED(c.status) OR c.status != 'archived' ORDER BY c.lastActivityAt DESC",
+			query:
+				"SELECT * FROM c WHERE NOT IS_DEFINED(c.status) OR c.status != 'archived' ORDER BY c.lastActivityAt DESC",
 		});
 	}
 

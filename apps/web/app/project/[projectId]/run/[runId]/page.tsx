@@ -31,6 +31,39 @@ interface BudgetApiResponse {
 	pauseTriggered: boolean;
 }
 
+/** Detect tasks whose status changed vs previous poll */
+function detectTaskChanges(
+	tasks: PlanTask[],
+	prevStatusMap: Map<string, string>,
+): { changed: string[]; preserved: string[]; newMap: Map<string, string> } {
+	const changed: string[] = [];
+	const preserved: string[] = [];
+	const newMap = new Map<string, string>();
+
+	for (const task of tasks) {
+		const prevStatus = prevStatusMap.get(task.id);
+		if (prevStatus && prevStatus !== task.status) {
+			changed.push(task.id);
+		} else if (prevStatus === task.status && task.status === "COMPLETED") {
+			preserved.push(task.id);
+		}
+		newMap.set(task.id, task.status);
+	}
+
+	return { changed, preserved, newMap };
+}
+
+/** Detect newly-arrived agent IDs (reinforcements) */
+function detectNewAgents(currentIds: Set<string>, prevIds: Set<string>): string[] {
+	const reinforcements: string[] = [];
+	for (const id of currentIds) {
+		if (!prevIds.has(id)) {
+			reinforcements.push(id);
+		}
+	}
+	return reinforcements;
+}
+
 /**
  * Run dashboard page — real-time view of execution progress.
  * Detects animation states: authorization, reinforcement, violation, spec change.
@@ -59,92 +92,63 @@ export default function RunPage() {
 	const prevTaskStatusRef = useRef<Map<string, string>>(new Map());
 	const hadAgentsRef = useRef(false);
 
+	const processRunData = useCallback((data: RunApiResponse) => {
+		if (data.plan?.tasks) {
+			const { changed, preserved, newMap } = detectTaskChanges(
+				data.plan.tasks,
+				prevTaskStatusRef.current,
+			);
+			if (changed.length > 0) {
+				setRecentlyChangedTaskIds(changed);
+				setPreservedTaskIds(preserved);
+				setTimeout(() => {
+					setRecentlyChangedTaskIds([]);
+					setPreservedTaskIds([]);
+				}, 3000);
+			}
+			prevTaskStatusRef.current = newMap;
+			setTasks(data.plan.tasks);
+		}
+		if (data.agents) {
+			const currentIds = new Set(data.agents.map((a) => a.agentId));
+			if (!hadAgentsRef.current && currentIds.size > 0) {
+				setJustAuthorized(true);
+				setTimeout(() => setJustAuthorized(false), 2000);
+				hadAgentsRef.current = true;
+			} else if (hadAgentsRef.current) {
+				const reinforcements = detectNewAgents(currentIds, prevAgentIdsRef.current);
+				if (reinforcements.length > 0) {
+					setNewReinforcementIds(reinforcements);
+					setTimeout(() => setNewReinforcementIds([]), 2000);
+				}
+			}
+			prevAgentIdsRef.current = currentIds;
+			setAgents(data.agents);
+		}
+		if (data.events) setEvents(data.events);
+		if (data.violation) setViolation(data.violation);
+		if (data.pendingFixes) setPendingFixes(data.pendingFixes);
+	}, []);
+
+	const processBudgetData = useCallback((budgetData: BudgetApiResponse) => {
+		setCurrentSpend(budgetData.currentSpend);
+		setCeiling(budgetData.ceiling);
+		setPercentUsed(budgetData.percentUsed);
+		if (budgetData.pauseTriggered) setShowPauseModal(true);
+	}, []);
+
 	const fetchStatus = useCallback(async () => {
 		try {
 			const [data, budgetData] = await Promise.all([
 				apiGet<RunApiResponse>(`/api/execution/${runId}`).catch(() => null),
 				apiGet<BudgetApiResponse>(`/api/budget/${runId}`).catch(() => null),
 			]);
-
-			if (data) {
-				if (data.plan?.tasks) {
-					// Detect spec changes — tasks whose status changed
-					const changed: string[] = [];
-					const preserved: string[] = [];
-					for (const task of data.plan.tasks) {
-						const prevStatus = prevTaskStatusRef.current.get(task.id);
-						if (prevStatus && prevStatus !== task.status) {
-							changed.push(task.id);
-						} else if (prevStatus && prevStatus === task.status && task.status === "COMPLETED") {
-							preserved.push(task.id);
-						}
-					}
-					if (changed.length > 0) {
-						setRecentlyChangedTaskIds(changed);
-						setPreservedTaskIds(preserved);
-						setTimeout(() => {
-							setRecentlyChangedTaskIds([]);
-							setPreservedTaskIds([]);
-						}, 3000);
-					}
-
-					// Update prev task status map
-					const newMap = new Map<string, string>();
-					for (const t of data.plan.tasks) {
-						newMap.set(t.id, t.status);
-					}
-					prevTaskStatusRef.current = newMap;
-					setTasks(data.plan.tasks);
-				}
-				if (data.agents) {
-					// Detect new agents (reinforcements)
-					const currentIds = new Set(data.agents.map((a) => a.agentId));
-					const prevIds = prevAgentIdsRef.current;
-
-					if (!hadAgentsRef.current && currentIds.size > 0) {
-						// First time seeing agents → authorization just happened
-						setJustAuthorized(true);
-						setTimeout(() => setJustAuthorized(false), 2000);
-						hadAgentsRef.current = true;
-					} else if (hadAgentsRef.current) {
-						const reinforcements: string[] = [];
-						for (const id of currentIds) {
-							if (!prevIds.has(id)) {
-								reinforcements.push(id);
-							}
-						}
-						if (reinforcements.length > 0) {
-							setNewReinforcementIds(reinforcements);
-							setTimeout(() => setNewReinforcementIds([]), 2000);
-						}
-					}
-
-					prevAgentIdsRef.current = currentIds;
-					setAgents(data.agents);
-				}
-				if (data.events) {
-					setEvents(data.events);
-				}
-				if (data.violation) {
-					setViolation(data.violation);
-				}
-				if (data.pendingFixes) {
-					setPendingFixes(data.pendingFixes);
-				}
-			}
-
-			if (budgetData) {
-				setCurrentSpend(budgetData.currentSpend);
-				setCeiling(budgetData.ceiling);
-				setPercentUsed(budgetData.percentUsed);
-				if (budgetData.pauseTriggered) {
-					setShowPauseModal(true);
-				}
-			}
+			if (data) processRunData(data);
+			if (budgetData) processBudgetData(budgetData);
 		} catch {
 			// Silently handle fetch errors during polling
 		}
-	}, [runId]);
+	}, [runId, processRunData, processBudgetData]);
 
 	useEffect(() => {
 		fetchStatus();
