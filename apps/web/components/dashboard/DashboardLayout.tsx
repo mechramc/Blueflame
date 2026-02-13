@@ -8,9 +8,11 @@ import { type ActionEvent, ActionStream } from "./ActionStream";
 import { AgentGrid } from "./AgentGrid";
 import type { AgentCardData } from "./AgentStatusCard";
 import { DAGProgress } from "./DAGProgress";
+import { ExecutionActivityBanner } from "./ExecutionActivityBanner";
 
 interface DashboardLayoutProps {
 	runId: string;
+	runStatus: string;
 	agents: AgentCardData[];
 	tasks: PlanTask[];
 	events: ActionEvent[];
@@ -28,6 +30,7 @@ interface DashboardLayoutProps {
  */
 export function DashboardLayout({
 	runId,
+	runStatus,
 	agents,
 	tasks,
 	events,
@@ -39,6 +42,10 @@ export function DashboardLayout({
 	recentlyChangedTaskIds = [],
 	preservedTaskIds = [],
 }: DashboardLayoutProps) {
+	const taskCount = tasks.length;
+	const completedCount = tasks.filter((t) => t.status === "COMPLETED").length;
+	const runningCount = agents.filter((a) => a.status === "EXECUTING").length;
+
 	return (
 		<div className="p-4 space-y-4" data-testid="dashboard-layout">
 			{/* Header */}
@@ -47,6 +54,14 @@ export function DashboardLayout({
 					Run: <span className="font-mono text-[--text-secondary]">{runId}</span>
 				</h1>
 			</div>
+
+			{/* Execution activity banner */}
+			<ExecutionActivityBanner
+				status={runStatus}
+				taskCount={taskCount}
+				runningCount={runningCount}
+				completedCount={completedCount}
+			/>
 
 			{/* Budget bar + warning */}
 			<div className="space-y-2">

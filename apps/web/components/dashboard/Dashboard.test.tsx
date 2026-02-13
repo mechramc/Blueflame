@@ -278,6 +278,7 @@ describe("DashboardLayout", () => {
 		render(
 			<DashboardLayout
 				runId="run-123"
+				runStatus="EXECUTING"
 				agents={[mockAgent]}
 				tasks={mockTasks}
 				events={mockEvents}
@@ -298,6 +299,7 @@ describe("DashboardLayout", () => {
 		render(
 			<DashboardLayout
 				runId="run-1"
+				runStatus="EXECUTING"
 				agents={[]}
 				tasks={[]}
 				events={[]}
@@ -315,6 +317,7 @@ describe("DashboardLayout", () => {
 		const { container } = render(
 			<DashboardLayout
 				runId="run-1"
+				runStatus="EXECUTING"
 				agents={[mockAgent]}
 				tasks={mockTasks}
 				events={[]}

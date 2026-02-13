@@ -26,6 +26,7 @@ import { logAuditEvent } from "./audit-logger.js";
 import { allTasksTerminal, getReadyTasks, hasFailedTasks } from "./dag-executor.js";
 import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
 import { extractPatternsFromRun } from "./knowledge-store.js";
+import { executeTask } from "./task-executor.js";
 
 /** Shared σ-router instance */
 const router = new SigmaRouter();
@@ -72,6 +73,22 @@ function pushEvent(run: RunState, agentId: string, role: string, action: string,
 		action,
 		detail,
 	});
+}
+
+/**
+ * Push an event to a run from outside the orchestrator (e.g., task-executor).
+ */
+export function pushEventExternal(
+	runId: string,
+	agentId: string,
+	role: string,
+	action: string,
+	detail: string,
+): void {
+	const run = runs.get(runId);
+	if (run) {
+		pushEvent(run, agentId, role, action, detail);
+	}
 }
 
 /** In-memory run store — hot state for active runs */
@@ -230,6 +247,11 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 		pushEvent(run, agent.agentId, task.agentRole, "TASK_STARTED", `Task ${task.id} started`);
 
 		spawnedAgents.push(agent);
+
+		// Fire-and-forget: actually execute the task via LLM
+		executeTask(run, task, agent).catch((err) => {
+			console.error(`[Orchestrator] Task execution failed for ${task.id}:`, err);
+		});
 	}
 
 	return { ok: true, value: spawnedAgents };
@@ -281,6 +303,12 @@ export async function completeTask(
 			"AGENT_SPAWNED",
 			`Verifier spawned for task ${taskId}`,
 		);
+
+		// Fire-and-forget: execute verifier via LLM
+		executeTask(run, task, verifier).catch((err) => {
+			console.error(`[Orchestrator] Verifier execution failed for ${taskId}:`, err);
+		});
+
 		return { ok: true, value: { verifierAgent: verifier } };
 	}
 
@@ -288,6 +316,11 @@ export async function completeTask(
 	task.status = TaskStatus.Completed;
 	pushEvent(run, agentId, task.agentRole, "TASK_COMPLETED", `Task ${taskId} completed`);
 	checkpointRun(run);
+
+	// Auto-advance: try to execute next wave of ready tasks
+	executeNextWave(runId).catch((err) => {
+		console.error(`[Orchestrator] Auto-advance failed after task ${taskId}:`, err);
+	});
 
 	return { ok: true, value: {} };
 }

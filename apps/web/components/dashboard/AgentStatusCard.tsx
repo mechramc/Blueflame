@@ -19,7 +19,7 @@ interface AgentStatusCardProps {
 }
 
 const STATUS_DOT: Record<string, string> = {
-	EXECUTING: "bg-emerald-400",
+	EXECUTING: "bg-emerald-400 animate-pulse",
 	IDLE: "bg-yellow-400",
 	COMPLETED: "bg-blue-400",
 	FAILED: "bg-red-400",
@@ -49,15 +49,20 @@ export function AgentStatusCard({ agent }: AgentStatusCardProps) {
 	const isHighSigma = agent.sigmaValue >= SIGMA_THRESHOLD;
 	const sigmaPercent = Math.min(agent.sigmaValue * 100, 100);
 
+	const isExecuting = agent.status === "EXECUTING";
 	const animClass = agent.isBlocked
 		? "animate-flash-red"
 		: isHighSigma
 			? "animate-escalate-pulse"
-			: "";
+			: isExecuting
+				? "animate-pulse"
+				: "";
 
 	return (
 		<div
-			className={`rounded border border-[--border] bg-[--bg-secondary] border-l-2 ${borderColor} p-3 ${animClass}`}
+			className={`rounded border bg-[--bg-secondary] border-l-2 ${borderColor} p-3 ${animClass} ${
+				isExecuting ? "border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.15)]" : "border-[--border]"
+			}`}
 			data-testid={`agent-card-${agent.agentId}`}
 		>
 			<div className="flex items-center justify-between mb-2">

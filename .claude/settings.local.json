@@ -20,7 +20,8 @@
       "Bash(node -e:*)",
       "Bash(tasklist:*)",
       "Bash(netstat:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(npx turbo test:*)"
     ]
   }
 }

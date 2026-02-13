@@ -64,6 +64,41 @@ function detectNewAgents(currentIds: Set<string>, prevIds: Set<string>): string[
 	return reinforcements;
 }
 
+interface TaskAnimationUpdate {
+	changed: string[];
+	preserved: string[];
+	newMap: Map<string, string>;
+}
+
+/** Process task data from a poll response */
+function processTaskData(
+	tasks: PlanTask[],
+	prevStatusMap: Map<string, string>,
+): TaskAnimationUpdate {
+	return detectTaskChanges(tasks, prevStatusMap);
+}
+
+interface AgentAnimationResult {
+	isFirstSpawn: boolean;
+	reinforcements: string[];
+}
+
+/** Process agent data from a poll response */
+function processAgentAnimations(
+	agents: AgentCardData[],
+	prevIds: Set<string>,
+	hadAgentsBefore: boolean,
+): AgentAnimationResult {
+	const currentIds = new Set(agents.map((a) => a.agentId));
+	if (!hadAgentsBefore && currentIds.size > 0) {
+		return { isFirstSpawn: true, reinforcements: [] };
+	}
+	if (hadAgentsBefore) {
+		return { isFirstSpawn: false, reinforcements: detectNewAgents(currentIds, prevIds) };
+	}
+	return { isFirstSpawn: false, reinforcements: [] };
+}
+
 /**
  * Run dashboard page — real-time view of execution progress.
  * Detects animation states: authorization, reinforcement, violation, spec change.
@@ -72,6 +107,7 @@ export default function RunPage() {
 	const params = useParams<{ projectId: string; runId: string }>();
 	const { runId } = params;
 
+	const [runStatus, setRunStatus] = useState("PENDING");
 	const [tasks, setTasks] = useState<PlanTask[]>([]);
 	const [agents, setAgents] = useState<AgentCardData[]>([]);
 	const [events, setEvents] = useState<ActionEvent[]>([]);
@@ -92,43 +128,52 @@ export default function RunPage() {
 	const prevTaskStatusRef = useRef<Map<string, string>>(new Map());
 	const hadAgentsRef = useRef(false);
 
-	const processRunData = useCallback((data: RunApiResponse) => {
-		if (data.plan?.tasks) {
-			const { changed, preserved, newMap } = detectTaskChanges(
-				data.plan.tasks,
-				prevTaskStatusRef.current,
-			);
-			if (changed.length > 0) {
-				setRecentlyChangedTaskIds(changed);
-				setPreservedTaskIds(preserved);
-				setTimeout(() => {
-					setRecentlyChangedTaskIds([]);
-					setPreservedTaskIds([]);
-				}, 3000);
-			}
-			prevTaskStatusRef.current = newMap;
-			setTasks(data.plan.tasks);
+	const applyTaskAnimations = useCallback((incomingTasks: PlanTask[]) => {
+		const { changed, preserved, newMap } = processTaskData(
+			incomingTasks,
+			prevTaskStatusRef.current,
+		);
+		if (changed.length > 0) {
+			setRecentlyChangedTaskIds(changed);
+			setPreservedTaskIds(preserved);
+			setTimeout(() => {
+				setRecentlyChangedTaskIds([]);
+				setPreservedTaskIds([]);
+			}, 3000);
 		}
-		if (data.agents) {
-			const currentIds = new Set(data.agents.map((a) => a.agentId));
-			if (!hadAgentsRef.current && currentIds.size > 0) {
-				setJustAuthorized(true);
-				setTimeout(() => setJustAuthorized(false), 2000);
-				hadAgentsRef.current = true;
-			} else if (hadAgentsRef.current) {
-				const reinforcements = detectNewAgents(currentIds, prevAgentIdsRef.current);
-				if (reinforcements.length > 0) {
-					setNewReinforcementIds(reinforcements);
-					setTimeout(() => setNewReinforcementIds([]), 2000);
-				}
-			}
-			prevAgentIdsRef.current = currentIds;
-			setAgents(data.agents);
-		}
-		if (data.events) setEvents(data.events);
-		if (data.violation) setViolation(data.violation);
-		if (data.pendingFixes) setPendingFixes(data.pendingFixes);
+		prevTaskStatusRef.current = newMap;
+		setTasks(incomingTasks);
 	}, []);
+
+	const applyAgentAnimations = useCallback((incomingAgents: AgentCardData[]) => {
+		const anim = processAgentAnimations(
+			incomingAgents,
+			prevAgentIdsRef.current,
+			hadAgentsRef.current,
+		);
+		if (anim.isFirstSpawn) {
+			setJustAuthorized(true);
+			setTimeout(() => setJustAuthorized(false), 2000);
+			hadAgentsRef.current = true;
+		} else if (anim.reinforcements.length > 0) {
+			setNewReinforcementIds(anim.reinforcements);
+			setTimeout(() => setNewReinforcementIds([]), 2000);
+		}
+		prevAgentIdsRef.current = new Set(incomingAgents.map((a) => a.agentId));
+		setAgents(incomingAgents);
+	}, []);
+
+	const processRunData = useCallback(
+		(data: RunApiResponse) => {
+			if (data.status) setRunStatus(data.status);
+			if (data.plan?.tasks) applyTaskAnimations(data.plan.tasks);
+			if (data.agents) applyAgentAnimations(data.agents);
+			if (data.events) setEvents(data.events);
+			if (data.violation) setViolation(data.violation);
+			if (data.pendingFixes) setPendingFixes(data.pendingFixes);
+		},
+		[applyTaskAnimations, applyAgentAnimations],
+	);
 
 	const processBudgetData = useCallback((budgetData: BudgetApiResponse) => {
 		setCurrentSpend(budgetData.currentSpend);
@@ -185,6 +230,7 @@ export default function RunPage() {
 		<div className="min-h-screen bg-[--bg-primary]">
 			<DashboardLayout
 				runId={runId}
+				runStatus={runStatus}
 				agents={agents}
 				tasks={tasks}
 				events={events}
