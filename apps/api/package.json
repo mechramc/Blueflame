@@ -15,6 +15,7 @@
 	"dependencies": {
 		"@blueflame/cosmos": "*",
 		"@blueflame/foundry": "*",
+		"@blueflame/github-app": "*",
 		"@blueflame/shared": "*",
 		"azure-devops-node-api": "^15.1.2",
 		"cors": "^2.8.5",

@@ -26,18 +26,14 @@ describe("SpecStatusBadge", () => {
 	});
 
 	it("should render ACCEPTED status with blue styling", () => {
-		const { container } = render(
-			<SpecStatusBadge status={SpecStatus.Accepted} />,
-		);
+		const { container } = render(<SpecStatusBadge status={SpecStatus.Accepted} />);
 		expect(screen.getByText("ACCEPTED")).toBeInTheDocument();
 		const badge = container.querySelector("[class*='text-blue']");
 		expect(badge).toBeInTheDocument();
 	});
 
 	it("should render FROZEN status with green styling", () => {
-		const { container } = render(
-			<SpecStatusBadge status={SpecStatus.Frozen} />,
-		);
+		const { container } = render(<SpecStatusBadge status={SpecStatus.Frozen} />);
 		expect(screen.getByText("FROZEN")).toBeInTheDocument();
 		const badge = container.querySelector("[class*='text-emerald']");
 		expect(badge).toBeInTheDocument();
