@@ -82,32 +82,34 @@ let telemetryInitialized = false;
  * Call once at API startup. No-op if connection string is not set.
  */
 export function initTelemetry(connectionString?: string): boolean {
-    const connStr = connectionString ?? process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
-    if (!connStr) {
-        console.log("[Telemetry] No APPLICATIONINSIGHTS_CONNECTION_STRING — App Insights disabled");
-        return false;
-    }
+	const connStr = connectionString ?? process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
+	if (!connStr) {
+		console.log("[Telemetry] No APPLICATIONINSIGHTS_CONNECTION_STRING — App Insights disabled");
+		return false;
+	}
 
-    try {
-        // Dynamic import to avoid hard dependency when not configured
-        // For ESM, use createRequire from module
-        import("module").then(({ createRequire }) => {
-            const require = createRequire(import.meta.url);
-            const appInsights = require("applicationinsights");
-            appInsights
-                .setup(connStr)
-                .setAutoCollectRequests(true)
-                .setAutoCollectPerformance(true)
-                .setAutoCollectExceptions(true)
-                .setAutoCollectDependencies(false) // We track these manually
-                .setAutoCollectConsole(false)
-                .start();
+	try {
+		// Dynamic import to avoid hard dependency when not configured
+		// For ESM, use createRequire from module
+		import("node:module")
+			.then(({ createRequire }) => {
+				const require = createRequire(import.meta.url);
+				const appInsights = require("applicationinsights");
+				appInsights
+					.setup(connStr)
+					.setAutoCollectRequests(true)
+					.setAutoCollectPerformance(true)
+					.setAutoCollectExceptions(true)
+					.setAutoCollectDependencies(false) // We track these manually
+					.setAutoCollectConsole(false)
+					.start();
 
-            appInsightsClient = appInsights.defaultClient;
-            telemetryInitialized = true;
-        }).catch((error) => {
-            console.warn("[Telemetry] Failed to initialize App Insights:", error.message);
-        });
+				appInsightsClient = appInsights.defaultClient;
+				telemetryInitialized = true;
+			})
+			.catch((error) => {
+				console.warn("[Telemetry] Failed to initialize App Insights:", error.message);
+			});
 		telemetryInitialized = true;
 		console.log("[Telemetry] Application Insights initialized");
 		return true;

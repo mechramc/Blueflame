@@ -1,9 +1,9 @@
 "use client";
 
+import { apiPost } from "@/lib/api-client";
 import { SpecStatus } from "@blueflame/shared";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { apiPost } from "@/lib/api-client";
 
 interface SpecActionsProps {
 	status: SpecStatus;
@@ -37,20 +37,20 @@ export function SpecActions({
 
 		try {
 			// Step 1: Generate plan from frozen spec
-			await apiPost(`/api/plans/generate`, {
+			await apiPost("/api/plans/generate", {
 				specId,
 				runId,
 				projectId,
 			});
 
 			// Step 2: Authorize the plan (default budget ceiling $50)
-			await apiPost(`/api/authorize`, {
+			await apiPost("/api/authorize", {
 				runId,
 				budgetCeiling: 50,
 			});
 
 			// Step 3: Start execution
-			await apiPost(`/api/execution/start`, { runId });
+			await apiPost("/api/execution/start", { runId });
 
 			// Navigate to the run dashboard
 			router.push(`/project/${projectId}/run/${runId}`);
@@ -104,9 +104,7 @@ export function SpecActions({
 					>
 						{isLaunching ? "Launching..." : "Generate Plan & Execute"}
 					</button>
-					{launchError && (
-						<span className="text-xs text-red-400">{launchError}</span>
-					)}
+					{launchError && <span className="text-xs text-red-400">{launchError}</span>}
 				</div>
 			)}
 		</div>

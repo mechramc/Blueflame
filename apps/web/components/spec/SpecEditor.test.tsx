@@ -4,6 +4,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SpecActions } from "./SpecActions";
 import { SpecStatusBadge } from "./SpecStatusBadge";
 
+// Mock next/navigation (SpecActions uses useRouter)
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({
+		push: vi.fn(),
+		replace: vi.fn(),
+		prefetch: vi.fn(),
+	}),
+}));
+
 afterEach(() => {
 	cleanup();
 });
@@ -17,14 +26,18 @@ describe("SpecStatusBadge", () => {
 	});
 
 	it("should render ACCEPTED status with blue styling", () => {
-		const { container } = render(<SpecStatusBadge status={SpecStatus.Accepted} />);
+		const { container } = render(
+			<SpecStatusBadge status={SpecStatus.Accepted} />,
+		);
 		expect(screen.getByText("ACCEPTED")).toBeInTheDocument();
 		const badge = container.querySelector("[class*='text-blue']");
 		expect(badge).toBeInTheDocument();
 	});
 
 	it("should render FROZEN status with green styling", () => {
-		const { container } = render(<SpecStatusBadge status={SpecStatus.Frozen} />);
+		const { container } = render(
+			<SpecStatusBadge status={SpecStatus.Frozen} />,
+		);
 		expect(screen.getByText("FROZEN")).toBeInTheDocument();
 		const badge = container.querySelector("[class*='text-emerald']");
 		expect(badge).toBeInTheDocument();
@@ -33,17 +46,23 @@ describe("SpecStatusBadge", () => {
 
 // ─── SpecActions ─────────────────────────────────────────────
 
+const baseProps = {
+	projectId: "proj-1",
+	specId: "spec-1",
+	onAccept: vi.fn(),
+	onFreeze: vi.fn(),
+	onGenerateSpec: vi.fn(),
+};
+
 describe("SpecActions", () => {
 	it("should show Accept and Regenerate buttons for DRAFT status", () => {
-		const onAccept = vi.fn();
-		const onFreeze = vi.fn();
-		const onGen = vi.fn();
 		render(
 			<SpecActions
+				{...baseProps}
 				status={SpecStatus.Draft}
-				onAccept={onAccept}
-				onFreeze={onFreeze}
-				onGenerateSpec={onGen}
+				onAccept={vi.fn()}
+				onFreeze={vi.fn()}
+				onGenerateSpec={vi.fn()}
 			/>,
 		);
 		expect(screen.getByText("Accept")).toBeInTheDocument();
@@ -54,6 +73,7 @@ describe("SpecActions", () => {
 		const onAccept = vi.fn();
 		render(
 			<SpecActions
+				{...baseProps}
 				status={SpecStatus.Draft}
 				onAccept={onAccept}
 				onFreeze={vi.fn()}
@@ -67,6 +87,7 @@ describe("SpecActions", () => {
 	it("should show Freeze button for ACCEPTED status", () => {
 		render(
 			<SpecActions
+				{...baseProps}
 				status={SpecStatus.Accepted}
 				onAccept={vi.fn()}
 				onFreeze={vi.fn()}
@@ -80,6 +101,7 @@ describe("SpecActions", () => {
 		const onFreeze = vi.fn();
 		render(
 			<SpecActions
+				{...baseProps}
 				status={SpecStatus.Accepted}
 				onAccept={vi.fn()}
 				onFreeze={onFreeze}
@@ -93,6 +115,7 @@ describe("SpecActions", () => {
 	it("should show frozen message for FROZEN status", () => {
 		render(
 			<SpecActions
+				{...baseProps}
 				status={SpecStatus.Frozen}
 				onAccept={vi.fn()}
 				onFreeze={vi.fn()}
@@ -105,6 +128,7 @@ describe("SpecActions", () => {
 	it("should disable buttons when disabled prop is true", () => {
 		render(
 			<SpecActions
+				{...baseProps}
 				status={SpecStatus.Draft}
 				onAccept={vi.fn()}
 				onFreeze={vi.fn()}
