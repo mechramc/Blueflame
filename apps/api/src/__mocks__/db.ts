@@ -48,6 +48,11 @@ function createMockRepo<T extends Doc>() {
 			return { ok: true, value: undefined };
 		},
 
+		upsert: async (item: T, _pk: string): Promise<T> => {
+			store.set(item.id, { ...item });
+			return { ...item };
+		},
+
 		query: async () => ({
 			items: [...store.values()],
 			continuationToken: undefined,

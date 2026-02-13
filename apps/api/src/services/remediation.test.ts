@@ -8,7 +8,7 @@ import {
 	completeRemediation,
 	createRemediation,
 	failRemediation,
-	getRemediation,
+	getRemediationSync,
 	getRemediationsByFailureId,
 	getRemediationsByRunId,
 	startAnalysis,
@@ -150,8 +150,8 @@ describe("remediation service", () => {
 			parentLockId: "lock-1",
 		});
 
-		expect(getRemediation(rem.remediationId)).toBeDefined();
-		expect(getRemediation("nonexistent")).toBeUndefined();
+		expect(getRemediationSync(rem.remediationId)).toBeDefined();
+		expect(getRemediationSync("nonexistent")).toBeUndefined();
 	});
 
 	it("should query by failureId", () => {

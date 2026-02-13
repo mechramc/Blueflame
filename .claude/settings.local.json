@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(npx turbo build:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nphase\\(all\\): resolve all 13 gaps across 12 phases — full integration build\n\nPhases 1-12 complete:\n- Auth wiring with dev role picker and RBAC middleware\n- Projects CRUD API + dynamic home page with project cards\n- Run dashboard API contract fix \\(agents, tasks, events\\)\n- Navigation links for Compliance/Chargeback\n- Compliance + Chargeback dashboards with real API backends\n- Cosmos DB write-through persistence \\(conversation, remediation, budget, cost, runs\\)\n- 3-panel spec page with validation panel + workflow progress bar\n- WF3 fixer loop \\(Verifier fail → Fixer → human approval → re-verify\\)\n- WF5 autonomous healing \\(failure clustering, auto-heal on 3+ similar failures\\)\n- WF6 delta detection API endpoint\n- WF7 knowledge store \\(pattern extraction from completed runs\\)\n- WF8 GitHub Actions \\(webhook normalization + dispatch/list API\\)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(claude install-extension:*)",
+      "Bash(git commit:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git stash:*)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

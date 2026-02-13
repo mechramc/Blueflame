@@ -12,6 +12,7 @@ import {
 	executeNextWave,
 	failTask,
 	getRun,
+	getRunSync,
 	onBudgetAlert,
 	onRunStatusChange,
 	requestInterrupt,
@@ -184,7 +185,7 @@ describe("completeTask", () => {
 		const result = await completeTask("run-1", "TASK-001", agent.agentId, 500, 0.02);
 		expect(result.ok).toBe(true);
 
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		const task = run?.plan.tasks.find((t) => t.id === "TASK-001");
 		expect(task?.status).toBe(TaskStatus.Completed);
 	});
@@ -203,7 +204,7 @@ describe("failTask", () => {
 		const result = await failTask("run-1", "TASK-001", "agent-1", 200, 0.01);
 		expect(result.ok).toBe(true);
 
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		const task = run?.plan.tasks.find((t) => t.id === "TASK-001");
 		expect(task?.status).toBe(TaskStatus.Failed);
 	});
@@ -216,7 +217,7 @@ describe("requestInterrupt", () => {
 		const result = requestInterrupt("run-1");
 		expect(result.ok).toBe(true);
 
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		expect(run?.interruptRequested).toBe(true);
 	});
 
@@ -224,7 +225,7 @@ describe("requestInterrupt", () => {
 		const plan = makePlan();
 		startExecution(plan, makeLock());
 		// Manually set to paused for test
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		if (run) run.status = RunStatus.Paused;
 
 		const result = requestInterrupt("run-1");
@@ -236,7 +237,7 @@ describe("requestInterrupt", () => {
 		requestInterrupt("run-1");
 
 		await executeNextWave("run-1");
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		expect(run?.status).toBe(RunStatus.Paused);
 	});
 });
@@ -267,7 +268,7 @@ describe("budget enforcement", () => {
 		await recordAgentUsage(agent.agentId, 10000, 0.96);
 
 		await executeNextWave("run-1");
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		expect(run?.status).toBe(RunStatus.Paused);
 	});
 
@@ -281,7 +282,7 @@ describe("budget enforcement", () => {
 		await recordAgentUsage(agent.agentId, 10000, 0.96);
 
 		await executeNextWave("run-1");
-		const run = getRun("run-1");
+		const run = getRunSync("run-1");
 		const task2 = run?.plan.tasks.find((t) => t.id === "TASK-002");
 		expect(task2?.status).toBe(TaskStatus.Deferred);
 	});

@@ -4,7 +4,7 @@ import {
 	BudgetAlertLevel,
 	checkBudget,
 	clearAllBudgets,
-	getBudgetState,
+	getBudgetStateSync,
 	handleBudgetDecision,
 	initBudget,
 	onBudgetAlert,
@@ -118,14 +118,14 @@ describe("getBudgetState", () => {
 		initBudget("run-1", 5.0);
 		recordCost("agent-1", "run-1", "gpt-4o", 10000, 5000);
 
-		const state = getBudgetState("run-1");
+		const state = getBudgetStateSync("run-1");
 		expect(state).toBeDefined();
 		expect(state?.currentSpend).toBeGreaterThan(0);
 		expect(state?.percentUsed).toBeGreaterThan(0);
 	});
 
 	it("should return undefined for unknown run", () => {
-		expect(getBudgetState("unknown")).toBeUndefined();
+		expect(getBudgetStateSync("unknown")).toBeUndefined();
 	});
 });
 
