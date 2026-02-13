@@ -3,7 +3,7 @@
 **The Governed AI Software Refinery**
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-453%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-540%2B%20passing-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 [![Hackathon](https://img.shields.io/badge/Microsoft%20AI%20Dev%20Days-2026-purple)]()
@@ -112,6 +112,9 @@ Users set cost ceilings. The system warns at 80%, pauses at 95%, and handles par
 ### Spec Delta Detection
 When specs change mid-execution, the system computes semantic diffs, maps impact to tasks (preserve/rebuild/new/remove), and surgically re-executes only what's affected.
 
+### SCR Governance (Spec-Freeze Doctrine)
+A frozen spec is law. Changing it is a governance event — not a chat edit. Spec Change Requests (SCRs) enforce a formal workflow: create change request with reason → automatic DiffPack + impact analysis → approve/reject by Authorizer → delta execution that patches the existing plan and only re-executes affected tasks. Completed work is preserved. Every SCR is audited with full traceability back to DiffPack items.
+
 ### Constraint Registry
 Persistent, project-level rules (architectural, security, performance) survive across runs. The Verifier evaluates agent outputs against these constraints — not just model agreement.
 
@@ -138,7 +141,7 @@ Persistent, project-level rules (architectural, security, performance) survive a
 | 3 | **Refactor Under Constraints** | Codebase Context | Constraint registry enforced throughout refactoring |
 | 4 | **Bug Fix + Root Cause** | Chat + Codebase | Explainer produces ACAR-informed attribution with explicit diffs |
 | 5 | **Budget-Constrained Partial** | Any | Graceful pause at ceiling, partial PRs preserved |
-| 6 | **Spec Change Rebuild** | Spec Editor | Delta detection → surgical re-execution of impacted tasks only |
+| 6 | **Spec Change Request (SCR)** | Spec Editor | Frozen spec change → SCR governance → DiffPack + impact analysis → delta execution (patch plan, re-execute only affected tasks) |
 | 7 | **CI/CD Failure Intelligence** | ADO Service Hook | Pipeline failure → governed remediation → validated re-run |
 
 ---
@@ -162,7 +165,7 @@ Persistent, project-level rules (architectural, security, performance) survive a
 | IaC | Azure Bicep | Repeatable infrastructure deployment |
 | Monorepo | Turborepo + npm workspaces | Build orchestration |
 | Linting | Biome | Fast lint + format |
-| Testing | Vitest (unit) + Playwright (E2E) | 453+ tests |
+| Testing | Vitest (unit) + Playwright (E2E) | 540+ tests |
 
 ---
 
@@ -267,13 +270,13 @@ npx turbo dev
 ## Testing
 
 ```
-Total: 453+ tests across 7 packages
-├── apps/api:      181 tests (services, routes, middleware, webhooks, SignalR)
-├── apps/web:      119 tests (components, hooks, dashboard, animations, budget, failures)
-├── packages/foundry: 81 tests (6 agents, prompts, parsers)
+Total: 540+ tests across 7 packages
+├── apps/api:      234 tests (services, routes, middleware, webhooks, SignalR, SCR)
+├── apps/web:      128 tests (components, hooks, dashboard, animations, budget, SCR panel)
+├── packages/foundry: 150 tests (6 agents, prompts, parsers, σ-routing)
 ├── packages/cosmos:  44 tests (repositories, change feed)
 ├── packages/github-app: 24 tests (branches, PRs, actions, diffs)
-└── packages/shared:   4 tests (hash, types)
+└── packages/shared:   28 tests (hash, types, schemas)
 ```
 
 All tests run in CI via GitHub Actions on every PR.
@@ -307,12 +310,14 @@ All tests run in CI via GitHub Actions on every PR.
 | **S7-S8: Agent Swarm** | Done | Builder, verifier, explainer, orchestrator, GitHub integration |
 | **S9-S10: Governance** | Done | Budget system, dashboard, agent cards, animations |
 | **S11: Failure Intelligence** | Done | ADO adapter, Fixer agent, remediation gate, failure dashboard |
-| **S12: ACAR σ-Routing** | Next | σ-based model selection, self-consistency sampling, cost benchmarking |
-| **S13: Enterprise Governance** | Next | OpenTelemetry tracing, compliance dashboard, reasoning trace viewer |
-| **S14: Spec Delta Detection** | Next | WF6: spec diff engine, impact classifier, surgical re-execution |
-| **S15: CI/CD Templates** | Next | Cosmos failures, verifier templates, security constraints, ADO outbound |
-| **S16: Enterprise Budgeting** | Planned | Azure Cost Management, org budget pools, chargeback, SignalR migration |
-| **Demo + Submit** | Planned | Recording, submission package |
+| **S12: ACAR σ-Routing** | Done | σ-based model selection, self-consistency sampling, cost benchmarking |
+| **S13: Enterprise Governance** | Done | OpenTelemetry tracing, compliance dashboard, reasoning trace viewer |
+| **S14: Spec Delta Detection** | Done | WF6: spec diff engine, impact classifier, surgical re-execution |
+| **S15: CI/CD Templates** | Done | Cosmos failures, verifier templates, security constraints, ADO outbound |
+| **S16: Enterprise Budgeting** | Done | Budget pools, chargeback dashboard (SignalR + AppInsights deferred) |
+| **SCR Governance + Delta Execution** | Done | Spec-Freeze Doctrine, SCR workflow, DiffPack, TaskPatch, Patch Mode agents |
+| **E2E Integration** | Done | 12-phase gap resolution, all 13 integration gaps fixed |
+| **Demo + Submit** | In Progress | Recording, submission package |
 
 ---
 

@@ -8,24 +8,40 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-12
-- **Session**: 11
+- **Date**: 2026-02-13
+- **Session**: 13
 
 ## Current State
-- **Phase**: Integration & E2E Testing — All 12 gap resolution phases complete
-- **Last completed task**: Fixed SpecActions.tsx "Generate Plan & Execute" button to match actual API contracts
-- **Next task**: Test Spec→Plan→Execute flow end-to-end in browser, then commit staged changes
+- **Phase**: Demo Preparation — All features implemented including SCR governance + delta execution
+- **Last completed task**: SCR governance + delta execution (full feature), documentation updates
+- **Next task**: E2E testing (Spec→Plan→Execute flow), demo recording (7 workflows)
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks)
-- **CI/CD**: Last push had lint/deploy fixes staged but not yet committed
-- **Last commit**: `4baf28e` — Image refs added
+- **CI/CD**: All changes committed and pushed
+- **Last commit**: `2998b94` — feat: implement SCR governance + delta execution
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–11)
+## What Just Happened (Sessions 10–13)
 
-### Gap Resolution — All 12 Phases Complete
+### Session 12–13: SCR Governance + Delta Execution + Docs
+
+Implemented the Spec-Freeze Doctrine: frozen specs can only be changed via formal Spec Change Requests (SCRs). Full workflow: create SCR → automatic DiffPack + impact analysis → approve/reject → delta execution (patch existing plan, re-execute only affected tasks). 14 files changed, ~1538 lines added. All documentation updated.
+
+**New files:**
+- `packages/shared/src/types/scr.ts` — SCR types (SCRStatus, DiffPack, TaskPatch, BaselineSnapshot)
+- `apps/api/src/services/scr-service.ts` — Core SCR logic (create, analyze, approve, reject, delta execute)
+- `apps/api/src/routes/scr.ts` — 6 REST endpoints for SCR workflow
+- `apps/web/components/spec/SCRPanel.tsx` — Multi-step SCR UI (edit → review → approve → execute)
+
+**Modified files:**
+- `apps/api/src/services/orchestrator.ts` — Added `applyTaskPatch()` for delta execution
+- `apps/api/src/services/task-executor.ts` — Patch Mode agent constraints
+- `apps/web/components/chat/ChatPanel.tsx` — SCR integration when frozen
+- `apps/web/app/project/[projectId]/page.tsx` — Pass frozen spec props
+
+### Sessions 10–11: Gap Resolution — All 12 Phases Complete
 
 Resolved all 13 integration gaps identified in the gap analysis. Every phase verified via build. ~61 files changed, ~3400 lines added.
 
@@ -109,28 +125,23 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 8**: ALL enterprise streams implemented (15/18 tasks, 2 deferred, +87 tests)
 - **Session 9**: Production migration + full Azure deployment (live API + Web)
 - **Sessions 10–11**: All 12 gap resolution phases + integration fixes + E2E testing started
+- **Sessions 12–13**: SCR governance + delta execution feature + documentation updates
 
 ## What To Pick Up Next
 
-### Immediate (Session 12)
-1. **Commit staged changes from VS Code** — CI/CD fixes + SpecActions button fix
-2. **Test Spec→Plan→Execute flow** — Create project → chat → generate spec → accept → freeze → click "Generate Plan & Execute" → verify run dashboard populates
+### Immediate (Session 14)
+1. **E2E test Spec→Plan→Execute flow** — Create project → chat → generate spec → accept → freeze → click "Generate Plan & Execute" → verify run dashboard populates
+2. **E2E test SCR flow** — Freeze spec → Request Change → review impact map → approve → execute delta
 3. **Verify run dashboard** — Task DAG, agent cards, action stream, budget bar should show real data
-4. **Add "Runs" navigation** — Consider adding a runs list page per project (currently Run tab only appears when viewing a specific run)
-5. **Demo recording** — 7 workflow demonstrations
-6. **Submission package** — README, architecture diagram, demo video
+4. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
+5. **Submission package** — README (done), architecture diagram, demo video
 
 ### What's Deferred (OK to skip)
 - **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical
 - **S16-005: Application Insights SDK** — OTel spans already provide instrumentation
 
 ## Staged But Uncommitted Changes
-The following changes are staged and ready to commit from VS Code:
-- `biome.json` — Added `.claude` and `.vscode` to ignore
-- `apps/api/Dockerfile` — Added github-app package copy
-- `apps/api/src/index.ts` — Fixed import ordering
-- `apps/web/components/spec/SpecActions.tsx` — Fixed API contracts for plan/authorize/execute
-- Various files auto-formatted by `biome check --fix`
+None — all changes committed and pushed.
 
 ## Type Gotchas (Learned the Hard Way)
 - `FailedStep.name` (not `stepName`)
@@ -165,6 +176,8 @@ The following changes are staged and ready to commit from VS Code:
 - **Orchestrator**: `apps/api/src/services/orchestrator.ts` (run state, events, fixer loop, auto-heal)
 - **Knowledge Store**: `apps/api/src/services/knowledge-store.ts`
 - **Healing Engine**: `apps/api/src/services/healing-engine.ts`
+- **SCR Service**: `apps/api/src/services/scr-service.ts` (create, analyze, approve, delta execute)
+- **SCR Panel**: `apps/web/components/spec/SCRPanel.tsx` (multi-step governance UI)
 - **Dockerfile (API)**: `apps/api/Dockerfile`
 - **Dockerfile (Web)**: `apps/web/Dockerfile`
 - **Deploy**: `.github/workflows/deploy.yml`

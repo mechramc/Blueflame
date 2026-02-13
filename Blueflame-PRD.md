@@ -36,8 +36,9 @@ The companion `tasks.yaml` breaks each system into atomic tasks sized for Claude
 | S15 | CI/CD Templates & Security Constraints | 7.2, 9, 14 | Week 6 | P0 |
 | S16 | Enterprise Budgeting & MS Integration | 16, 23 | Week 7 | P0 |
 
-**Completed:** S1–S11 (all MVP systems), visual animations, demo wiring, UI redesign.
-**In Progress:** S12–S16 (enterprise streams).
+**Completed:** S1–S16 (all MVP + enterprise systems), visual animations, demo wiring, UI redesign, SCR governance + delta execution, 12-phase gap resolution.
+**In Progress:** Demo recording + submission.
+**Deferred:** S16-004 (SignalR migration), S16-005 (AppInsights SDK).
 
 ---
 
@@ -562,6 +563,66 @@ Build the real-time dashboard that serves as the primary Stage 5 interface and t
 ### S15: Content Safety (Section 15.3)
 - Foundry Content Safety + Protected Material Detection integration
 - Configuration-level; lower implementation effort
+
+---
+
+## SCR Governance + Delta Execution (Added Session 12–13)
+
+### Purpose
+Implement the Spec-Freeze Doctrine: "A frozen spec is law. Changing it is a governance event, not a chat edit." Changes to frozen specs follow a formal Spec Change Request (SCR) workflow with impact analysis and delta execution (patch the existing plan, only re-execute affected tasks — never a fresh run).
+
+### User Stories
+- As a user, when a spec is frozen, I can request a formal change via SCR (not a direct edit).
+- As a user, I see a DiffPack showing exactly what changed between spec versions.
+- As a user, I see a color-coded Impact Map (PRESERVE/REBUILD/NEW/REMOVE) per task.
+- As an Authorizer, I can approve or reject SCRs with full audit trail.
+- As a user, approved SCRs trigger delta execution that preserves completed work.
+
+### Technical Requirements
+
+**Shared Types (`packages/shared/src/types/scr.ts`):**
+- `SCRStatus`: OPEN → IMPACT_ANALYZED → APPROVED → REJECTED → DEFERRED → EXECUTING → COMPLETED
+- `SCRSeverity`: PATCH (clarification) / MINOR (additive) / MAJOR (breaking)
+- `DiffPack` + `DiffPackItem`: Field-level diffs with affected criteria IDs
+- `TaskPatch` + `TaskPatchEntry`: add/update/invalidate/cancel with DiffPack citation
+- `BaselineSnapshot`: Captures run state before delta execution
+- `SpecChangeRequest`: Full SCR document with governance metadata
+
+**SCR Service (`apps/api/src/services/scr-service.ts`):**
+- `createSCR()` — Creates new spec version via editFrozenSpec(), runs delta analysis, builds DiffPack
+- `approveSCR()` — Generates TaskPatch, transitions to APPROVED
+- `rejectSCR()` — Transitions to REJECTED with reason
+- `executeDeltaRun()` — Captures baseline, applies TaskPatch, resumes execution
+
+**API Routes (`apps/api/src/routes/scr.ts`):**
+- POST `/api/scr` — Create SCR
+- GET `/api/scr/:scrId` — Get SCR
+- GET `/api/scr/project/:projectId` — List SCRs by project
+- PUT `/api/scr/:scrId/approve` — Approve
+- PUT `/api/scr/:scrId/reject` — Reject
+- POST `/api/scr/:scrId/execute` — Execute delta run
+
+**Orchestrator (`apps/api/src/services/orchestrator.ts`):**
+- `applyTaskPatch()` — Patches existing run plan: invalidate → reset to PENDING, cancel → DEFERRED, add → append new tasks
+
+**Task Executor (`apps/api/src/services/task-executor.ts`):**
+- Patch Mode: Builder agents get constrained prompts during delta execution ("Only modify files related to cited DiffPack items")
+
+**Frontend (`apps/web/components/spec/SCRPanel.tsx`):**
+- Multi-step UI: idle → editing → reviewing (DiffPack + Impact Map) → approved (TaskPatch summary) → executing
+- Reuses existing `DeltaImpactMap.tsx` component
+
+### Acceptance Criteria
+- [x] SCR can be created from a frozen spec with reason
+- [x] DiffPack shows field-level changes with severity
+- [x] Impact Map shows per-task PRESERVE/REBUILD/NEW/REMOVE
+- [x] Approve/reject transitions with audit logging
+- [x] Delta execution patches plan and only re-executes affected tasks
+- [x] Completed work preserved in BaselineSnapshot
+- [x] Every TaskPatchEntry cites a DiffPackItem.id
+
+### Dependencies
+- S5 (spec freeze), S7 (orchestrator), S14 (delta detection)
 
 ---
 

@@ -21,7 +21,13 @@
       "Bash(tasklist:*)",
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
-      "Bash(npx turbo test:*)"
+      "Bash(npx turbo test:*)",
+      "Bash(gh run watch:*)",
+      "Bash(findstr:*)",
+      "Bash(wmic process:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(ps:*)"
     ]
   }
 }

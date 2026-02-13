@@ -116,6 +116,19 @@
 | Cosmos `projects` container creation | Runtime | **DONE** |
 | Azure OpenAI gpt-4o model deployment | Runtime | **DONE** (user action) |
 
+### Session 12–13 — SCR Governance + Delta Execution + Documentation
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| SCR shared types (SCRStatus, DiffPack, TaskPatch, BaselineSnapshot) | S14 | P0 | **DONE** |
+| SCR service (create, analyze, approve, reject, delta execute) | S14 | P0 | **DONE** |
+| SCR API routes (6 endpoints) | S14 | P0 | **DONE** |
+| Orchestrator: applyTaskPatch() for delta execution | S7 | P0 | **DONE** |
+| Task executor: Patch Mode agent constraints | S7 | P1 | **DONE** |
+| SCR Panel UI (multi-step: edit → review → approve → execute) | S14 | P0 | **DONE** |
+| ChatPanel: SCR integration when spec frozen | UI | P0 | **DONE** |
+| Documentation updates (README, STATUS, CHECKPOINT, PRD, spec) | Docs | P0 | **DONE** |
+| CHANGELOG.md creation | Docs | P1 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -129,9 +142,11 @@
 - **MVP Complete**: 34/34 (all S1–S11 + demo wiring + UI redesign)
 - **Enterprise Streams**: 15/18 complete (S12–S16, 2 deferred, 1 skipped)
 - **Gap Resolution**: 12/12 phases complete (all 13 gaps resolved)
+- **SCR Governance + Delta Execution**: 7/7 (types, service, routes, orchestrator, UI, wiring)
 - **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
+- **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
-- **Grand Total**: 64/69 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Grand Total**: 73/78 complete (2 deferred, 2 demo remaining, 1 skipped)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
@@ -143,6 +158,7 @@
 | **Spec Delta Detection** | S14 | 2 | **2/2** | Spec change → PRESERVE/REBUILD/NEW/REMOVE per task |
 | **CI/CD Templates** | S15 | 5 | **5/5** | Cosmos failures + verifier templates + ADO + normalizer |
 | **Enterprise Budgeting** | S16 | 5 | **3/5** | Budget pools + chargeback (SignalR + AppInsights deferred) |
+| **SCR Governance** | S14+ | 7 | **7/7** | Spec-Freeze Doctrine, SCR workflow, DiffPack, TaskPatch, delta execution, Patch Mode |
 
 ## Decisions Log
 | Date | Decision | Rationale |
@@ -169,7 +185,7 @@
 
 ## Blockers
 - **E2E flow not yet verified**: Spec→Plan→Execute button is wired but hasn't been tested end-to-end in browser
-- **Staged changes uncommitted**: CI/CD fixes + SpecActions button fix staged but not yet committed
+- **Demo recording not started**: All features implemented; need to record 7 workflow demos
 
 ## Risks
 | Risk | Impact | Mitigation | Status |

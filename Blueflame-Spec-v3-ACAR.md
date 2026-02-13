@@ -736,9 +736,27 @@ This section directly addresses the Best Enterprise Solution category's safety r
 | 4. Decision | PRESERVE (unaffected) \| REBUILD (changed) \| NEW (added) \| REMOVE (deleted) | Planner Agent |
 | 5. Present | Visual impact map: green/amber/blue/red. User confirms before re-authorization. | React UI |
 
-### 18.2 Rebuild Execution
+### 18.2 SCR Governance (Spec-Freeze Doctrine)
 
-PRESERVE: branches untouched. REBUILD: branches deleted, re-created, agents re-execute. NEW: new branches. REMOVE: branches deleted, PRs closed with Explainer note. New plan.lock created. Re-authorization required.
+**A frozen spec is law.** Changing it is a governance event, not a chat edit. All modifications to frozen specs follow the Spec Change Request (SCR) workflow:
+
+| Step | Action | Actor |
+|---|---|---|
+| 1. Request | User submits SCR with reason and modified content | Editor/Authorizer |
+| 2. Analyze | System calls `editFrozenSpec()`, runs `detectChanges()` + `computeTaskImpacts()`, builds DiffPack | Automated |
+| 3. Classify | DiffPack items assigned severity: PATCH (clarification), MINOR (additive), MAJOR (breaking) | Automated |
+| 4. Review | Impact Map displayed: PRESERVE (green), REBUILD (amber), NEW (blue), REMOVE (red) per task | User |
+| 5. Decide | Authorizer approves or rejects SCR with audit trail | Authorizer |
+| 6. Patch | TaskPatch generated: invalidate (reset to PENDING), add (new tasks), cancel (removed), update (modified) | Automated |
+| 7. Execute | Delta execution: BaselineSnapshot captured, TaskPatch applied to existing plan, only affected tasks re-execute | Orchestrator |
+
+**Key invariant:** Every `TaskPatchEntry` must cite a `DiffPackItem.id`. No patch without provenance.
+
+**Patch Mode:** During delta execution, Builder agents receive constrained prompts: "Only modify files related to cited DiffPack items. Do not touch preserved task outputs."
+
+### 18.3 Delta Execution (Not Fresh Run)
+
+PRESERVE: task outputs and branches untouched. REBUILD (invalidate): task status reset to PENDING, re-executed by agent swarm. NEW (add): new PlanTask entries appended, executed in next wave. REMOVE (cancel): task status set to DEFERRED, branches/PRs closed. BaselineSnapshot preserves completed work. No new plan.lock — existing plan is patched in place with full audit trail.
 
 ---
 

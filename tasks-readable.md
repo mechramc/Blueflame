@@ -13,11 +13,14 @@
 | Week 1 (Feb 10–16) | S1-001 → S1-005, S2-001 → S2-002, S3-001 | DONE |
 | Week 2 (Feb 17–23) | S3-002 → S3-003, S4-001 → S4-002, S5-001 → S5-003, S6-001 | DONE |
 | Week 3 (Feb 24–Mar 2) | S6-002 → S6-003, S7-001 → S7-004, S8-001 → S8-002 | DONE |
-| Week 4 (Mar 3–9) | S9-001 → S9-002, S10-001 → S10-002, S14-001 → S14-002 | DONE (S14 deferred) |
-| Week 5 (Mar 10–14) | S11-001 → S11-005 | Not started |
-| Week 6 (Mar 14–15) | Demo recording, polish, submission | Not started |
+| Week 4 (Mar 3–9) | S9-001 → S9-002, S10-001 → S10-002, S14-001 → S14-002 | DONE |
+| Week 5 (Mar 10–14) | S11-001 → S11-005 | DONE |
+| Week 6 | S12-001 → S16-003 (enterprise streams) | DONE |
+| Session 10–11 | 12-phase gap resolution (13 gaps) | DONE |
+| Session 12–13 | SCR governance + delta execution + docs | DONE |
+| Final | Demo recording, polish, submission | In progress |
 
-**Total tasks: 32** | **P0: 23** | **P1: 7** | **Demo: 2**
+**Total tasks: 78** | **Completed: 73** | **Deferred: 2** | **Demo: 2 remaining**
 
 ---
 
