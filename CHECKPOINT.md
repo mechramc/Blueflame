@@ -9,21 +9,52 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-13
-- **Session**: 13
+- **Session**: 14
 
 ## Current State
-- **Phase**: Demo Preparation — All features implemented including SCR governance + delta execution
-- **Last completed task**: SCR governance + delta execution (full feature), documentation updates
-- **Next task**: E2E testing (Spec→Plan→Execute flow), demo recording (7 workflows)
+- **Phase**: Demo Preparation — All features implemented, UX polished from real user testing
+- **Last completed task**: Session 14 UX bug fixes (11 issues: execution flow, stats, delta detection, retry, CI)
+- **Next task**: E2E re-test all flows, demo recording (7 workflows)
 - **Branch**: `main`
-- **Repo is green**: YES (full build passes — 6/6 turbo tasks)
-- **CI/CD**: All changes committed and pushed
-- **Last commit**: `2998b94` — feat: implement SCR governance + delta execution
+- **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors, all tests green)
+- **CI/CD**: Changes ready to commit and push
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–13)
+## What Just Happened (Sessions 10–14)
+
+### Session 14: UX Bug Fixes from Real User Testing
+
+User tested the full Spec→Plan→Execute and SCR flows and found 11 issues. All fixed:
+
+**Execution flow (SpecActions)**:
+- Broke one-click "Generate Plan & Execute" into 3 discrete steps: Generate Plan → Approve & Lock → Start Execution
+- Each step has its own button, loading state, and Cancel option
+
+**Stop execution**:
+- Added 3 interrupt checkpoints in orchestrator (between task spawns, before Verifier spawn, before Fixer spawn)
+- Previously only checked at top of `executeNextWave()`
+
+**Dev banner overlay**:
+- Removed `sticky top-0 z-50` from dev mode banner — was overlaying NavHeader (z-40)
+
+**Project stats (0 specs, 0 runs)**:
+- Added `incrementProjectStat()` — called after spec creation (specCount++) and run start (runCount++)
+
+**SCR delta detection (0 changes)**:
+- `detectChanges()` only compared structured fields (acceptanceCriteria, deliverables) which are always empty arrays
+- Added content-level comparison fallback: compares raw YAML `content` field when structured fields detect nothing
+- `computeTaskImpacts()` now marks all tasks as REBUILD on content-level changes
+
+**Failed task UX**:
+- `fail-task` route now passes `originalCode`, `errorMessage`, `failingRole` to orchestrator
+- New `retryFailedTasks()` function: resets FAILED→PENDING, clears retry counts, resumes execution
+- New `POST /api/execution/:runId/retry-failed` endpoint
+- Run dashboard: PARTIAL badge shows "N tasks failed", amber banner lists failed tasks, Retry button
+
+**CI fixes**:
+- Biome formatting auto-fix on SpecActions, SCRPanel, ChatPanel
 
 ### Session 12–13: SCR Governance + Delta Execution + Docs
 

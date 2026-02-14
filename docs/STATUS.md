@@ -129,6 +129,21 @@
 | Documentation updates (README, STATUS, CHECKPOINT, PRD, spec) | Docs | P0 | **DONE** |
 | CHANGELOG.md creation | Docs | P1 | **DONE** |
 
+### Session 14 — UX Bug Fixes + E2E Polish
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| SpecActions: 3-step execution flow (Generate → Lock → Execute) | UI | P0 | **DONE** |
+| Dev banner: remove sticky overlay (was covering NavHeader) | UI | P0 | **DONE** |
+| Stop execution: 3 interrupt checkpoints in orchestrator | S7 | P0 | **DONE** |
+| SCR Panel: clearer UX (amber styling, edit-vs-execute guidance) | UI | P1 | **DONE** |
+| Project stats: increment specCount/runCount on creation | S3 | P0 | **DONE** |
+| Delta detection: content-level comparison fallback | S14 | P0 | **DONE** |
+| Task impact: REBUILD all tasks on content-level changes | S14 | P0 | **DONE** |
+| fail-task route: pass originalCode/errorMessage/failingRole | S7 | P0 | **DONE** |
+| Retry failed tasks: new endpoint + orchestrator function | S7 | P0 | **DONE** |
+| Run dashboard: PARTIAL banner + failed task list + Retry button | UI | P0 | **DONE** |
+| CI fix: Biome formatting auto-fix on 3 files | CI/CD | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -143,10 +158,11 @@
 - **Enterprise Streams**: 15/18 complete (S12–S16, 2 deferred, 1 skipped)
 - **Gap Resolution**: 12/12 phases complete (all 13 gaps resolved)
 - **SCR Governance + Delta Execution**: 7/7 (types, service, routes, orchestrator, UI, wiring)
+- **Session 14 UX Fixes**: 11/11 (execution flow, stats, delta detection, retry, CI)
 - **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
-- **Grand Total**: 73/78 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Grand Total**: 84/89 complete (2 deferred, 2 demo remaining, 1 skipped)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
@@ -184,8 +200,8 @@
 | 2026-02-12 | Defer AppInsights SDK (S16-005) | OTel spans already provide instrumentation |
 
 ## Blockers
-- **E2E flow not yet verified**: Spec→Plan→Execute button is wired but hasn't been tested end-to-end in browser
-- **Demo recording not started**: All features implemented; need to record 7 workflow demos
+- **E2E flow partially tested**: User tested Spec→Plan→Execute and SCR flows — found and fixed 11 UX/backend bugs in Session 14
+- **Demo recording not started**: All features implemented + polished; need to record 7 workflow demos
 
 ## Risks
 | Risk | Impact | Mitigation | Status |
