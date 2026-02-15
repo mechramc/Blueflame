@@ -35,8 +35,17 @@ export async function getProject(request: APIRequestContext, projectId: string) 
 	return res.json();
 }
 
+export async function getLatestSpec(request: APIRequestContext, projectId: string) {
+	const res = await request.get(`${API_BASE}/api/specs/${projectId}`);
+	if (!res.ok()) {
+		return null;
+	}
+	const body = await res.json();
+	return body?.spec ?? null;
+}
+
 export async function acceptSpec(request: APIRequestContext, specId: string) {
-	const res = await request.post(`${API_BASE}/api/specs/${specId}/accept`);
+	const res = await request.put(`${API_BASE}/api/specs/${specId}/accept`);
 	if (!res.ok()) {
 		throw new Error(`Failed to accept spec: ${res.status()} ${await res.text()}`);
 	}
@@ -44,7 +53,7 @@ export async function acceptSpec(request: APIRequestContext, specId: string) {
 }
 
 export async function freezeSpec(request: APIRequestContext, specId: string) {
-	const res = await request.post(`${API_BASE}/api/specs/${specId}/freeze`);
+	const res = await request.put(`${API_BASE}/api/specs/${specId}/freeze`);
 	if (!res.ok()) {
 		throw new Error(`Failed to freeze spec: ${res.status()} ${await res.text()}`);
 	}

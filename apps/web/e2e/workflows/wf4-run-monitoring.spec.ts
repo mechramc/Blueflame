@@ -4,6 +4,7 @@ import { resetDemoData, seedDemoData } from "../helpers/api-helpers";
 
 test.describe("WF4: Run Monitoring", () => {
 	test.beforeAll(async ({ request }) => {
+		await resetDemoData(request);
 		await seedDemoData(request);
 	});
 

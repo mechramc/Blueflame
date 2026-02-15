@@ -1,10 +1,10 @@
 import { expect, test } from "../fixtures/auth.fixture";
-import { setupAIMocks } from "../fixtures/mock-ai";
 import { DEMO_PROJECT_ID } from "../fixtures/test-data";
 import { resetDemoData, seedDemoData } from "../helpers/api-helpers";
 
 test.describe("WF3: Spec to Execution", () => {
 	test.beforeAll(async ({ request }) => {
+		await resetDemoData(request);
 		await seedDemoData(request);
 	});
 
@@ -14,30 +14,36 @@ test.describe("WF3: Spec to Execution", () => {
 
 	test("spec shows Draft status with Accept button", async ({ page }) => {
 		await page.goto(`/project/${DEMO_PROJECT_ID}`);
-		await page.waitForTimeout(2000);
 
-		// Spec should be in DRAFT status
-		await expect(page.locator("text=Draft").or(page.locator("text=DRAFT"))).toBeVisible({
-			timeout: 10_000,
+		// Wait for spec editor to load content first
+		await expect(page.getByTestId("spec-editor")).toBeVisible({ timeout: 15_000 });
+
+		// Spec should be in DRAFT status — wait for it to load
+		await expect(page.getByText("Draft", { exact: false }).first()).toBeVisible({
+			timeout: 20_000,
 		});
 
 		// Accept button should be visible
 		await expect(
 			page.getByTestId("spec-actions-accept-button").or(page.locator("button:has-text('Accept')")),
-		).toBeVisible();
+		).toBeVisible({ timeout: 5_000 });
 	});
 
 	test("can accept a spec", async ({ page }) => {
 		await page.goto(`/project/${DEMO_PROJECT_ID}`);
-		await page.waitForTimeout(2000);
+
+		// Wait for spec to load
+		await expect(page.getByTestId("spec-editor")).toBeVisible({ timeout: 15_000 });
+		await page.waitForTimeout(3000);
 
 		const acceptBtn = page
 			.getByTestId("spec-actions-accept-button")
 			.or(page.locator("button:has-text('Accept')"));
+		await expect(acceptBtn).toBeVisible({ timeout: 10_000 });
 		await acceptBtn.click();
 
 		// Status should change to Accepted
-		await expect(page.locator("text=Accepted").or(page.locator("text=ACCEPTED"))).toBeVisible({
+		await expect(page.getByText("Accepted", { exact: false }).first()).toBeVisible({
 			timeout: 10_000,
 		});
 
@@ -49,7 +55,8 @@ test.describe("WF3: Spec to Execution", () => {
 
 	test("can freeze an accepted spec", async ({ page }) => {
 		await page.goto(`/project/${DEMO_PROJECT_ID}`);
-		await page.waitForTimeout(2000);
+		await expect(page.getByTestId("spec-editor")).toBeVisible({ timeout: 15_000 });
+		await page.waitForTimeout(3000);
 
 		// Accept first if still in Draft
 		const acceptBtn = page
@@ -63,10 +70,11 @@ test.describe("WF3: Spec to Execution", () => {
 		const freezeBtn = page
 			.getByTestId("spec-actions-freeze-button")
 			.or(page.locator("button:has-text('Freeze')"));
+		await expect(freezeBtn).toBeVisible({ timeout: 10_000 });
 		await freezeBtn.click();
 
 		// Status should change to Frozen
-		await expect(page.locator("text=Frozen").or(page.locator("text=FROZEN"))).toBeVisible({
+		await expect(page.getByText("Frozen", { exact: false }).first()).toBeVisible({
 			timeout: 10_000,
 		});
 
@@ -79,9 +87,9 @@ test.describe("WF3: Spec to Execution", () => {
 	});
 
 	test("can generate a plan from frozen spec", async ({ page }) => {
-		await setupAIMocks(page);
 		await page.goto(`/project/${DEMO_PROJECT_ID}`);
-		await page.waitForTimeout(2000);
+		await expect(page.getByTestId("spec-editor")).toBeVisible({ timeout: 15_000 });
+		await page.waitForTimeout(3000);
 
 		// Walk through Accept → Freeze if needed
 		const acceptBtn = page
@@ -115,9 +123,9 @@ test.describe("WF3: Spec to Execution", () => {
 	});
 
 	test("can approve, lock, and start execution", async ({ page }) => {
-		await setupAIMocks(page);
 		await page.goto(`/project/${DEMO_PROJECT_ID}`);
-		await page.waitForTimeout(2000);
+		await expect(page.getByTestId("spec-editor")).toBeVisible({ timeout: 15_000 });
+		await page.waitForTimeout(3000);
 
 		// Walk through the full workflow if needed
 		const acceptBtn = page

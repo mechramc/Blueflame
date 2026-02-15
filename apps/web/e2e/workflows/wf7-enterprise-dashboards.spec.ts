@@ -3,6 +3,7 @@ import { resetDemoData, seedDemoData } from "../helpers/api-helpers";
 
 test.describe("WF7: Enterprise Dashboards", () => {
 	test.beforeAll(async ({ request }) => {
+		await resetDemoData(request);
 		await seedDemoData(request);
 	});
 
