@@ -130,7 +130,7 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 	}, []);
 
 	return (
-		<div className="border-t border-[--border] bg-[--bg-primary]">
+		<div className="border-t border-[--border] bg-[--bg-primary]" data-testid="scr-panel">
 			{error && (
 				<div className="px-4 py-2 text-xs text-red-400 bg-red-500/10 border-b border-red-500/20">
 					{error}
@@ -245,6 +245,7 @@ function EditingView({
 					value={reason}
 					onChange={(e) => onReasonChange(e.target.value)}
 					placeholder="Why is this change needed?"
+					data-testid="scr-reason-input"
 					className="w-full px-3 py-1.5 text-xs bg-[--bg-secondary] border border-[--border] rounded text-[--text-primary] placeholder:text-[--text-muted]"
 				/>
 			</label>
@@ -256,6 +257,7 @@ function EditingView({
 					value={editedContent}
 					onChange={(e) => onContentChange(e.target.value)}
 					rows={8}
+					data-testid="scr-yaml-editor"
 					className="w-full px-3 py-2 text-xs font-mono bg-[--bg-secondary] border border-amber-500/30 rounded text-[--text-primary] resize-y focus:border-amber-500 focus:outline-none"
 				/>
 			</label>
@@ -271,6 +273,7 @@ function EditingView({
 					type="button"
 					onClick={onSubmit}
 					disabled={loading}
+					data-testid="scr-submit-button"
 					className="px-3 py-1.5 text-xs font-medium rounded bg-[--accent] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
 				>
 					{loading ? "Analyzing..." : "Submit SCR"}
@@ -371,6 +374,7 @@ function ReviewingView({
 					type="button"
 					onClick={onApprove}
 					disabled={loading}
+					data-testid="scr-approve-button"
 					className="px-3 py-1.5 text-xs font-medium rounded bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
 				>
 					{loading ? "Approving..." : "Approve SCR"}
@@ -443,6 +447,7 @@ function ApprovedView({
 					type="button"
 					onClick={onExecute}
 					disabled={loading}
+					data-testid="scr-execute-delta-button"
 					className="px-4 py-1.5 text-xs font-medium rounded bg-[--accent] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
 				>
 					{loading ? "Starting..." : "Execute Delta"}

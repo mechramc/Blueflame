@@ -26,7 +26,10 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
 	}
 
 	return (
-		<div className="rounded border border-[--border] bg-[--bg-secondary] p-4 hover:border-[--border-bright] transition-colors group relative overflow-hidden">
+		<div
+			data-testid={`project-card-${project.id}`}
+			className="rounded border border-[--border] bg-[--bg-secondary] p-4 hover:border-[--border-bright] transition-colors group relative overflow-hidden"
+		>
 			<div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[--accent]" />
 			<div className="pl-3">
 				<div className="flex items-start justify-between">

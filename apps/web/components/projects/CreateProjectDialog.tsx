@@ -39,7 +39,10 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
 			{/* Backdrop */}
 			<div className="absolute inset-0 bg-black/60" onClick={onClose} onKeyDown={undefined} />
 			{/* Dialog */}
-			<div className="relative z-10 w-full max-w-md rounded-lg border border-[--border-bright] bg-[--bg-secondary] p-6 shadow-xl">
+			<div
+				className="relative z-10 w-full max-w-md rounded-lg border border-[--border-bright] bg-[--bg-secondary] p-6 shadow-xl"
+				data-testid="create-project-dialog"
+			>
 				<h2 className="text-lg font-semibold text-[--text-primary] mb-4">New Project</h2>
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
@@ -51,6 +54,7 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
 						</label>
 						<input
 							id="project-name"
+							data-testid="project-name-input"
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
@@ -87,6 +91,7 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
 						<button
 							type="submit"
 							disabled={submitting || !name.trim()}
+							data-testid="create-project-submit-button"
 							className="rounded border border-[--accent] bg-[--accent]/10 px-3 py-1.5 text-sm font-medium text-blue-400 hover:bg-[--accent]/20 transition-colors disabled:opacity-50"
 						>
 							{submitting ? "Creating..." : "Create Project"}

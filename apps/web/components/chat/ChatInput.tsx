@@ -55,6 +55,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 					placeholder="Describe what you want to build..."
 					disabled={disabled}
 					rows={1}
+					data-testid="chat-input-textarea"
 					className="flex-1 resize-none rounded border border-[--border] bg-[--bg-secondary] px-3 py-2 text-sm text-[--text-primary] placeholder-[--text-muted] focus:border-[--accent] focus:outline-none focus:ring-1 focus:ring-[--accent-glow] disabled:opacity-50 font-sans"
 				/>
 				<button
@@ -63,6 +64,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 					type="button"
 					className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-[--accent] text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
 					aria-label="Send message"
+					data-testid="chat-input-send-button"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

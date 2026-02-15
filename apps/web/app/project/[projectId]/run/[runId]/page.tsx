@@ -253,6 +253,7 @@ export default function RunPage() {
 						Run: <span className="text-[--text-primary] font-mono">{runId.slice(0, 20)}</span>
 					</span>
 					<span
+						data-testid="run-status-badge"
 						className={`text-xs px-2 py-0.5 rounded font-medium ${
 							isRunning
 								? "bg-blue-500/20 text-blue-400"
@@ -275,6 +276,7 @@ export default function RunPage() {
 						<button
 							type="button"
 							onClick={handleRetryFailed}
+							data-testid="retry-failed-tasks-button"
 							className="rounded border border-amber-500/50 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20 hover:text-amber-300"
 						>
 							Retry Failed Tasks

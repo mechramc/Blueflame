@@ -138,7 +138,7 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 	);
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex h-full flex-col" data-testid="spec-editor">
 			{/* Header */}
 			<div className="flex items-center justify-between border-b border-[--border] px-4 py-3">
 				<div className="flex items-center gap-3">

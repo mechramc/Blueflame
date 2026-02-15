@@ -100,6 +100,7 @@ export function SpecActions({
 						onClick={onGenerateSpec}
 						disabled={disabled}
 						type="button"
+						data-testid="spec-actions-generate-button"
 						className="rounded border border-[--border-bright] px-3 py-1 text-xs font-medium text-[--text-secondary] transition-colors hover:bg-[--bg-tertiary] hover:text-[--text-primary] disabled:opacity-50"
 					>
 						{specId ? "Regenerate" : "Generate"}
@@ -109,6 +110,7 @@ export function SpecActions({
 							onClick={onAccept}
 							disabled={disabled}
 							type="button"
+							data-testid="spec-actions-accept-button"
 							className="rounded border border-[--accent] px-3 py-1 text-xs font-medium text-blue-400 transition-colors hover:bg-[--accent]/10 disabled:opacity-50"
 						>
 							Accept
@@ -121,6 +123,7 @@ export function SpecActions({
 					onClick={onFreeze}
 					disabled={disabled}
 					type="button"
+					data-testid="spec-actions-freeze-button"
 					className="rounded border border-emerald-500 px-3 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10 disabled:opacity-50"
 				>
 					Freeze
@@ -136,6 +139,7 @@ export function SpecActions({
 							onClick={handleGeneratePlan}
 							disabled={!specId}
 							type="button"
+							data-testid="spec-actions-generate-plan-button"
 							className="rounded bg-[--accent] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
 						>
 							Generate Plan
@@ -153,6 +157,7 @@ export function SpecActions({
 							<button
 								onClick={handleApproveLock}
 								type="button"
+								data-testid="spec-actions-approve-lock-button"
 								className="rounded bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
 							>
 								Approve &amp; Lock
@@ -178,6 +183,7 @@ export function SpecActions({
 							<button
 								onClick={handleStartExecution}
 								type="button"
+								data-testid="spec-actions-start-execution-button"
 								className="rounded bg-[--accent] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
 							>
 								Start Execution

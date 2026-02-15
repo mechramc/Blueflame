@@ -35,6 +35,11 @@ desktop.ini
 coverage/
 *.lcov
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
 # Azure
 .azure/
 infra/*.json

@@ -73,7 +73,7 @@ export default function Home() {
 
 				{/* Project list */}
 				{!isLoading && projects.length > 0 && (
-					<div className="space-y-3">
+					<div className="space-y-3" data-testid="projects-list">
 						{projects.map((project) => (
 							<ProjectCard key={project.id} project={project} onDelete={deleteProject} />
 						))}
