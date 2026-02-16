@@ -12,6 +12,7 @@ export interface AgentCardData {
 	costIncurred: number;
 	sigmaValue: number;
 	isBlocked?: boolean;
+	failureReason?: string;
 }
 
 interface AgentStatusCardProps {
@@ -89,6 +90,17 @@ export function AgentStatusCard({ agent }: AgentStatusCardProps) {
 					)}
 				</span>
 			</div>
+
+			{/* Failure reason */}
+			{agent.status === "FAILED" && agent.failureReason && (
+				<p
+					className="text-[11px] text-red-400 mb-2 line-clamp-2"
+					title={agent.failureReason}
+					data-testid="failure-reason"
+				>
+					{agent.failureReason}
+				</p>
+			)}
 
 			{/* Sigma complexity bar */}
 			<div className="mb-2" data-testid="sigma-bar">

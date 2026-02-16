@@ -410,6 +410,11 @@ export async function failTask(
 	// Use explicit failingRole if provided, otherwise fall back to task.agentRole
 	const agentRole = failingRole ?? task.agentRole;
 
+	// Set failureReason on the task so the frontend can display it
+	if (errorMessage) {
+		task.failureReason = errorMessage;
+	}
+
 	// WF3 Fixer Loop: On Verifier failure, spawn Fixer if retries remain
 	const retryCount = run.retryCountByTask[taskId] ?? 0;
 	if (agentRole === AgentRole.Verifier && retryCount < MAX_FIXER_RETRIES) {

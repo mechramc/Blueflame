@@ -27,6 +27,8 @@ export interface PlanTask {
 	parallelizable: boolean;
 	/** Current execution status */
 	status: TaskStatus;
+	/** Error message when task failed (populated by orchestrator) */
+	failureReason?: string;
 }
 
 /** The full task plan artifact (Cosmos DB: plans container) */

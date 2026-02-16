@@ -120,6 +120,13 @@ export default function RunPage() {
 	const [taskOutputs, setTaskOutputs] = useState<Record<string, TaskOutput>>({});
 	const [showPauseModal, setShowPauseModal] = useState(false);
 
+	// Run completion notification
+	const [completionBanner, setCompletionBanner] = useState<{
+		type: "success" | "partial";
+		failedCount: number;
+	} | null>(null);
+	const prevRunStatusRef = useRef<string>("PENDING");
+
 	// Animation states
 	const [justAuthorized, setJustAuthorized] = useState(false);
 	const [newReinforcementIds, setNewReinforcementIds] = useState<string[]>([]);
@@ -205,6 +212,28 @@ export default function RunPage() {
 		return () => clearInterval(interval);
 	}, [fetchStatus]);
 
+	const failedTasks = tasks.filter((t) => t.status === "FAILED");
+
+	// Detect run completion transitions → show banner
+	useEffect(() => {
+		const prev = prevRunStatusRef.current;
+		const wasRunning = prev === "EXECUTING" || prev === "RUNNING";
+		prevRunStatusRef.current = runStatus;
+
+		if (!wasRunning) return;
+
+		if (runStatus === "PARTIAL") {
+			setCompletionBanner({ type: "partial", failedCount: failedTasks.length });
+			const timer = setTimeout(() => setCompletionBanner(null), 10_000);
+			return () => clearTimeout(timer);
+		}
+		if (runStatus === "COMPLETED") {
+			setCompletionBanner({ type: "success", failedCount: 0 });
+			const timer = setTimeout(() => setCompletionBanner(null), 5_000);
+			return () => clearTimeout(timer);
+		}
+	}, [runStatus, failedTasks.length]);
+
 	const handleApproveFix = useCallback(
 		async (taskId: string) => {
 			await apiPost(`/api/execution/${runId}/approve-fix`, { taskId }).catch(() => {});
@@ -241,7 +270,6 @@ export default function RunPage() {
 	}, [runId, fetchStatus]);
 
 	const isRunning = runStatus === "EXECUTING" || runStatus === "RUNNING";
-	const failedTasks = tasks.filter((t) => t.status === "FAILED");
 	const isPartial = runStatus === "PARTIAL";
 
 	return (
@@ -305,11 +333,44 @@ export default function RunPage() {
 							<span
 								key={t.id}
 								className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded"
+								title={t.failureReason ?? t.description}
 							>
-								{t.id}: {t.description.slice(0, 60)}
+								{t.id}: {t.failureReason ?? t.description.slice(0, 60)}
 							</span>
 						))}
 					</div>
+				</div>
+			)}
+			{/* Run completion notification banner */}
+			{completionBanner && (
+				<div
+					data-testid="completion-banner"
+					className={`flex items-center justify-between px-4 py-2 border-b ${
+						completionBanner.type === "success"
+							? "bg-emerald-500/10 border-emerald-500/30"
+							: "bg-red-500/10 border-red-500/30"
+					}`}
+				>
+					<p
+						className={`text-sm font-medium ${
+							completionBanner.type === "success" ? "text-emerald-400" : "text-red-400"
+						}`}
+					>
+						{completionBanner.type === "success"
+							? "Run completed successfully"
+							: `Run completed with ${completionBanner.failedCount} failed task${completionBanner.failedCount !== 1 ? "s" : ""}`}
+					</p>
+					<button
+						type="button"
+						onClick={() => setCompletionBanner(null)}
+						className={`text-xs px-2 py-0.5 rounded ${
+							completionBanner.type === "success"
+								? "text-emerald-400 hover:bg-emerald-500/20"
+								: "text-red-400 hover:bg-red-500/20"
+						}`}
+					>
+						Dismiss
+					</button>
 				</div>
 			)}
 			<div className="flex-1 min-h-0">
