@@ -155,6 +155,13 @@
 | RunPage: failureReason in failed tasks banner | UI | P0 | **DONE** |
 | CLAUDE.md: enforce doc updates before push | Docs | P0 | **DONE** |
 
+### Session 16 — Spec Viewer on Run Dashboard
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Add projectId + specId to GET /execution/:runId response | API | P0 | **DONE** |
+| SpecViewerPanel: read-only YAML viewer with SCR guidance | UI | P0 | **DONE** |
+| Run dashboard: "View Spec" toggle + collapsible panel | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -171,10 +178,11 @@
 - **SCR Governance + Delta Execution**: 7/7 (types, service, routes, orchestrator, UI, wiring)
 - **Session 14 UX Fixes**: 11/11 (execution flow, stats, delta detection, retry, CI)
 - **Session 15 Failure UX**: 7/7 (loading state, failure reasons, completion banner, docs rule)
+- **Session 16 Spec Viewer**: 3/3 (API response, SpecViewerPanel, run dashboard toggle)
 - **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
-- **Grand Total**: 91/96 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Grand Total**: 94/99 complete (2 deferred, 2 demo remaining, 1 skipped)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview

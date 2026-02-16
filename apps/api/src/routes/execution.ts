@@ -214,6 +214,8 @@ executionRouter.get("/:runId", async (req, res) => {
 	res.json({
 		runId: run.runId,
 		status: run.status,
+		projectId: run.projectId,
+		specId: run.plan.specId,
 		lockId: run.lockId,
 		startedAt: run.startedAt,
 		completedAt: run.completedAt,

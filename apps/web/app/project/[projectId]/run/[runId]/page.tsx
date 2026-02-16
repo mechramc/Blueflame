@@ -13,11 +13,14 @@ import type { AgentCardData } from "@/components/dashboard/AgentStatusCard";
 import type { TaskOutput } from "@/components/dashboard/FileTreePane";
 import { FixerDiffView } from "@/components/dashboard/FixerDiffView";
 import { RunDashboardPanes } from "@/components/dashboard/RunDashboardPanes";
+import { SpecViewerPanel } from "@/components/spec/SpecViewerPanel";
 import { apiGet, apiPost } from "@/lib/api-client";
 import type { BudgetDecision, PendingFix, PlanTask } from "@blueflame/shared";
 
 interface RunApiResponse {
 	status: string;
+	projectId?: string;
+	specId?: string;
 	plan?: { tasks: PlanTask[] };
 	agents?: AgentCardData[];
 	events?: ActionEvent[];
@@ -119,6 +122,7 @@ export default function RunPage() {
 	const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
 	const [taskOutputs, setTaskOutputs] = useState<Record<string, TaskOutput>>({});
 	const [showPauseModal, setShowPauseModal] = useState(false);
+	const [showSpec, setShowSpec] = useState(false);
 
 	// Run completion notification
 	const [completionBanner, setCompletionBanner] = useState<{
@@ -300,6 +304,17 @@ export default function RunPage() {
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={() => setShowSpec((prev) => !prev)}
+						className={`rounded border px-3 py-1 text-xs font-medium transition-colors ${
+							showSpec
+								? "border-[--accent] bg-[--accent]/10 text-[--accent]"
+								: "border-[--border] bg-[--bg-secondary] text-[--text-secondary] hover:text-[--text-primary]"
+						}`}
+					>
+						{showSpec ? "Hide Spec" : "View Spec"}
+					</button>
 					{isPartial && (
 						<button
 							type="button"
@@ -373,6 +388,7 @@ export default function RunPage() {
 					</button>
 				</div>
 			)}
+			{showSpec && <SpecViewerPanel projectId={params.projectId} />}
 			<div className="flex-1 min-h-0">
 				<RunDashboardPanes
 					runId={runId}

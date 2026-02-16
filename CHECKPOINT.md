@@ -9,11 +9,11 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-16
-- **Session**: 15
+- **Session**: 16
 
 ## Current State
-- **Phase**: Demo Preparation — All features implemented, failure UX polished
-- **Last completed task**: Session 15 workflow failure UX improvements (3 fixes: loading state, error surfacing, completion banner)
+- **Phase**: Demo Preparation — All features implemented, spec viewer added to run dashboard
+- **Last completed task**: Session 16 spec viewer on run dashboard (API response, SpecViewerPanel, toggle)
 - **Next task**: E2E re-test all flows, demo recording (7 workflows)
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors, all tests green)
@@ -22,7 +22,16 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–15)
+## What Just Happened (Sessions 10–16)
+
+### Session 16: Spec Viewer on Run Dashboard
+
+Added a read-only spec viewer to the run dashboard so users can reference the frozen spec while watching execution.
+
+**Changes:**
+- `apps/api/src/routes/execution.ts` — Added `projectId` + `specId` to GET `/:runId` response
+- `apps/web/components/spec/SpecViewerPanel.tsx` — **New** — read-only YAML viewer with frozen badge, SCR guidance banner, and "Go to Project" link
+- `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — "View Spec" / "Hide Spec" toggle button in header bar, collapsible SpecViewerPanel
 
 ### Session 15: Workflow Failure UX Improvements
 
@@ -180,6 +189,7 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Sessions 12–13**: SCR governance + delta execution feature + documentation updates
 - **Session 14**: UX bug fixes from real user testing (11 issues fixed)
 - **Session 15**: Workflow failure UX improvements (loading state, error surfacing, completion banner)
+- **Session 16**: Spec viewer on run dashboard (API response, SpecViewerPanel, toggle)
 
 ## What To Pick Up Next
 
@@ -195,13 +205,10 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 ## Staged But Uncommitted Changes
 None — all changes committed and pushed.
 
-## Files Changed in Session 15
-- `apps/web/components/dashboard/FixerDiffView.tsx` — Loading state when fixedCode empty
-- `packages/shared/src/types/plan.ts` — Added `failureReason?` to PlanTask
-- `apps/api/src/services/orchestrator.ts` — Set task.failureReason in failTask()
-- `apps/web/components/dashboard/AgentStatusCard.tsx` — Show failure reason when FAILED
-- `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — Completion banner + failure reason in banner
-- `CLAUDE.md` — Added mandatory doc update rule before push
+## Files Changed in Session 16
+- `apps/api/src/routes/execution.ts` — Added projectId + specId to GET /:runId response
+- `apps/web/components/spec/SpecViewerPanel.tsx` — **New** read-only spec viewer with SCR guidance
+- `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — View Spec toggle + SpecViewerPanel
 
 ## Type Gotchas (Learned the Hard Way)
 - `FailedStep.name` (not `stepName`)
