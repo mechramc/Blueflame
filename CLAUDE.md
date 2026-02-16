@@ -141,6 +141,7 @@ C:\Github\Blueflame-pkg     # packages/* work
 - Write a QA report after every phase (`docs/qa/<phase>_qa_report.md`)
 - Cross-check `CHECKPOINT.md` blockers against `docs/STATUS.md` at session start
 - Flag blockers immediately — never let "Blockers: None" stand when issues exist
+- **ALWAYS update `docs/STATUS.md` and `CHECKPOINT.md` before committing and pushing** — when the user says "commit and push", update these documents first, then stage everything together in one commit and push
 
 ### Don't
 - Don't commit secrets (`.env`, API keys, connection strings)

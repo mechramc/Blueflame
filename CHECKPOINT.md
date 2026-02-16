@@ -8,21 +8,42 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-13
-- **Session**: 14
+- **Date**: 2026-02-16
+- **Session**: 15
 
 ## Current State
-- **Phase**: Demo Preparation — All features implemented, UX polished from real user testing
-- **Last completed task**: Session 14 UX bug fixes (11 issues: execution flow, stats, delta detection, retry, CI)
+- **Phase**: Demo Preparation — All features implemented, failure UX polished
+- **Last completed task**: Session 15 workflow failure UX improvements (3 fixes: loading state, error surfacing, completion banner)
 - **Next task**: E2E re-test all flows, demo recording (7 workflows)
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors, all tests green)
-- **CI/CD**: Changes ready to commit and push
+- **CI/CD**: All changes committed and pushed
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–14)
+## What Just Happened (Sessions 10–15)
+
+### Session 15: Workflow Failure UX Improvements
+
+Three UX issues identified during real user testing of the run dashboard were fixed:
+
+**Fix 1: FixerDiffView loading state**
+- When fixer agent is working (`fixedCode` empty), shows pulse spinner + shimmer placeholder instead of empty panel
+- Approve/Reject buttons hidden until fix is ready
+
+**Fix 2: Error reason surfacing**
+- Added `failureReason?: string` to `PlanTask` type
+- Orchestrator `failTask()` now sets `task.failureReason` from error message
+- `AgentStatusCard` shows 2-line red error text when FAILED (with tooltip for full text)
+- Failed tasks banner shows actual error reason instead of truncated description
+
+**Fix 3: Run completion notification**
+- Prominent inline banner when run transitions to PARTIAL (red, 10s auto-dismiss) or COMPLETED (green, 5s auto-dismiss)
+- Dismiss button for manual close
+
+**Process improvement:**
+- Added mandatory rule to CLAUDE.md: always update STATUS.md + CHECKPOINT.md before committing and pushing
 
 ### Session 14: UX Bug Fixes from Real User Testing
 
@@ -157,15 +178,15 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 9**: Production migration + full Azure deployment (live API + Web)
 - **Sessions 10–11**: All 12 gap resolution phases + integration fixes + E2E testing started
 - **Sessions 12–13**: SCR governance + delta execution feature + documentation updates
+- **Session 14**: UX bug fixes from real user testing (11 issues fixed)
+- **Session 15**: Workflow failure UX improvements (loading state, error surfacing, completion banner)
 
 ## What To Pick Up Next
 
-### Immediate (Session 14)
-1. **E2E test Spec→Plan→Execute flow** — Create project → chat → generate spec → accept → freeze → click "Generate Plan & Execute" → verify run dashboard populates
-2. **E2E test SCR flow** — Freeze spec → Request Change → review impact map → approve → execute delta
-3. **Verify run dashboard** — Task DAG, agent cards, action stream, budget bar should show real data
-4. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
-5. **Submission package** — README (done), architecture diagram, demo video
+### Immediate (Session 16)
+1. **E2E test all flows** — Spec→Plan→Execute, SCR, failure→fix→approve
+2. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
+3. **Submission package** — README (done), architecture diagram, demo video
 
 ### What's Deferred (OK to skip)
 - **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical
@@ -173,6 +194,14 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 
 ## Staged But Uncommitted Changes
 None — all changes committed and pushed.
+
+## Files Changed in Session 15
+- `apps/web/components/dashboard/FixerDiffView.tsx` — Loading state when fixedCode empty
+- `packages/shared/src/types/plan.ts` — Added `failureReason?` to PlanTask
+- `apps/api/src/services/orchestrator.ts` — Set task.failureReason in failTask()
+- `apps/web/components/dashboard/AgentStatusCard.tsx` — Show failure reason when FAILED
+- `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — Completion banner + failure reason in banner
+- `CLAUDE.md` — Added mandatory doc update rule before push
 
 ## Type Gotchas (Learned the Hard Way)
 - `FailedStep.name` (not `stepName`)

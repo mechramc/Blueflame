@@ -144,6 +144,17 @@
 | Run dashboard: PARTIAL banner + failed task list + Retry button | UI | P0 | **DONE** |
 | CI fix: Biome formatting auto-fix on 3 files | CI/CD | P0 | **DONE** |
 
+### Session 15 — Workflow Failure UX Improvements
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| FixerDiffView: loading state when fix pending | UI | P0 | **DONE** |
+| PlanTask: add failureReason field | Shared | P0 | **DONE** |
+| Orchestrator: set failureReason in failTask() | S7 | P0 | **DONE** |
+| AgentStatusCard: show failure reason on FAILED | UI | P0 | **DONE** |
+| RunPage: completion banner (PARTIAL/COMPLETED) | UI | P0 | **DONE** |
+| RunPage: failureReason in failed tasks banner | UI | P0 | **DONE** |
+| CLAUDE.md: enforce doc updates before push | Docs | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -159,10 +170,11 @@
 - **Gap Resolution**: 12/12 phases complete (all 13 gaps resolved)
 - **SCR Governance + Delta Execution**: 7/7 (types, service, routes, orchestrator, UI, wiring)
 - **Session 14 UX Fixes**: 11/11 (execution flow, stats, delta detection, retry, CI)
+- **Session 15 Failure UX**: 7/7 (loading state, failure reasons, completion banner, docs rule)
 - **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
-- **Grand Total**: 84/89 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Grand Total**: 91/96 complete (2 deferred, 2 demo remaining, 1 skipped)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
