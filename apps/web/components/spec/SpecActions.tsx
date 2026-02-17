@@ -1,11 +1,28 @@
 "use client";
 
-import { apiPost } from "@/lib/api-client";
+import { apiGet, apiPost } from "@/lib/api-client";
 import { SpecStatus } from "@blueflame/shared";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-type ExecutionStep = "idle" | "generating" | "planned" | "locking" | "locked" | "starting";
+type ExecutionStep =
+	| "idle"
+	| "generating"
+	| "planned"
+	| "locking"
+	| "locked"
+	| "starting"
+	| "running"
+	| "completed";
+
+interface RunSummary {
+	runId: string;
+	status: string;
+	specId: string;
+	createdAt: string;
+	startedAt: string | null;
+	endedAt: string | null;
+}
 
 interface SpecActionsProps {
 	status: SpecStatus;
@@ -30,6 +47,48 @@ export function SpecActions({
 	const [execStep, setExecStep] = useState<ExecutionStep>("idle");
 	const [runId, setRunId] = useState<string | null>(null);
 	const [launchError, setLaunchError] = useState<string | null>(null);
+	const [latestRun, setLatestRun] = useState<RunSummary | null>(null);
+	const [loadingState, setLoadingState] = useState(true);
+
+	// On mount: check for existing runs for this spec
+	useEffect(() => {
+		if (!specId || status !== SpecStatus.Frozen) {
+			setLoadingState(false);
+			return;
+		}
+
+		async function checkExistingRuns() {
+			try {
+				const data = await apiGet<{ runs: RunSummary[] }>(`/api/projects/${projectId}/runs`);
+				// Find the latest run for this spec
+				const runsForSpec = data.runs.filter((r) => r.specId === specId);
+				const latest = runsForSpec[0];
+				if (latest) {
+					setLatestRun(latest);
+					setRunId(latest.runId);
+
+					const s = latest.status;
+					if (s === "COMPLETED") {
+						setExecStep("completed");
+					} else if (s === "PARTIAL" || s === "FAILED") {
+						setExecStep("completed");
+					} else if (s === "EXECUTING" || s === "PAUSED") {
+						setExecStep("running");
+					} else if (s === "AUTHORIZED") {
+						setExecStep("locked");
+					} else {
+						// PENDING — plan generated but not locked
+						setExecStep("planned");
+					}
+				}
+			} catch {
+				// API unavailable — stay in idle
+			} finally {
+				setLoadingState(false);
+			}
+		}
+		checkExistingRuns();
+	}, [specId, projectId, status]);
 
 	const handleGeneratePlan = async () => {
 		if (!specId) return;
@@ -86,11 +145,26 @@ export function SpecActions({
 		}
 	};
 
-	const handleReset = () => {
+	const handleNewRun = useCallback(() => {
 		setExecStep("idle");
 		setRunId(null);
+		setLatestRun(null);
 		setLaunchError(null);
-	};
+	}, []);
+
+	const handleViewRun = useCallback(() => {
+		if (runId) {
+			router.push(`/project/${projectId}/run/${runId}`);
+		}
+	}, [runId, projectId, router]);
+
+	if (loadingState) {
+		return (
+			<div className="flex items-center gap-2">
+				<span className="text-xs text-[--text-muted] animate-pulse">Loading...</span>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex items-center gap-2">
@@ -133,6 +207,37 @@ export function SpecActions({
 				<div className="flex items-center gap-2">
 					<span className="text-xs text-emerald-400">Frozen</span>
 
+					{/* Existing run — show status + actions */}
+					{(execStep === "running" || execStep === "completed") && latestRun && (
+						<>
+							<span
+								className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+									latestRun.status === "COMPLETED"
+										? "bg-emerald-500/20 text-emerald-400"
+										: latestRun.status === "PARTIAL" || latestRun.status === "FAILED"
+											? "bg-red-500/20 text-red-400"
+											: "bg-blue-500/20 text-blue-400"
+								}`}
+							>
+								{latestRun.status}
+							</span>
+							<button
+								onClick={handleViewRun}
+								type="button"
+								className="rounded bg-[--accent] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-600"
+							>
+								View Run
+							</button>
+							<button
+								onClick={handleNewRun}
+								type="button"
+								className="rounded border border-[--border] px-3 py-1.5 text-xs text-[--text-muted] hover:bg-[--bg-tertiary]"
+							>
+								New Run
+							</button>
+						</>
+					)}
+
 					{/* Step 1: Generate Plan */}
 					{execStep === "idle" && (
 						<button
@@ -163,7 +268,7 @@ export function SpecActions({
 								Approve &amp; Lock
 							</button>
 							<button
-								onClick={handleReset}
+								onClick={handleNewRun}
 								type="button"
 								className="rounded border border-[--border] px-3 py-1.5 text-xs text-[--text-muted] hover:bg-[--bg-tertiary]"
 							>
@@ -189,7 +294,7 @@ export function SpecActions({
 								Start Execution
 							</button>
 							<button
-								onClick={handleReset}
+								onClick={handleNewRun}
 								type="button"
 								className="rounded border border-[--border] px-3 py-1.5 text-xs text-[--text-muted] hover:bg-[--bg-tertiary]"
 							>

@@ -71,9 +71,19 @@ export function DeltaImpactMap({
 			<div className="flex items-center justify-between px-4 py-3 border-b border-[--border] bg-[--bg-secondary]">
 				<div>
 					<h3 className="text-sm font-semibold text-[--text-primary]">Spec Delta Impact</h3>
-					<p className="text-xs text-[--text-muted] mt-0.5">
-						{oldSpecId} {"\u2192"} {newSpecId} — {summary.totalChanges} change
-						{summary.totalChanges !== 1 ? "s" : ""} detected
+					<p
+						className="text-xs text-[--text-muted] mt-0.5 font-mono truncate max-w-[400px]"
+						title={`${oldSpecId} → ${newSpecId}`}
+					>
+						{oldSpecId.slice(-20)} {"\u2192"} {newSpecId.slice(-20)}
+					</p>
+					<p className="text-xs text-[--text-secondary] mt-0.5">
+						{summary.totalChanges} change{summary.totalChanges !== 1 ? "s" : ""} detected
+						{summary.rebuild > 0 &&
+							` — ${summary.rebuild} task${summary.rebuild !== 1 ? "s" : ""} to rebuild`}
+						{summary.new > 0 && ` — ${summary.new} new task${summary.new !== 1 ? "s" : ""}`}
+						{summary.remove > 0 &&
+							` — ${summary.remove} task${summary.remove !== 1 ? "s" : ""} to remove`}
 					</p>
 				</div>
 				{needsReauth && onReauthorize && (

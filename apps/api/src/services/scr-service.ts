@@ -27,7 +27,7 @@ import {
 	TaskImpact,
 	analyzeSpecDelta,
 } from "./delta-detection.js";
-import { applyTaskPatch, executeNextWave, getRun } from "./orchestrator.js";
+import { applyTaskPatch, getRun } from "./orchestrator.js";
 import { editFrozenSpec, freezeSpec } from "./spec-freeze.js";
 import { getSpec } from "./spec-generation.js";
 
@@ -264,19 +264,14 @@ export async function executeDeltaRun(scrId: string): Promise<Result<{ runId: st
 		await freezeSpec(newSpec.id);
 	}
 
-	// Apply the task patch to the existing run
+	// Apply the task patch to the existing run (sets run to AUTHORIZED, not EXECUTING)
 	const patchResult = applyTaskPatch(scr.runId, scr.taskPatch);
 	if (!patchResult.ok) {
 		return { ok: false, error: patchResult.error };
 	}
 
-	// Resume execution — only re-execute affected (now PENDING) tasks
-	const waveResult = await executeNextWave(scr.runId);
-	if (!waveResult.ok) {
-		console.error("[SCR] Delta execution wave failed:", waveResult.error.message);
-	}
-
-	scr.status = SCRStatus.Executing;
+	// Run is now AUTHORIZED with patched tasks — user must click "Start Execution" on the run dashboard
+	scr.status = SCRStatus.Approved;
 	scrStore.set(scrId, scr);
 	persistSCR(scr);
 

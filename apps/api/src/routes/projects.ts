@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { db } from "../db.js";
 import { requireRole } from "../middleware/auth.js";
+import { getRunsByProject } from "../services/orchestrator.js";
 
 const router = Router();
 
@@ -118,6 +119,28 @@ router.put("/:projectId", requireRole("Blueflame_Editor"), async (req, res) => {
 	} catch (error) {
 		console.error("[Projects] Update error:", error);
 		res.status(500).json({ error: "Failed to update project" });
+	}
+});
+
+/** GET /api/projects/:projectId/runs — list all runs for a project (newest first) */
+router.get("/:projectId/runs", async (req, res) => {
+	try {
+		const allRuns = await getRunsByProject(req.params.projectId);
+		// Return lightweight summaries (not full run state with all task outputs)
+		const runs = allRuns.map((r) => ({
+			runId: r.runId,
+			status: r.status,
+			specId: r.plan?.specId ?? "",
+			createdAt: r.startedAt ?? "",
+			startedAt: r.startedAt ?? null,
+			endedAt: r.completedAt ?? null,
+			costActual: 0,
+			costBudget: r.plan?.tasks?.reduce((sum, t) => sum + (t.estimatedCost ?? 0), 0) ?? 0,
+		}));
+		res.json({ runs });
+	} catch (error) {
+		console.error("[Projects] List runs error:", error);
+		res.status(500).json({ error: "Failed to list runs" });
 	}
 });
 

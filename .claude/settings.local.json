@@ -28,7 +28,12 @@
       "Bash(powershell -Command:*)",
       "Bash(powershell.exe -Command:*)",
       "Bash(ps:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npx playwright:*)",
+      "Bash(grep:*)",
+      "Bash(python3:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)"
     ]
   }
 }

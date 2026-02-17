@@ -25,6 +25,8 @@ interface RunDashboardPanesProps {
 	newReinforcementIds?: string[];
 	recentlyChangedTaskIds?: string[];
 	preservedTaskIds?: string[];
+	selectedTaskId?: string | null;
+	onSelectTask?: (task: PlanTask) => void;
 }
 
 /**
@@ -45,6 +47,8 @@ export function RunDashboardPanes({
 	newReinforcementIds,
 	recentlyChangedTaskIds,
 	preservedTaskIds,
+	selectedTaskId,
+	onSelectTask,
 }: RunDashboardPanesProps) {
 	const [selectedFile, setSelectedFile] = useState<{ path: string; content: string } | null>(null);
 
@@ -80,6 +84,8 @@ export function RunDashboardPanes({
 								newReinforcementIds={newReinforcementIds}
 								recentlyChangedTaskIds={recentlyChangedTaskIds}
 								preservedTaskIds={preservedTaskIds}
+								selectedTaskId={selectedTaskId}
+								onSelectTask={onSelectTask}
 							/>
 						</div>
 					}

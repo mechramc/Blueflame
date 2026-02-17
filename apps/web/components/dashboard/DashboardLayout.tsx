@@ -23,6 +23,8 @@ interface DashboardLayoutProps {
 	newReinforcementIds?: string[];
 	recentlyChangedTaskIds?: string[];
 	preservedTaskIds?: string[];
+	selectedTaskId?: string | null;
+	onSelectTask?: (task: PlanTask) => void;
 }
 
 /**
@@ -41,6 +43,8 @@ export function DashboardLayout({
 	newReinforcementIds = [],
 	recentlyChangedTaskIds = [],
 	preservedTaskIds = [],
+	selectedTaskId,
+	onSelectTask,
 }: DashboardLayoutProps) {
 	const taskCount = tasks.length;
 	const completedCount = tasks.filter((t) => t.status === "COMPLETED").length;
@@ -90,6 +94,8 @@ export function DashboardLayout({
 					tasks={tasks}
 					recentlyChangedTaskIds={recentlyChangedTaskIds}
 					preservedTaskIds={preservedTaskIds}
+					selectedTaskId={selectedTaskId}
+					onSelectTask={onSelectTask}
 				/>
 			</div>
 

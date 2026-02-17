@@ -468,14 +468,23 @@ function DiffPackViewer({ items }: { items: DiffPackItem[] }) {
 				<h4 className="text-xs font-semibold text-[--text-primary]">DiffPack</h4>
 			</div>
 			{items.map((item) => (
-				<div key={item.id} className="px-3 py-2 flex items-start gap-2 text-xs">
-					<span className="font-mono text-[--text-muted] shrink-0 w-16">{item.id}</span>
-					<span className="font-mono text-[--text-secondary] shrink-0 w-40 truncate">
-						{item.path}
-					</span>
-					<div className="flex-1 min-w-0">
-						{item.oldValue && <div className="text-red-400/70 truncate">- {item.oldValue}</div>}
-						{item.newValue && <div className="text-emerald-400/70 truncate">+ {item.newValue}</div>}
+				<div key={item.id} className="px-3 py-2 space-y-1 text-xs">
+					<div className="flex items-center gap-2">
+						<span className="font-mono text-[--text-muted] shrink-0">{item.id}</span>
+						<span className="font-mono text-[--text-secondary]">{item.path}</span>
+						<span className="text-[10px] text-[--text-muted] uppercase">{item.changeType}</span>
+					</div>
+					<div className="pl-4">
+						{item.oldValue && (
+							<div className="text-red-400/70 whitespace-pre-wrap break-words">
+								- {item.oldValue}
+							</div>
+						)}
+						{item.newValue && (
+							<div className="text-emerald-400/70 whitespace-pre-wrap break-words">
+								+ {item.newValue}
+							</div>
+						)}
 					</div>
 				</div>
 			))}

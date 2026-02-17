@@ -1,5 +1,5 @@
 import { SpecStatus } from "@blueflame/shared";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SpecActions } from "./SpecActions";
 import { SpecStatusBadge } from "./SpecStatusBadge";
@@ -11,6 +11,12 @@ vi.mock("next/navigation", () => ({
 		replace: vi.fn(),
 		prefetch: vi.fn(),
 	}),
+}));
+
+// Mock api-client (SpecActions uses apiGet to check existing runs)
+vi.mock("@/lib/api-client", () => ({
+	apiGet: vi.fn().mockResolvedValue({ runs: [] }),
+	apiPost: vi.fn().mockResolvedValue({}),
 }));
 
 afterEach(() => {
@@ -108,7 +114,7 @@ describe("SpecActions", () => {
 		expect(onFreeze).toHaveBeenCalledOnce();
 	});
 
-	it("should show frozen message for FROZEN status", () => {
+	it("should show frozen message for FROZEN status", async () => {
 		render(
 			<SpecActions
 				{...baseProps}
@@ -118,7 +124,9 @@ describe("SpecActions", () => {
 				onGenerateSpec={vi.fn()}
 			/>,
 		);
-		expect(screen.getByText(/frozen/i)).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByText(/frozen/i)).toBeInTheDocument();
+		});
 	});
 
 	it("should disable buttons when disabled prop is true", () => {

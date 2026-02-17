@@ -96,6 +96,19 @@ async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentSta
 		}
 	}
 
+	// Check if this is a fixer run — inject failure context
+	const pendingFix = run.pendingFixes.find((f) => f.taskId === task.id);
+	if (pendingFix) {
+		if (pendingFix.originalCode) {
+			constraints.push(
+				`FIX MODE: The previous code failed verification. Original code:\n${pendingFix.originalCode}`,
+			);
+		}
+		if (task.failureReason) {
+			constraints.push(`FAILURE REASON: ${task.failureReason}`);
+		}
+	}
+
 	const input: BuilderTaskInput = {
 		taskId: task.id,
 		description: task.description,
@@ -252,6 +265,11 @@ async function executeVerifierTask(
 	} else {
 		const errorMsg = result.ok ? result.value.summary : result.error.error;
 		console.error(`[TaskExecutor] Verifier failed task ${task.id}:`, errorMsg);
+		// Capture builder's original output so fixer can see what failed
+		const existingOutput = run.taskOutputs[task.id];
+		const originalCode = existingOutput?.files?.length
+			? existingOutput.files.map((f) => `// === ${f.path} ===\n${f.content}`).join("\n\n")
+			: undefined;
 		setTaskOutput(run.runId, task.id, { files: [], error: `Verifier: ${errorMsg}` });
 		await failTask(
 			run.runId,
@@ -259,7 +277,7 @@ async function executeVerifierTask(
 			agent.agentId,
 			estimatedTokens,
 			estimatedCost,
-			undefined,
+			originalCode,
 			errorMsg,
 			AgentRole.Verifier,
 		);

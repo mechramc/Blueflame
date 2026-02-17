@@ -45,7 +45,12 @@ export default function ProjectPage() {
 
 			{/* Validation Panel — 25% */}
 			<div className="w-[25%] h-full overflow-hidden">
-				<ValidationPanel specId={specId} specContent={specContent} status={specStatus} />
+				<ValidationPanel
+					specId={specId}
+					specContent={specContent}
+					status={specStatus}
+					projectId={projectId}
+				/>
 			</div>
 		</div>
 	);

@@ -75,10 +75,7 @@ export function SpecViewerPanel({ projectId }: SpecViewerPanelProps) {
 						{spec.specId.slice(0, 12)}
 					</span>
 				</div>
-				<a
-					href={`/project/${projectId}`}
-					className="text-xs text-[--accent] hover:underline"
-				>
+				<a href={`/project/${projectId}`} className="text-xs text-[--accent] hover:underline">
 					Go to Project
 				</a>
 			</div>
@@ -87,10 +84,7 @@ export function SpecViewerPanel({ projectId }: SpecViewerPanelProps) {
 			<div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2">
 				<p className="text-xs text-amber-400">
 					This spec is frozen. To make changes, use a{" "}
-					<a
-						href={`/project/${projectId}`}
-						className="font-medium underline hover:text-amber-300"
-					>
+					<a href={`/project/${projectId}`} className="font-medium underline hover:text-amber-300">
 						Spec Change Request
 					</a>{" "}
 					from the project page.

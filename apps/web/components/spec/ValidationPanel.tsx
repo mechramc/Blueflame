@@ -3,12 +3,14 @@
 import { apiPost } from "@/lib/api-client";
 import type { SpecStatus } from "@blueflame/shared";
 import { useCallback, useEffect, useState } from "react";
+import { RunHistory } from "./RunHistory";
 import { WorkflowProgressBar } from "./WorkflowProgressBar";
 
 interface ValidationPanelProps {
 	specId: string | null;
 	specContent: string;
 	status: SpecStatus;
+	projectId: string;
 }
 
 interface SchemaCheck {
@@ -47,7 +49,7 @@ function CheckIcon({ pass }: { pass: boolean }) {
 	);
 }
 
-export function ValidationPanel({ specId, specContent, status }: ValidationPanelProps) {
+export function ValidationPanel({ specId, specContent, status, projectId }: ValidationPanelProps) {
 	const [validation, setValidation] = useState<ValidationResult | null>(null);
 	const [isValidating, setIsValidating] = useState(false);
 
@@ -177,6 +179,14 @@ export function ValidationPanel({ specId, specContent, status }: ValidationPanel
 						</div>
 					</div>
 				)}
+
+				{/* Run History */}
+				<div>
+					<div className="flex items-center gap-2 mb-2">
+						<span className="text-xs font-medium text-[--text-primary]">Run History</span>
+					</div>
+					<RunHistory projectId={projectId} />
+				</div>
 			</div>
 		</div>
 	);

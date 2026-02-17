@@ -6,6 +6,8 @@ interface DAGProgressProps {
 	tasks: PlanTask[];
 	recentlyChangedTaskIds?: string[];
 	preservedTaskIds?: string[];
+	selectedTaskId?: string | null;
+	onSelectTask?: (task: PlanTask) => void;
 }
 
 const DEFAULT_FILL = { fill: "#1a1a2e", stroke: "#555570" };
@@ -28,6 +30,8 @@ export function DAGProgress({
 	tasks,
 	recentlyChangedTaskIds = [],
 	preservedTaskIds = [],
+	selectedTaskId,
+	onSelectTask,
 }: DAGProgressProps) {
 	const positions = computeLayout(tasks);
 
@@ -93,11 +97,20 @@ export function DAGProgress({
 						animStyle = "animate-rebuild-pulse";
 					}
 
+					const isSelected = selectedTaskId === node.task.id;
+
 					return (
 						<g
 							key={node.task.id}
 							data-testid={`dag-progress-node-${node.task.id}`}
 							className={animStyle}
+							style={{ cursor: onSelectTask ? "pointer" : "default" }}
+							onClick={() => onSelectTask?.(node.task)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") onSelectTask?.(node.task);
+							}}
+							tabIndex={onSelectTask ? 0 : undefined}
+							role={onSelectTask ? "button" : undefined}
 						>
 							<rect
 								x={node.x}
@@ -106,8 +119,8 @@ export function DAGProgress({
 								height={30}
 								rx={4}
 								fill={colors.fill}
-								stroke={colors.stroke}
-								strokeWidth={1.5}
+								stroke={isSelected ? "#8b5cf6" : colors.stroke}
+								strokeWidth={isSelected ? 2.5 : 1.5}
 							/>
 							<text
 								x={node.x + 70}
