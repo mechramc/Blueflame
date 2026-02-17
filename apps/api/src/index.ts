@@ -49,6 +49,7 @@ import { chargebackRouter } from "./routes/chargeback.js";
 import { complianceRouter } from "./routes/compliance.js";
 import { deltaRouter } from "./routes/delta.js";
 import { demoSeedRouter } from "./routes/demo-seed.js";
+import { deploymentRouter } from "./routes/deployment.js";
 import { executionRouter } from "./routes/execution.js";
 import { failuresRouter } from "./routes/failures.js";
 import { githubActionsRouter } from "./routes/github-actions.js";
@@ -81,6 +82,7 @@ app.use("/api/specs", deltaRouter);
 app.use("/api/knowledge", knowledgeRouter);
 app.use("/api/github", githubActionsRouter);
 app.use("/api/scr", scrRouter);
+app.use("/api/deployment", deploymentRouter);
 app.use("/api/demo", demoSeedRouter);
 
 // ─── Global Express error handler (prevents crash on unhandled route errors) ───

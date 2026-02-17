@@ -13,9 +13,10 @@ import type { AgentCardData } from "@/components/dashboard/AgentStatusCard";
 import type { TaskOutput } from "@/components/dashboard/FileTreePane";
 import { FixerDiffView } from "@/components/dashboard/FixerDiffView";
 import { RunDashboardPanes } from "@/components/dashboard/RunDashboardPanes";
+import { PostRunActionsPanel } from "@/components/deployment/PostRunActionsPanel";
 import { SpecViewerPanel } from "@/components/spec/SpecViewerPanel";
 import { apiGet, apiPost } from "@/lib/api-client";
-import type { BudgetDecision, PendingFix, PlanTask } from "@blueflame/shared";
+import type { BudgetDecision, DeploymentState, PendingFix, PlanTask } from "@blueflame/shared";
 
 interface RunApiResponse {
 	status: string;
@@ -27,6 +28,7 @@ interface RunApiResponse {
 	violation?: ConstraintViolation;
 	pendingFixes?: PendingFix[];
 	taskOutputs?: Record<string, TaskOutput>;
+	deploymentState?: DeploymentState | null;
 }
 
 interface BudgetApiResponse {
@@ -121,8 +123,10 @@ export default function RunPage() {
 	const [percentUsed, setPercentUsed] = useState(0);
 	const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
 	const [taskOutputs, setTaskOutputs] = useState<Record<string, TaskOutput>>({});
+	const [deploymentState, setDeploymentState] = useState<DeploymentState | null>(null);
 	const [showPauseModal, setShowPauseModal] = useState(false);
 	const [showSpec, setShowSpec] = useState(false);
+	const [selectedTask, setSelectedTask] = useState<PlanTask | null>(null);
 
 	// Run completion notification
 	const [completionBanner, setCompletionBanner] = useState<{
@@ -186,6 +190,7 @@ export default function RunPage() {
 			if (data.violation) setViolation(data.violation);
 			if (data.pendingFixes) setPendingFixes(data.pendingFixes);
 			if (data.taskOutputs) setTaskOutputs(data.taskOutputs);
+			if (data.deploymentState !== undefined) setDeploymentState(data.deploymentState ?? null);
 		},
 		[applyTaskAnimations, applyAgentAnimations],
 	);
@@ -247,8 +252,8 @@ export default function RunPage() {
 	);
 
 	const handleRejectFix = useCallback(
-		async (taskId: string) => {
-			await apiPost(`/api/execution/${runId}/reject-fix`, { taskId }).catch(() => {});
+		async (taskId: string, guidance?: string) => {
+			await apiPost(`/api/execution/${runId}/reject-fix`, { taskId, guidance }).catch(() => {});
 			fetchStatus();
 		},
 		[runId, fetchStatus],
@@ -273,8 +278,29 @@ export default function RunPage() {
 		fetchStatus();
 	}, [runId, fetchStatus]);
 
+	const handleSelectTask = useCallback((task: PlanTask) => {
+		setSelectedTask((prev) => (prev?.id === task.id ? null : task));
+	}, []);
+
+	// Keep selectedTask in sync with latest poll data
+	useEffect(() => {
+		if (selectedTask) {
+			const updated = tasks.find((t) => t.id === selectedTask.id);
+			if (updated && updated.status !== selectedTask.status) {
+				setSelectedTask(updated);
+			}
+		}
+	}, [tasks, selectedTask]);
+
 	const isRunning = runStatus === "EXECUTING" || runStatus === "RUNNING";
+	const isAuthorized = runStatus === "AUTHORIZED";
 	const isPartial = runStatus === "PARTIAL";
+	const hasFailures = failedTasks.length > 0;
+
+	const handleStartDeltaExecution = useCallback(async () => {
+		await apiPost(`/api/execution/${runId}/advance`).catch(() => {});
+		fetchStatus();
+	}, [runId, fetchStatus]);
 
 	return (
 		<div className="h-full bg-[--bg-primary] flex flex-col">
@@ -287,20 +313,24 @@ export default function RunPage() {
 					<span
 						data-testid="run-status-badge"
 						className={`text-xs px-2 py-0.5 rounded font-medium ${
-							isRunning
-								? "bg-blue-500/20 text-blue-400"
-								: runStatus === "COMPLETED"
-									? "bg-emerald-500/20 text-emerald-400"
-									: isPartial
-										? "bg-amber-500/20 text-amber-400"
-										: runStatus === "PAUSED"
-											? "bg-yellow-500/20 text-yellow-400"
-											: "bg-red-500/20 text-red-400"
+							isAuthorized
+								? "bg-purple-500/20 text-purple-400"
+								: isRunning
+									? "bg-blue-500/20 text-blue-400"
+									: runStatus === "COMPLETED"
+										? "bg-emerald-500/20 text-emerald-400"
+										: isPartial
+											? "bg-amber-500/20 text-amber-400"
+											: runStatus === "PAUSED"
+												? "bg-yellow-500/20 text-yellow-400"
+												: "bg-red-500/20 text-red-400"
 						}`}
 					>
-						{isPartial
-							? `PARTIAL — ${failedTasks.length} task${failedTasks.length !== 1 ? "s" : ""} failed`
-							: runStatus}
+						{isAuthorized
+							? "AUTHORIZED — Ready to execute"
+							: isPartial
+								? `PARTIAL — ${failedTasks.length} task${failedTasks.length !== 1 ? "s" : ""} failed`
+								: runStatus}
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
@@ -315,7 +345,17 @@ export default function RunPage() {
 					>
 						{showSpec ? "Hide Spec" : "View Spec"}
 					</button>
-					{isPartial && (
+					{isAuthorized && (
+						<button
+							type="button"
+							onClick={handleStartDeltaExecution}
+							data-testid="start-execution-button"
+							className="rounded border border-emerald-500/50 bg-emerald-600 px-4 py-1 text-xs font-medium text-white transition-colors hover:bg-emerald-500"
+						>
+							Start Execution
+						</button>
+					)}
+					{(isPartial || hasFailures) && (
 						<button
 							type="button"
 							onClick={handleRetryFailed}
@@ -331,14 +371,26 @@ export default function RunPage() {
 							onClick={handleStopExecution}
 							className="rounded border border-red-500/50 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
 						>
-							Stop Execution
+							{hasFailures ? "Force Stop" : "Stop Execution"}
 						</button>
 					)}
 				</div>
 			</div>
 
-			{/* Failed tasks banner */}
-			{isPartial && failedTasks.length > 0 && (
+			{/* Authorized banner — delta patch applied, awaiting user approval to start */}
+			{isAuthorized && (
+				<div className="border-b border-purple-500/30 bg-purple-500/5 px-4 py-3">
+					<p className="text-sm font-medium text-purple-400 mb-1">
+						Delta patch applied — review the updated plan below
+					</p>
+					<p className="text-xs text-[--text-muted]">
+						Tasks have been updated based on the spec change. Click{" "}
+						<strong className="text-purple-300">Start Execution</strong> when ready to proceed.
+					</p>
+				</div>
+			)}
+			{/* Failed tasks banner — shown whenever tasks have failed, even if run is still EXECUTING */}
+			{hasFailures && (
 				<div className="border-b border-amber-500/30 bg-amber-500/5 px-4 py-2">
 					<p className="text-xs font-medium text-amber-400 mb-1">
 						{failedTasks.length} task{failedTasks.length !== 1 ? "s" : ""} failed after all retries:
@@ -389,6 +441,51 @@ export default function RunPage() {
 				</div>
 			)}
 			{showSpec && <SpecViewerPanel projectId={params.projectId} />}
+			{/* Task detail panel — shown when a task is clicked in the DAG */}
+			{selectedTask && (
+				<div className="border-b border-[--border] bg-[--bg-secondary] px-4 py-3">
+					<div className="flex items-start justify-between gap-4">
+						<div className="flex-1 min-w-0">
+							<div className="flex items-center gap-2 mb-1">
+								<span className="text-xs font-mono font-semibold text-[--text-primary]">
+									{selectedTask.id}
+								</span>
+								<span
+									className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+										selectedTask.status === "FAILED"
+											? "bg-red-500/20 text-red-400"
+											: selectedTask.status === "COMPLETED"
+												? "bg-emerald-500/20 text-emerald-400"
+												: selectedTask.status === "RUNNING"
+													? "bg-blue-500/20 text-blue-400"
+													: selectedTask.status === "DEFERRED"
+														? "bg-amber-500/20 text-amber-400"
+														: "bg-gray-500/20 text-gray-400"
+									}`}
+								>
+									{selectedTask.status}
+								</span>
+							</div>
+							<p className="text-xs text-[--text-secondary] mb-1">{selectedTask.description}</p>
+							{selectedTask.failureReason && (
+								<div className="mt-2 rounded border border-red-500/30 bg-red-500/5 px-3 py-2">
+									<p className="text-xs font-medium text-red-400 mb-1">Failure Reason:</p>
+									<p className="text-xs text-red-300 font-mono whitespace-pre-wrap">
+										{selectedTask.failureReason}
+									</p>
+								</div>
+							)}
+						</div>
+						<button
+							type="button"
+							onClick={() => setSelectedTask(null)}
+							className="text-[--text-muted] hover:text-[--text-primary] text-sm shrink-0"
+						>
+							&times;
+						</button>
+					</div>
+				</div>
+			)}
 			<div className="flex-1 min-h-0">
 				<RunDashboardPanes
 					runId={runId}
@@ -404,6 +501,8 @@ export default function RunPage() {
 					newReinforcementIds={newReinforcementIds}
 					recentlyChangedTaskIds={recentlyChangedTaskIds}
 					preservedTaskIds={preservedTaskIds}
+					selectedTaskId={selectedTask?.id ?? null}
+					onSelectTask={handleSelectTask}
 				/>
 			</div>
 			{/* Fixer Diff Views */}
@@ -413,11 +512,21 @@ export default function RunPage() {
 						<FixerDiffView
 							key={`${fix.taskId}-${fix.retryCount}`}
 							fix={fix}
+							taskFailureReason={tasks.find((t) => t.id === fix.taskId)?.failureReason}
 							onApprove={handleApproveFix}
 							onReject={handleRejectFix}
 						/>
 					))}
 				</div>
+			)}
+			{/* Post-run deployment actions */}
+			{(runStatus === "COMPLETED" || runStatus === "PARTIAL") && (
+				<PostRunActionsPanel
+					runId={runId}
+					taskOutputs={taskOutputs}
+					deploymentState={deploymentState}
+					onRefresh={fetchStatus}
+				/>
 			)}
 			{showPauseModal && (
 				<PauseDecisionModal

@@ -91,6 +91,9 @@ export type { PatternEntry, PatternSource } from "./knowledge.js";
 // State machine helpers
 export { RUN_TRANSITIONS } from "./run.js";
 
+// Deployment pipeline types
+export type { DeploymentState, DeploymentStep } from "./deployment.js";
+
 // SCR (Spec Change Request) types
 export { SCRSeverity, SCRStatus } from "./scr.js";
 export type {

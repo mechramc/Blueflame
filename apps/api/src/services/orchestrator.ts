@@ -15,6 +15,7 @@ import type { RoutingDecision } from "@blueflame/foundry";
 import type {
 	ActionEvent,
 	AgentState,
+	DeploymentState,
 	PendingFix,
 	PlanLock,
 	TaskPatch,
@@ -74,6 +75,7 @@ export interface RunState {
 	pendingFixes: PendingFix[];
 	retryCountByTask: Record<string, number>;
 	taskOutputs: Record<string, TaskOutput>;
+	deploymentState?: DeploymentState;
 }
 
 let eventCounter = 0;
@@ -114,6 +116,17 @@ export function setTaskOutput(runId: string, taskId: string, output: TaskOutput)
 	const run = runs.get(runId);
 	if (run) {
 		run.taskOutputs[taskId] = output;
+	}
+}
+
+/**
+ * Update deployment state for a run (used by deployment-service).
+ */
+export function updateDeploymentState(runId: string, state: DeploymentState): void {
+	const run = runs.get(runId);
+	if (run) {
+		run.deploymentState = state;
+		checkpointRun(run);
 	}
 }
 
@@ -246,6 +259,14 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 		return { ok: true, value: [] };
 	}
 
+	// Transition AUTHORIZED → EXECUTING when starting/resuming
+	if (run.status === RunStatus.Authorized) {
+		run.status = RunStatus.Executing;
+		pushEvent(run, "orchestrator", "SYSTEM", "RUN_RESUMED", "Execution started by user");
+		checkpointRun(run);
+		notifyStatusChange(runId, RunStatus.Executing);
+	}
+
 	const readyTasks = getReadyTasks(run.plan.tasks);
 
 	if (readyTasks.length === 0) {
@@ -328,6 +349,29 @@ export async function completeTask(
 
 	// A2A handoff: Builder → Verifier (use task's σ for verifier routing)
 	if (agentRole === AgentRole.Builder) {
+		// Check if this was a fixer run — require user approval before verifying
+		const pendingFix = run.pendingFixes.find((f) => f.taskId === taskId);
+		if (pendingFix) {
+			// Populate the fix with the fixer's output
+			const fixerOutput = run.taskOutputs[taskId];
+			pendingFix.fixedCode = fixerOutput?.files?.length
+				? fixerOutput.files.map((f) => `// === ${f.path} ===\n${f.content}`).join("\n\n")
+				: "(fixer produced no output)";
+			pendingFix.explanation =
+				fixerOutput?.commitMessage ?? "Fixer attempted to resolve verification failure";
+
+			pushEvent(
+				run,
+				agentId,
+				AgentRole.Builder,
+				"FIX_PROPOSED",
+				`Fixer proposed fix for task ${taskId} (retry ${pendingFix.retryCount}) — awaiting approval`,
+			);
+			checkpointRun(run);
+			// Do NOT auto-spawn verifier — wait for user to approve/reject via UI
+			return { ok: true, value: {} };
+		}
+
 		pushEvent(
 			run,
 			agentId,
@@ -472,6 +516,16 @@ export async function failTask(
 
 	// No retries left or non-Verifier role — mark as failed permanently
 	task.status = TaskStatus.Failed;
+
+	// If a pending fix exists (fixer failed), populate it so UI stops showing "working..."
+	const existingFix = run.pendingFixes.find((f) => f.taskId === taskId);
+	if (existingFix && !existingFix.fixedCode) {
+		existingFix.fixedCode = errorMessage
+			? `Fixer failed: ${errorMessage}`
+			: "(fixer could not produce a fix)";
+		existingFix.explanation = errorMessage ?? "The fixer agent was unable to resolve this task";
+	}
+
 	const failDetail = errorMessage
 		? `Task ${taskId} failed: ${errorMessage}`
 		: `Task ${taskId} failed permanently`;
@@ -610,6 +664,8 @@ export function rejectFix(runId: string, taskId: string): Result<void> {
 
 /**
  * Request interruption of a run (user stop).
+ * If all tasks are already terminal, force-completes the run immediately.
+ * If tasks are still RUNNING with no pending waves, force-fails them and completes.
  */
 export function requestInterrupt(runId: string): Result<void> {
 	const run = runs.get(runId);
@@ -622,6 +678,36 @@ export function requestInterrupt(runId: string): Result<void> {
 	}
 
 	run.interruptRequested = true;
+
+	// Force-complete if all tasks are already terminal (stuck run)
+	if (allTasksTerminal(run.plan.tasks)) {
+		completeRun(run);
+		return { ok: true, value: undefined };
+	}
+
+	// Force-fail any RUNNING tasks that have no active agent processing them,
+	// then complete the run if everything is now terminal
+	const runningTasks = run.plan.tasks.filter((t) => t.status === TaskStatus.Running);
+	const pendingTasks = run.plan.tasks.filter((t) => t.status === TaskStatus.Pending);
+
+	if (runningTasks.length > 0 || pendingTasks.length > 0) {
+		for (const task of runningTasks) {
+			task.status = TaskStatus.Failed;
+			task.failureReason = task.failureReason || "Execution stopped by user";
+			pushEvent(
+				run,
+				"orchestrator",
+				"SYSTEM",
+				"TASK_FAILED",
+				`Task ${task.id} force-stopped by user`,
+			);
+		}
+		for (const task of pendingTasks) {
+			task.status = TaskStatus.Deferred;
+		}
+		completeRun(run);
+	}
+
 	return { ok: true, value: undefined };
 }
 
@@ -647,6 +733,42 @@ export async function getRun(runId: string): Promise<RunState | undefined> {
 		// Cosmos unavailable
 	}
 	return undefined;
+}
+
+/**
+ * Get all runs for a project (from in-memory cache + Cosmos fallback).
+ * Returns lightweight summaries sorted newest-first.
+ */
+export async function getRunsByProject(projectId: string): Promise<RunState[]> {
+	// Collect from in-memory cache first
+	const results: RunState[] = [];
+	for (const run of runs.values()) {
+		if (run.projectId === projectId) {
+			results.push(run);
+		}
+	}
+
+	// Fallback: also check Cosmos for runs not in memory
+	try {
+		const docs = await db.documents.queryAll({
+			query:
+				"SELECT * FROM c WHERE c.projectId = @pid AND c.type = 'run-state' ORDER BY c.startedAt DESC",
+			parameters: [{ name: "@pid", value: projectId }],
+		});
+		const cachedIds = new Set(results.map((r) => r.runId));
+		for (const doc of docs) {
+			const run = doc as unknown as RunState;
+			if (!cachedIds.has(run.runId)) {
+				results.push(run);
+			}
+		}
+	} catch {
+		// Cosmos unavailable — use in-memory only
+	}
+
+	// Sort newest first
+	results.sort((a, b) => (b.startedAt ?? "").localeCompare(a.startedAt ?? ""));
+	return results;
 }
 
 /**
@@ -738,8 +860,8 @@ export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
 
 	applyPatchEntries(run, patch);
 
-	// Resume the run
-	run.status = RunStatus.Executing;
+	// Set run to AUTHORIZED — user must explicitly start execution
+	run.status = RunStatus.Authorized;
 	run.interruptRequested = false;
 	run.completedAt = null;
 
@@ -747,11 +869,11 @@ export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
 		run,
 		"orchestrator",
 		"SYSTEM",
-		"DELTA_EXECUTION_STARTED",
-		`Delta execution started: ${patch.invalidateTasks.length} invalidated, ${patch.addTasks.length} added, ${patch.cancelTasks.length} cancelled`,
+		"DELTA_PATCH_APPLIED",
+		`Delta patch applied: ${patch.invalidateTasks.length} invalidated, ${patch.addTasks.length} added, ${patch.cancelTasks.length} cancelled — awaiting user approval to start execution`,
 	);
 	checkpointRun(run);
-	notifyStatusChange(runId, RunStatus.Executing);
+	notifyStatusChange(runId, RunStatus.Authorized);
 
 	return { ok: true, value: undefined };
 }
