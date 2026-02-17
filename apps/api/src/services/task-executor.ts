@@ -109,6 +109,14 @@ async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentSta
 		}
 	}
 
+	// Retry mode: if task previously failed, inject the failure reason so the builder
+	// can adapt its approach (e.g., pick a default framework if spec is underspecified)
+	if (!pendingFix && task.failureReason) {
+		constraints.push(
+			`RETRY: This task previously failed with: "${task.failureReason}". You MUST produce working code this time. If the spec does not specify a technology choice, make a reasonable default decision (e.g., React Native for mobile, Express for API, React for web) and proceed. Do NOT refuse to generate code due to missing details — fill in sensible defaults.`,
+		);
+	}
+
 	const input: BuilderTaskInput = {
 		taskId: task.id,
 		description: task.description,

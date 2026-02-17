@@ -24,6 +24,10 @@
 
 ## What Just Happened (Sessions 10–17)
 
+### Session 17c: Builder retry constraint injection
+
+When `retryFailedTasks()` re-runs a failed task, the builder received the exact same input and produced the same failure. Now on retry, the task's previous `failureReason` is injected as a RETRY constraint telling the builder to make reasonable default choices instead of refusing (e.g., pick React Native if spec doesn't specify mobile framework).
+
 ### Session 17b: Fix SCR Delta Execution + Retry Bugs
 
 Three bugs prevented runs from restarting after SCR delta or retry:

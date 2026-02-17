@@ -176,6 +176,11 @@
 | DeltaImpactMap: truncated IDs + change breakdown | UI | P1 | **DONE** |
 | SCRPanel DiffPack: word-wrap + change type display | UI | P1 | **DONE** |
 
+### Session 17c — Builder Retry Constraint Injection
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Inject failureReason as RETRY constraint on task retry | S7 | P0 | **DONE** |
+
 ### Session 17b — Fix SCR Delta Execution + Retry Bugs
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
