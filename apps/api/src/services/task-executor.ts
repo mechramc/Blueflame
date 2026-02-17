@@ -17,17 +17,37 @@ import {
 import type { AgentState, PlanTask } from "@blueflame/shared";
 import { AgentRole } from "@blueflame/shared";
 import type { RunState } from "./orchestrator.js";
+import { getAgentRoutingDecision } from "./orchestrator.js";
 import { getSpec } from "./spec-generation.js";
 
-/** Cost per 1K tokens (rough estimate for gpt-4o) */
-const COST_PER_1K_TOKENS = 0.005;
+/** Cost per 1K tokens — varies by model */
+const COST_PER_1K_TOKENS: Record<string, number> = {
+	"gpt-4o": 0.005,
+	"gpt-4o-mini": 0.00015,
+	"claude-sonnet-4-5": 0.003,
+	"claude-opus-4-6": 0.015,
+};
 
-/** Get foundry config for a given deployment/model */
-function getFoundryConfig(model: string): BuilderConfig & VerifierConfig {
+function getCostRate(model: string): number {
+	return COST_PER_1K_TOKENS[model] ?? 0.005;
+}
+
+/** Get foundry config for a given agent — uses routing decision when available */
+function getFoundryConfig(agent: AgentState): BuilderConfig & VerifierConfig {
+	const decision = getAgentRoutingDecision(agent.agentId);
+	if (decision?.providerConfig) {
+		return {
+			endpoint: decision.providerConfig.endpoint,
+			apiKey: decision.providerConfig.apiKey,
+			deployment: decision.providerConfig.model,
+			apiVersion: decision.providerConfig.apiVersion ?? "2024-10-21",
+		};
+	}
+	// Fallback: Azure OpenAI with agent's model name
 	return {
 		endpoint: process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "",
 		apiKey: process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "",
-		deployment: model,
+		deployment: agent.model,
 		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-10-21",
 	};
 }
@@ -76,7 +96,7 @@ async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentSta
 		return;
 	}
 
-	const config = getFoundryConfig(agent.model);
+	const config = getFoundryConfig(agent);
 
 	// Patch Mode: if run was resumed via delta execution, constrain the builder
 	const constraints = [...(spec.constraints?.must ?? spec.inheritedConstraints ?? [])];
@@ -134,7 +154,7 @@ async function executeBuilderTask(run: RunState, task: PlanTask, agent: AgentSta
 		? JSON.stringify(result.value).length
 		: JSON.stringify(result.error).length;
 	const estimatedTokens = Math.ceil(outputLength / 4) + 500; // rough: 4 chars/token + prompt overhead
-	const estimatedCost = (estimatedTokens / 1000) * COST_PER_1K_TOKENS;
+	const estimatedCost = (estimatedTokens / 1000) * getCostRate(agent.model);
 
 	const { completeTask, failTask, pushEventExternal, setTaskOutput } = await import(
 		"./orchestrator.js"
@@ -238,7 +258,7 @@ async function executeVerifierTask(
 		builderNotes = `Builder completed task: ${task.description}`;
 	}
 
-	const config = getFoundryConfig(agent.model);
+	const config = getFoundryConfig(agent);
 	const input: VerifierInput = {
 		taskId: task.id,
 		acceptanceCriteria: criteria,
@@ -255,7 +275,7 @@ async function executeVerifierTask(
 		? JSON.stringify(result.value).length
 		: JSON.stringify(result.error).length;
 	const estimatedTokens = Math.ceil(outputLength / 4) + 300;
-	const estimatedCost = (estimatedTokens / 1000) * COST_PER_1K_TOKENS;
+	const estimatedCost = (estimatedTokens / 1000) * getCostRate(agent.model);
 
 	const { completeTask, failTask, setTaskOutput } = await import("./orchestrator.js");
 

@@ -12,16 +12,16 @@ import { ExecutionTier, type ModelRouter, type RoutingDecision } from "./types.j
 
 /**
  * Map σ value to execution tier.
- * σ < 0.3  → Routine  (cheap, fast models)
- * 0.3 ≤ σ ≤ 0.7 → Standard (balanced)
- * σ > 0.7  → Complex  (most capable models)
+ * σ < 0.4  → Routine  (cheap, fast models — gpt-4o-mini)
+ * 0.4 ≤ σ ≤ 0.6 → Standard (balanced — gpt-4o)
+ * σ > 0.6  → Complex  (most capable — gpt-4o / claude-sonnet)
  */
 export function sigmaToTier(sigma: number): ExecutionTier {
 	// Clamp to [0, 1]
 	const clamped = Math.max(0, Math.min(1, sigma));
 
-	if (clamped < 0.3) return ExecutionTier.Routine;
-	if (clamped > 0.7) return ExecutionTier.Complex;
+	if (clamped < 0.4) return ExecutionTier.Routine;
+	if (clamped > 0.6) return ExecutionTier.Complex;
 	return ExecutionTier.Standard;
 }
 
@@ -42,6 +42,7 @@ export class SigmaRouter implements ModelRouter {
 			provider: config.provider,
 			model: config.model,
 			reason: `σ=${clamped.toFixed(2)} → ${tier} tier`,
+			providerConfig: config,
 		};
 	}
 }

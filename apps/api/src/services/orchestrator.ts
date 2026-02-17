@@ -54,6 +54,14 @@ const router = new SigmaRouter();
 /** Routing decision log for transparency/audit (NOT attribution) */
 const routingLog: RoutingDecision[] = [];
 
+/** Provider configs keyed by agentId — so task executor knows which provider to call */
+const agentProviderConfigs = new Map<string, RoutingDecision>();
+
+/** Get the routing decision for a specific agent (used by task executor) */
+export function getAgentRoutingDecision(agentId: string): RoutingDecision | undefined {
+	return agentProviderConfigs.get(agentId);
+}
+
 /** Get routing log entries for a given run (for transparency) */
 export function getRoutingLog(): ReadonlyArray<RoutingDecision> {
 	return routingLog;
@@ -304,6 +312,9 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 		routingLog.push(decision);
 		const model = decision.model;
 		const agent = await spawnAgent(runId, task.agentRole, task.id, model);
+
+		// Store routing decision so task executor can use correct provider
+		agentProviderConfigs.set(agent.agentId, decision);
 
 		// Mark task as running
 		task.status = TaskStatus.Running;

@@ -42,6 +42,8 @@ export interface RoutingDecision {
 	provider: ProviderType;
 	model: string;
 	reason: string;
+	/** Full provider config for task execution (not serialized to audit log) */
+	providerConfig?: ProviderConfig;
 }
 
 /** Chat message in provider-agnostic format */

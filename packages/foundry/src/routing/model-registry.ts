@@ -50,23 +50,31 @@ function initDefaults(): void {
 		apiKey: anthropicKey,
 	};
 
-	// All roles default to: Routine→mini, Standard→4o, Complex→4o
-	const allRoles = [
-		AgentRole.Planner,
-		AgentRole.Builder,
-		AgentRole.Verifier,
-		AgentRole.Explainer,
-		AgentRole.Fixer,
-	];
-
-	for (const role of allRoles) {
-		registry.set(registryKey(role, ExecutionTier.Routine), { ...azureMini });
-		registry.set(registryKey(role, ExecutionTier.Standard), { ...azure4o });
-		registry.set(registryKey(role, ExecutionTier.Complex), { ...azure4o });
-	}
-
-	// Builder Complex → Claude Sonnet 4.5 (better at code generation)
+	// Role-specific model routing — ACAR selects optimal model per role + tier
+	// Builder: needs strongest code generation → 4o for standard, Claude for complex
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Standard), { ...azure4o });
 	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Complex), { ...claudeSonnet });
+
+	// Verifier: code review is less token-intensive → mini for routine/standard, 4o for complex
+	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Standard), { ...azureMini });
+	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Complex), { ...azure4o });
+
+	// Fixer: same as Builder — needs strong code generation
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Standard), { ...azure4o });
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Complex), { ...claudeSonnet });
+
+	// Planner: task decomposition benefits from stronger reasoning at standard+
+	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Standard), { ...azure4o });
+	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Complex), { ...azure4o });
+
+	// Explainer: lightweight summarization → mini for all tiers
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Standard), { ...azureMini });
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Complex), { ...azure4o });
 }
 
 // Initialize on module load

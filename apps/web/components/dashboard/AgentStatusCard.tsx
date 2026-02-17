@@ -42,7 +42,7 @@ const ROLE_LABELS: Record<string, string> = {
 	FIXER: "Fixer",
 };
 
-const SIGMA_THRESHOLD = 0.7;
+const SIGMA_THRESHOLD = 0.6;
 
 export function AgentStatusCard({ agent }: AgentStatusCardProps) {
 	const dotColor = STATUS_DOT[agent.status] ?? "bg-[--text-muted]";
@@ -126,7 +126,11 @@ export function AgentStatusCard({ agent }: AgentStatusCardProps) {
 				<div className="flex justify-between">
 					<span>Model</span>
 					<span className="font-mono flex items-center gap-1">
-						<span className="text-blue-400/70 text-[9px]">Azure</span>
+						<span
+							className={`text-[9px] ${agent.model.startsWith("claude") ? "text-amber-400/70" : "text-blue-400/70"}`}
+						>
+							{agent.model.startsWith("claude") ? "Anthropic" : "Azure"}
+						</span>
 						{agent.model}
 					</span>
 				</div>

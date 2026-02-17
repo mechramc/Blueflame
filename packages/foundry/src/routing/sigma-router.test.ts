@@ -10,24 +10,24 @@ describe("sigmaToTier", () => {
 		expect(sigmaToTier(0)).toBe(ExecutionTier.Routine);
 	});
 
-	it("should return Routine for σ=0.29", () => {
-		expect(sigmaToTier(0.29)).toBe(ExecutionTier.Routine);
+	it("should return Routine for σ=0.39", () => {
+		expect(sigmaToTier(0.39)).toBe(ExecutionTier.Routine);
 	});
 
-	it("should return Standard for σ=0.3", () => {
-		expect(sigmaToTier(0.3)).toBe(ExecutionTier.Standard);
+	it("should return Standard for σ=0.4", () => {
+		expect(sigmaToTier(0.4)).toBe(ExecutionTier.Standard);
 	});
 
 	it("should return Standard for σ=0.5", () => {
 		expect(sigmaToTier(0.5)).toBe(ExecutionTier.Standard);
 	});
 
-	it("should return Standard for σ=0.7", () => {
-		expect(sigmaToTier(0.7)).toBe(ExecutionTier.Standard);
+	it("should return Standard for σ=0.6", () => {
+		expect(sigmaToTier(0.6)).toBe(ExecutionTier.Standard);
 	});
 
-	it("should return Complex for σ=0.71", () => {
-		expect(sigmaToTier(0.71)).toBe(ExecutionTier.Complex);
+	it("should return Complex for σ=0.61", () => {
+		expect(sigmaToTier(0.61)).toBe(ExecutionTier.Complex);
 	});
 
 	it("should return Complex for σ=1.0", () => {
@@ -75,6 +75,27 @@ describe("SigmaRouter.route", () => {
 		expect(decision.model).toBe("gpt-4o");
 	});
 
+	it("should route medium σ Verifier to Standard tier with gpt-4o-mini", () => {
+		resetRegistry();
+		const decision = router.route(AgentRole.Verifier, 0.5);
+		expect(decision.tier).toBe(ExecutionTier.Standard);
+		expect(decision.model).toBe("gpt-4o-mini");
+	});
+
+	it("should route Explainer to gpt-4o-mini at Standard tier", () => {
+		resetRegistry();
+		const decision = router.route(AgentRole.Explainer, 0.5);
+		expect(decision.tier).toBe(ExecutionTier.Standard);
+		expect(decision.model).toBe("gpt-4o-mini");
+	});
+
+	it("should include providerConfig in routing decision", () => {
+		resetRegistry();
+		const decision = router.route(AgentRole.Builder, 0.5);
+		expect(decision.providerConfig).toBeDefined();
+		expect(decision.providerConfig?.model).toBe("gpt-4o");
+	});
+
 	it("should clamp negative σ values", () => {
 		const decision = router.route(AgentRole.Planner, -0.5);
 		expect(decision.sigma).toBe(0);
@@ -99,14 +120,14 @@ describe("SigmaRouter.route", () => {
 	});
 
 	it("should respect runtime overrides via setProviderConfig", () => {
-		setProviderConfig(AgentRole.Explainer, ExecutionTier.Standard, {
+		setProviderConfig(AgentRole.Builder, ExecutionTier.Standard, {
 			provider: ProviderType.Google,
 			model: "gemini-2.5-pro",
 			endpoint: "https://generativelanguage.googleapis.com",
 			apiKey: "test-key",
 		});
 
-		const decision = router.route(AgentRole.Explainer, 0.5);
+		const decision = router.route(AgentRole.Builder, 0.5);
 		expect(decision.model).toBe("gemini-2.5-pro");
 		expect(decision.provider).toBe(ProviderType.Google);
 
