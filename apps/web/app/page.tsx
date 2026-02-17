@@ -80,11 +80,67 @@ export default function Home() {
 					</div>
 				)}
 
-				{/* Architecture highlights */}
-				<div className="mt-12 grid grid-cols-3 gap-3">
-					<FeatureCard title="Spec-First" icon="S" />
-					<FeatureCard title="Governed Agents" icon="G" />
-					<FeatureCard title="Failure Intelligence" icon="F" />
+				{/* Microsoft Azure integration highlights */}
+				<div className="mt-12">
+					<div className="flex items-center gap-2 mb-3">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+							<rect
+								x="1"
+								y="1"
+								width="10"
+								height="10"
+								rx="1"
+								fill="currentColor"
+								fillOpacity="0.8"
+							/>
+							<rect
+								x="13"
+								y="1"
+								width="10"
+								height="10"
+								rx="1"
+								fill="currentColor"
+								fillOpacity="0.6"
+							/>
+							<rect
+								x="1"
+								y="13"
+								width="10"
+								height="10"
+								rx="1"
+								fill="currentColor"
+								fillOpacity="0.6"
+							/>
+							<rect
+								x="13"
+								y="13"
+								width="10"
+								height="10"
+								rx="1"
+								fill="currentColor"
+								fillOpacity="0.4"
+							/>
+						</svg>
+						<span className="text-xs font-semibold uppercase text-[--text-muted] tracking-wider">
+							Powered by Microsoft Azure
+						</span>
+					</div>
+					<div className="grid grid-cols-3 gap-3">
+						<FeatureCard
+							title="Azure OpenAI Agents"
+							icon="AI"
+							desc="GPT-4o powered Builder, Verifier, Fixer"
+						/>
+						<FeatureCard title="Cosmos DB" icon="DB" desc="Specs, plans, runs, audit log" />
+						<FeatureCard title="Entra ID + RBAC" icon="ID" desc="4-tier role-based governance" />
+						<FeatureCard
+							title="GitHub Actions CI/CD"
+							icon="CI"
+							desc="Auto PR, CI validation, deploy"
+						/>
+						<FeatureCard title="SignalR Real-time" icon="RT" desc="Live agent status streaming" />
+						<FeatureCard title="App Insights" icon="AP" desc="OpenTelemetry tracing" />
+					</div>
 				</div>
 			</div>
 
@@ -99,13 +155,16 @@ export default function Home() {
 	);
 }
 
-function FeatureCard({ title, icon }: { title: string; icon: string }) {
+function FeatureCard({ title, icon, desc }: { title: string; icon: string; desc?: string }) {
 	return (
-		<div className="rounded border border-[--border] bg-[--bg-secondary]/50 p-3 flex items-center gap-3">
-			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[--accent]/10 text-xs font-semibold text-blue-400 font-mono">
+		<div className="rounded border border-[--border] bg-[--bg-secondary]/50 p-3 flex items-start gap-3">
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[--accent]/10 text-[10px] font-bold text-blue-400 font-mono">
 				{icon}
 			</span>
-			<span className="text-xs font-medium text-[--text-secondary]">{title}</span>
+			<div>
+				<span className="text-xs font-medium text-[--text-secondary]">{title}</span>
+				{desc && <p className="text-[10px] text-[--text-muted] mt-0.5">{desc}</p>}
+			</div>
 		</div>
 	);
 }

@@ -9,11 +9,11 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-17
-- **Session**: 17
+- **Session**: 18
 
 ## Current State
-- **Phase**: Demo Preparation — All features implemented, deployment workflow added
-- **Last completed task**: Session 17 post-execution deployment workflow + Session 16 uncommitted UX fixes
+- **Phase**: Demo Preparation — All features + MS visibility polish implemented
+- **Last completed task**: Session 18 Microsoft visibility features (6 features for hackathon wow factor)
 - **Next task**: E2E re-test all flows, demo recording (7 workflows)
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors, all tests green)
@@ -22,7 +22,21 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–17)
+## What Just Happened (Sessions 10–18)
+
+### Session 18: Microsoft Visibility Features (Hackathon Polish)
+
+6 features to make Microsoft service integration visible throughout all workflows:
+
+1. **MicrosoftServicesStrip** — Persistent status bar below nav showing 6 connected Azure services with green status dots. Expandable for full service names. Polls `/health` endpoint.
+2. **CreateProjectDialog rewrite** — 3-step flow: Details → Infrastructure Selection (Azure [RECOMMENDED] vs Local) → Provisioning Animation (6 services connect sequentially with spinners and checkmarks).
+3. **Azure OpenAI branding on agents** — Agent status cards show "Azure" prefix before model name. DAG nodes show "Azure OpenAI" label below task ID.
+4. **AzureToastProvider + toast notifications** — React Context for slide-in toast notifications. Wired into SpecEditor (spec generation, freeze) and SpecActions (plan generation, authorization, execution start). Each shows which Azure service was used.
+5. **AzureServiceUsagePanel** — Collapsible panel on run dashboard showing Azure service invocations: OpenAI (tokens), Cosmos DB (persistence ops), SignalR (events), Entra ID (auth), App Insights (telemetry).
+6. **Landing page feature cards** — Updated from 3 generic cards to 6 MS-branded cards (Azure OpenAI Agents, Cosmos DB, Entra ID + RBAC, GitHub Actions CI/CD, SignalR Real-time, App Insights).
+
+**New files:** `MicrosoftServicesStrip.tsx`, `AzureToastProvider.tsx`, `AzureServiceUsagePanel.tsx`
+**Modified:** `CreateProjectDialog.tsx`, `AgentStatusCard.tsx`, `DAGProgress.tsx`, `DashboardLayout.tsx`, `SpecActions.tsx`, `SpecEditor.tsx`, `page.tsx` (home), `layout.tsx`, `globals.css`
 
 ### Session 17f: Auto-init budget on run start + checkBudget after cost recording
 
@@ -251,10 +265,11 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 15**: Workflow failure UX improvements (loading state, error surfacing, completion banner)
 - **Session 16**: Spec viewer on run dashboard (API response, SpecViewerPanel, toggle)
 - **Session 17**: Post-execution deployment workflow + Session 16 UX fixes committed
+- **Session 18**: Microsoft visibility features (6 features for hackathon wow factor)
 
 ## What To Pick Up Next
 
-### Immediate (Session 18)
+### Immediate (Session 19)
 1. **E2E test all flows** — Spec→Plan→Execute, SCR, failure→fix→approve
 2. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
 3. **Submission package** — README (done), architecture diagram, demo video

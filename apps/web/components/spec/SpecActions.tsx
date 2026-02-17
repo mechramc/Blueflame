@@ -1,5 +1,6 @@
 "use client";
 
+import { useAzureToast } from "@/components/layout/AzureToastProvider";
 import { apiGet, apiPost } from "@/lib/api-client";
 import { SpecStatus } from "@blueflame/shared";
 import { useRouter } from "next/navigation";
@@ -44,6 +45,7 @@ export function SpecActions({
 	disabled = false,
 }: SpecActionsProps) {
 	const router = useRouter();
+	const { showToast } = useAzureToast();
 	const [execStep, setExecStep] = useState<ExecutionStep>("idle");
 	const [runId, setRunId] = useState<string | null>(null);
 	const [launchError, setLaunchError] = useState<string | null>(null);
@@ -104,6 +106,11 @@ export function SpecActions({
 				runId: newRunId,
 				projectId,
 			});
+			showToast("Azure OpenAI", "AI", "Plan generated via GPT-4o", "blue");
+			setTimeout(
+				() => showToast("Azure Cosmos DB", "DB", "Plan persisted to Cosmos DB", "emerald"),
+				800,
+			);
 			setExecStep("planned");
 		} catch (err) {
 			console.error("[SpecActions] Plan generation error:", err);
@@ -122,6 +129,8 @@ export function SpecActions({
 				runId,
 				budgetCeiling: 50,
 			});
+			showToast("Microsoft Entra ID", "ID", "Execution authorized via RBAC", "purple");
+			setTimeout(() => showToast("Azure Cosmos DB", "DB", "Plan lock persisted", "emerald"), 600);
 			setExecStep("locked");
 		} catch (err) {
 			console.error("[SpecActions] Lock error:", err);
@@ -137,6 +146,11 @@ export function SpecActions({
 
 		try {
 			await apiPost("/api/execution/start", { runId });
+			showToast("Azure OpenAI", "AI", "Agents dispatched via Azure OpenAI", "blue");
+			setTimeout(
+				() => showToast("Azure SignalR", "RT", "Real-time monitoring active", "amber"),
+				500,
+			);
 			router.push(`/project/${projectId}/run/${runId}`);
 		} catch (err) {
 			console.error("[SpecActions] Execution error:", err);

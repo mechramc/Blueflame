@@ -1,5 +1,6 @@
 "use client";
 
+import { useAzureToast } from "@/components/layout/AzureToastProvider";
 import { SpecStatus } from "@blueflame/shared";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
@@ -44,6 +45,7 @@ definition_of_done: ""
 `;
 
 export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
+	const { showToast } = useAzureToast();
 	const [content, setContent] = useState(PLACEHOLDER_YAML);
 	const [status, setStatus] = useState<SpecStatus>(SpecStatus.Draft);
 	const [specId, setSpecId] = useState<string | null>(null);
@@ -90,6 +92,11 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 				setSpecId(data.spec.specId);
 				setStatus(data.spec.status);
 				setContent(data.spec.content ?? data.spec.yamlContent ?? "");
+				showToast("Azure OpenAI", "AI", "Spec generated via GPT-4o Designer Agent", "blue");
+				setTimeout(
+					() => showToast("Azure Cosmos DB", "DB", "Spec saved to Cosmos DB", "emerald"),
+					600,
+				);
 			} else {
 				const errData = (await res.json()) as { error: string };
 				setError(errData.error ?? "Spec generation failed");
@@ -123,6 +130,7 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 			});
 			if (res.ok) {
 				setStatus(SpecStatus.Frozen);
+				showToast("Azure Cosmos DB", "DB", "Spec frozen and version-locked", "emerald");
 			}
 		} catch {
 			setError("Failed to freeze spec");

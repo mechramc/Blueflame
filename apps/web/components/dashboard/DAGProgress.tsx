@@ -44,7 +44,7 @@ export function DAGProgress({
 	}
 
 	const maxX = Math.max(...positions.map((p) => p.x)) + 180;
-	const maxY = Math.max(...positions.map((p) => p.y)) + 60;
+	const maxY = Math.max(...positions.map((p) => p.y)) + 70;
 
 	return (
 		<div
@@ -66,7 +66,7 @@ export function DAGProgress({
 							<line
 								key={`${depId}-${node.task.id}`}
 								x1={dep.x + 70}
-								y1={dep.y + 30}
+								y1={dep.y + 38}
 								x2={node.x + 70}
 								y2={node.y}
 								stroke="#2a2a4a"
@@ -116,7 +116,7 @@ export function DAGProgress({
 								x={node.x}
 								y={node.y}
 								width={140}
-								height={30}
+								height={38}
 								rx={4}
 								fill={colors.fill}
 								stroke={isSelected ? "#8b5cf6" : colors.stroke}
@@ -124,7 +124,7 @@ export function DAGProgress({
 							/>
 							<text
 								x={node.x + 70}
-								y={node.y + 19}
+								y={node.y + 15}
 								textAnchor="middle"
 								fontFamily="monospace"
 								fontSize={11}
@@ -132,10 +132,21 @@ export function DAGProgress({
 							>
 								{node.task.id}
 							</text>
+							<text
+								x={node.x + 70}
+								y={node.y + 30}
+								textAnchor="middle"
+								fontFamily="sans-serif"
+								fontSize={8}
+								fill="#60a5fa"
+								opacity={0.7}
+							>
+								Azure OpenAI
+							</text>
 							{isPreserved && (
 								<text
 									x={node.x + 130}
-									y={node.y + 12}
+									y={node.y + 15}
 									fontSize={12}
 									fill="#22c55e"
 									data-testid={`preserved-check-${node.task.id}`}
@@ -187,7 +198,7 @@ function computeLayout(tasks: PlanTask[]): NodePosition[] {
 			if (task) {
 				positions.push({
 					x: 20 + i * 170,
-					y: 50 + depth * 60,
+					y: 50 + depth * 70,
 					task,
 				});
 			}

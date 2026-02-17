@@ -125,7 +125,10 @@ export function AgentStatusCard({ agent }: AgentStatusCardProps) {
 				</div>
 				<div className="flex justify-between">
 					<span>Model</span>
-					<span className="font-mono">{agent.model}</span>
+					<span className="font-mono flex items-center gap-1">
+						<span className="text-blue-400/70 text-[9px]">Azure</span>
+						{agent.model}
+					</span>
 				</div>
 				<div className="flex justify-between">
 					<span>Tokens</span>

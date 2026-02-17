@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**Demo Preparation** — All features implemented. Cost tracking, failure recording, and audit log persistence wired end-to-end. Full build passes (6/6). Next: E2E testing and demo recording.
+**Demo Preparation** — All features implemented. Microsoft service visibility added throughout all workflows (toast notifications, service strip, provisioning animation, Azure branding on agents/DAG). Full build passes (6/6), 128 web tests pass. Next: E2E testing and demo recording.
 
 ## Sprint Progress
 
@@ -202,6 +202,16 @@
 | Graceful fallback when GitHub not configured | UI | P1 | **DONE** |
 | Run dashboard integration (mount on COMPLETED/PARTIAL) | UI | P0 | **DONE** |
 
+### Session 18 — Microsoft Visibility Features (Hackathon Polish)
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| MicrosoftServicesStrip (layout status bar) | UI | P0 | **DONE** |
+| CreateProjectDialog: 3-step infra selection + provisioning animation | UI | P0 | **DONE** |
+| Agent cards + DAG nodes: Azure OpenAI branding | UI | P0 | **DONE** |
+| AzureToastProvider + toast notifications wired into SpecEditor/SpecActions | UI | P0 | **DONE** |
+| AzureServiceUsagePanel on run dashboard | UI | P0 | **DONE** |
+| Landing page: 6 MS-branded feature cards | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -224,7 +234,8 @@
 - **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
-- **Grand Total**: 113/118 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Session 18 MS Visibility**: 6/6 (services strip, infra selection, Azure branding, toasts, usage panel, landing page)
+- **Grand Total**: 119/124 complete (2 deferred, 2 demo remaining, 1 skipped)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview

@@ -7,6 +7,7 @@ import { CostProgressBar } from "../budget/CostProgressBar";
 import { type ActionEvent, ActionStream } from "./ActionStream";
 import { AgentGrid } from "./AgentGrid";
 import type { AgentCardData } from "./AgentStatusCard";
+import { AzureServiceUsagePanel } from "./AzureServiceUsagePanel";
 import { DAGProgress } from "./DAGProgress";
 import { ExecutionActivityBanner } from "./ExecutionActivityBanner";
 
@@ -98,6 +99,9 @@ export function DashboardLayout({
 					onSelectTask={onSelectTask}
 				/>
 			</div>
+
+			{/* Azure Service Usage */}
+			<AzureServiceUsagePanel agents={agents} taskCount={taskCount} currentSpend={currentSpend} />
 
 			{/* Action stream */}
 			<div>
