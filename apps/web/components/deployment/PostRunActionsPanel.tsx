@@ -53,13 +53,31 @@ export function PostRunActionsPanel({
 					<p className="text-xs text-[--text-secondary] mb-2">
 						Set the following environment variables to enable deployment:
 					</p>
-					<ul className="text-xs text-[--text-muted] font-mono space-y-1">
-						<li>GITHUB_OWNER</li>
-						<li>GITHUB_REPO</li>
-						<li>GITHUB_APP_ID</li>
-						<li>GITHUB_PRIVATE_KEY</li>
-						<li>GITHUB_INSTALLATION_ID</li>
-					</ul>
+					<div className="text-xs text-[--text-muted] font-mono space-y-2">
+						<div>
+							<p className="text-[--text-secondary] mb-1">Required:</p>
+							<ul className="space-y-0.5 ml-2">
+								<li>GITHUB_OWNER</li>
+								<li>GITHUB_REPO</li>
+							</ul>
+						</div>
+						<div>
+							<p className="text-[--text-secondary] mb-1">
+								Auth (simplest — use a Personal Access Token):
+							</p>
+							<ul className="space-y-0.5 ml-2">
+								<li>GITHUB_TOKEN</li>
+							</ul>
+						</div>
+						<div>
+							<p className="text-[--text-secondary] mb-1">Or use GitHub App credentials:</p>
+							<ul className="space-y-0.5 ml-2">
+								<li>GITHUB_APP_ID</li>
+								<li>GITHUB_PRIVATE_KEY</li>
+								<li>GITHUB_INSTALLATION_ID</li>
+							</ul>
+						</div>
+					</div>
 					{hasFiles && (
 						<p className="text-xs text-[--text-muted] mt-3">
 							{Object.values(taskOutputs).reduce((sum, o) => sum + (o.files?.length ?? 0), 0)}{" "}

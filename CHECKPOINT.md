@@ -24,6 +24,10 @@
 
 ## What Just Happened (Sessions 10–17)
 
+### Session 17d: PAT-based GitHub auth for deployment
+
+Simplified GitHub auth for deployment workflow. Instead of requiring full GitHub App setup (5 env vars), users can now just set `GITHUB_TOKEN` (a Personal Access Token) + `GITHUB_OWNER` + `GITHUB_REPO`. PAT auth takes priority; falls back to GitHub App if no token set. Updated PostRunActionsPanel fallback message to show PAT as the simplest option.
+
 ### Session 17c: Builder retry constraint injection
 
 When `retryFailedTasks()` re-runs a failed task, the builder received the exact same input and produced the same failure. Now on retry, the task's previous `failureReason` is injected as a RETRY constraint telling the builder to make reasonable default choices instead of refusing (e.g., pick React Native if spec doesn't specify mobile framework).

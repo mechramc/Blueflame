@@ -3,6 +3,7 @@
  *
  * Syncs task outputs to a GitHub repo as a PR, monitors CI, and triggers deploy.
  * Uses env vars GITHUB_OWNER / GITHUB_REPO for target repo.
+ * Auth: GITHUB_TOKEN (PAT, simplest) or GitHub App credentials.
  * Each project maps to a folder: projects/{projectId}/
  * Branch per run: blueflame/{runId}
  */
@@ -20,6 +21,7 @@ import {
 } from "@blueflame/github-app";
 import type { DeploymentState } from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
+import { Octokit } from "octokit";
 
 import { getRun, updateDeploymentState } from "./orchestrator.js";
 
@@ -27,21 +29,40 @@ import { getRun, updateDeploymentState } from "./orchestrator.js";
 function getGitHubConfig() {
 	const owner = process.env.GITHUB_OWNER;
 	const repo = process.env.GITHUB_REPO;
-	const appId = process.env.GITHUB_APP_ID;
-	const privateKey = process.env.GITHUB_PRIVATE_KEY;
-	const installationId = process.env.GITHUB_INSTALLATION_ID;
 
 	if (!owner || !repo) {
 		return null;
 	}
 
+	const token = process.env.GITHUB_TOKEN;
+	const appId = process.env.GITHUB_APP_ID;
+	const privateKey = process.env.GITHUB_PRIVATE_KEY;
+	const installationId = process.env.GITHUB_INSTALLATION_ID;
+
 	return {
 		owner,
 		repo,
+		token: token ?? "",
 		appId: appId ?? "",
 		privateKey: privateKey ?? "",
 		installationId: Number(installationId) || 0,
 	};
+}
+
+/** Create an authenticated Octokit — PAT if available, otherwise GitHub App */
+async function getOctokit(
+	config: NonNullable<ReturnType<typeof getGitHubConfig>>,
+): Promise<Octokit> {
+	if (config.token) {
+		return new Octokit({ auth: config.token });
+	}
+	return createOctokitClient({
+		owner: config.owner,
+		repo: config.repo,
+		appId: config.appId,
+		privateKey: config.privateKey,
+		installationId: config.installationId,
+	});
 }
 
 /** Check if GitHub integration is configured */
@@ -73,13 +94,7 @@ export async function syncToGitHub(
 	updateDeploymentState(runId, { step: "syncing" });
 
 	try {
-		const octokit = await createOctokitClient({
-			owner: config.owner,
-			repo: config.repo,
-			appId: config.appId,
-			privateKey: config.privateKey,
-			installationId: config.installationId,
-		});
+		const octokit = await getOctokit(config);
 
 		const branchName = `blueflame/${runId}`;
 
@@ -168,13 +183,7 @@ export async function getCIStatus(
 	}
 
 	try {
-		const octokit = await createOctokitClient({
-			owner: config.owner,
-			repo: config.repo,
-			appId: config.appId,
-			privateKey: config.privateKey,
-			installationId: config.installationId,
-		});
+		const octokit = await getOctokit(config);
 
 		const workflowRuns = await getWorkflowRuns(
 			octokit,
@@ -234,13 +243,7 @@ export async function triggerDeploy(runId: string): Promise<Result<void>> {
 	}
 
 	try {
-		const octokit = await createOctokitClient({
-			owner: config.owner,
-			repo: config.repo,
-			appId: config.appId,
-			privateKey: config.privateKey,
-			installationId: config.installationId,
-		});
+		const octokit = await getOctokit(config);
 
 		await triggerWorkflow(octokit, {
 			owner: config.owner,
