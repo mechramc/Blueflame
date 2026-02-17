@@ -265,7 +265,7 @@ export async function executeDeltaRun(scrId: string): Promise<Result<{ runId: st
 	}
 
 	// Apply the task patch to the existing run (sets run to AUTHORIZED, not EXECUTING)
-	const patchResult = applyTaskPatch(scr.runId, scr.taskPatch);
+	const patchResult = await applyTaskPatch(scr.runId, scr.taskPatch);
 	if (!patchResult.ok) {
 		return { ok: false, error: patchResult.error };
 	}

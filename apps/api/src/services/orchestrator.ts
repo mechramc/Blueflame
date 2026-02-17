@@ -240,7 +240,7 @@ export async function startExecution(plan: TaskPlan, lock: PlanLock): Promise<Re
  * Returns the spawned agents for the tasks.
  */
 export async function executeNextWave(runId: string): Promise<Result<AgentState[]>> {
-	const run = runs.get(runId);
+	const run = await getRun(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
 	}
@@ -839,8 +839,8 @@ function applyPatchEntries(run: RunState, patch: TaskPatch): void {
  * Patches the plan in-place: invalidates, cancels, adds, and updates tasks.
  * Does NOT call executeNextWave — caller must do that after patching.
  */
-export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
-	const run = runs.get(runId);
+export async function applyTaskPatch(runId: string, patch: TaskPatch): Promise<Result<void>> {
+	const run = await getRun(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
 	}
@@ -848,14 +848,29 @@ export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
 	const isPatchable =
 		run.status === RunStatus.Completed ||
 		run.status === RunStatus.Partial ||
-		run.status === RunStatus.Paused;
+		run.status === RunStatus.Paused ||
+		run.status === RunStatus.Executing;
 	if (!isPatchable) {
 		return {
 			ok: false,
 			error: new Error(
-				`Run must be COMPLETED, PARTIAL, or PAUSED for delta execution (current: ${run.status})`,
+				`Run must be COMPLETED, PARTIAL, PAUSED, or EXECUTING for delta execution (current: ${run.status})`,
 			),
 		};
+	}
+
+	// If run is currently executing, interrupt it first
+	if (run.status === RunStatus.Executing) {
+		run.interruptRequested = true;
+		for (const task of run.plan.tasks) {
+			if (task.status === TaskStatus.Running) {
+				task.status = TaskStatus.Failed;
+				task.failureReason = task.failureReason || "Interrupted for SCR delta execution";
+			}
+			if (task.status === TaskStatus.Pending) {
+				task.status = TaskStatus.Deferred;
+			}
+		}
 	}
 
 	applyPatchEntries(run, patch);
@@ -885,7 +900,7 @@ export function applyTaskPatch(runId: string, patch: TaskPatch): Result<void> {
  * Retry failed tasks — resets FAILED tasks to PENDING and resumes execution.
  */
 export async function retryFailedTasks(runId: string): Promise<Result<{ retriedCount: number }>> {
-	const run = runs.get(runId);
+	const run = await getRun(runId);
 	if (!run) {
 		return { ok: false, error: new Error(`Run not found: ${runId}`) };
 	}

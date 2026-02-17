@@ -24,6 +24,15 @@
 
 ## What Just Happened (Sessions 10–17)
 
+### Session 17b: Fix SCR Delta Execution + Retry Bugs
+
+Three bugs prevented runs from restarting after SCR delta or retry:
+
+1. **`retryFailedTasks()` and `applyTaskPatch()` used `runs.get()` (cache only)** — if API restarted, run not in memory → "Run not found". Fixed: use `getRun()` with Cosmos fallback.
+2. **`applyTaskPatch()` rejected EXECUTING runs** — if user retried first (sets EXECUTING), then SCR delta execute failed with "must be COMPLETED/PARTIAL/PAUSED". Fixed: accept EXECUTING status, interrupt running tasks first.
+3. **`executeNextWave()` used `runs.get()` (cache only)** — same cache-miss problem. Fixed: use `getRun()`.
+4. **`applyTaskPatch()` was sync but needed async** — now returns `Promise<Result<void>>`, callers updated.
+
 ### Session 17: Post-Execution Deployment Workflow + Session 16 UX Fixes
 
 **Commit 1 — Deployment Workflow (`6955a02`):**

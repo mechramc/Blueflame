@@ -176,6 +176,14 @@
 | DeltaImpactMap: truncated IDs + change breakdown | UI | P1 | **DONE** |
 | SCRPanel DiffPack: word-wrap + change type display | UI | P1 | **DONE** |
 
+### Session 17b — Fix SCR Delta Execution + Retry Bugs
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| retryFailedTasks: use getRun() with Cosmos fallback | S7 | P0 | **DONE** |
+| applyTaskPatch: accept EXECUTING status, interrupt first | S7 | P0 | **DONE** |
+| executeNextWave: use getRun() with Cosmos fallback | S7 | P0 | **DONE** |
+| applyTaskPatch: sync→async, update callers | S7 | P0 | **DONE** |
+
 ### Session 17 — Post-Execution Deployment Workflow
 | Task | System | Priority | Status |
 |------|--------|----------|--------|
