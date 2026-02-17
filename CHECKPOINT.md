@@ -8,12 +8,12 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-16
-- **Session**: 16
+- **Date**: 2026-02-17
+- **Session**: 17
 
 ## Current State
-- **Phase**: Demo Preparation — All features implemented, spec viewer added to run dashboard
-- **Last completed task**: Session 16 spec viewer on run dashboard (API response, SpecViewerPanel, toggle)
+- **Phase**: Demo Preparation — All features implemented, deployment workflow added
+- **Last completed task**: Session 17 post-execution deployment workflow + Session 16 uncommitted UX fixes
 - **Next task**: E2E re-test all flows, demo recording (7 workflows)
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors, all tests green)
@@ -22,7 +22,36 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–16)
+## What Just Happened (Sessions 10–17)
+
+### Session 17: Post-Execution Deployment Workflow + Session 16 UX Fixes
+
+**Commit 1 — Deployment Workflow (`6955a02`):**
+Full post-run deployment pipeline: commit task outputs to GitHub → monitor CI → trigger deploy.
+
+- `packages/shared/src/types/deployment.ts` — **New** — `DeploymentStep`, `DeploymentState` types
+- `apps/api/src/services/deployment-service.ts` — **New** — `syncToGitHub()`, `getCIStatus()`, `triggerDeploy()`
+- `apps/api/src/routes/deployment.ts` — **New** — 3 API routes (POST sync, GET ci-status, POST deploy)
+- `apps/web/components/deployment/PostRunActionsPanel.tsx` — **New** — container component for step machine
+- `apps/web/components/deployment/GitHubSyncSection.tsx` — **New** — commit message editor + push button
+- `apps/web/components/deployment/CIStatusPanel.tsx` — **New** — live CI polling + deploy button
+- `apps/api/src/services/orchestrator.ts` — Added `deploymentState` to `RunState`, `updateDeploymentState()`
+- `apps/api/src/routes/execution.ts` — Include `deploymentState` in GET response
+- `apps/api/src/index.ts` — Register deployment router
+- `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — Mount `PostRunActionsPanel` when run complete
+
+**Commit 2 — Session 16 UX Fixes (`a968b71`):**
+Previously uncommitted work from Session 16: fixer workflow improvements, run history, DAG interaction.
+
+- `apps/api/src/routes/projects.ts` — Added `GET /:projectId/runs` route
+- `apps/api/src/services/scr-service.ts` — SCR delta: set AUTHORIZED (not auto-execute)
+- `apps/api/src/services/task-executor.ts` — Fixer context injection (original code + failure reason)
+- `apps/web/components/dashboard/DAGProgress.tsx` — Clickable DAG nodes with selection highlighting
+- `apps/web/components/dashboard/FixerDiffView.tsx` — Proper state detection, user guidance textarea
+- `apps/web/components/spec/SpecActions.tsx` — Restore state from server on mount, View Run / New Run
+- `apps/web/components/spec/RunHistory.tsx` — **New** — Run history with status badges, 10s auto-refresh
+- `apps/web/components/spec/ValidationPanel.tsx` — Integrated RunHistory, accepts projectId
+- Plus: DashboardLayout, RunDashboardPanes, DeltaImpactMap, SCRPanel, SpecEditor.test updates
 
 ### Session 16: Spec Viewer on Run Dashboard
 
@@ -190,10 +219,11 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 14**: UX bug fixes from real user testing (11 issues fixed)
 - **Session 15**: Workflow failure UX improvements (loading state, error surfacing, completion banner)
 - **Session 16**: Spec viewer on run dashboard (API response, SpecViewerPanel, toggle)
+- **Session 17**: Post-execution deployment workflow + Session 16 UX fixes committed
 
 ## What To Pick Up Next
 
-### Immediate (Session 16)
+### Immediate (Session 18)
 1. **E2E test all flows** — Spec→Plan→Execute, SCR, failure→fix→approve
 2. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
 3. **Submission package** — README (done), architecture diagram, demo video
@@ -205,10 +235,9 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 ## Staged But Uncommitted Changes
 None — all changes committed and pushed.
 
-## Files Changed in Session 16
-- `apps/api/src/routes/execution.ts` — Added projectId + specId to GET /:runId response
-- `apps/web/components/spec/SpecViewerPanel.tsx` — **New** read-only spec viewer with SCR guidance
-- `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — View Spec toggle + SpecViewerPanel
+## Files Changed in Session 17
+**Commit 1 (deployment workflow):** 11 files (5 new, 6 modified)
+**Commit 2 (Session 16 UX fixes):** 16 files (1 new, 15 modified)
 
 ## Type Gotchas (Learned the Hard Way)
 - `FailedStep.name` (not `stepName`)

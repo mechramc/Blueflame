@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**Integration & End-to-End Wiring** — All 12 gap resolution phases complete. Full build passes. Spec→Plan→Execute UI flow wired. Currently testing end-to-end user workflows.
+**Demo Preparation** — All features implemented including post-execution deployment workflow. Full build passes (6/6). Spec→Plan→Execute→Deploy pipeline complete. Next: E2E testing and demo recording.
 
 ## Sprint Progress
 
@@ -162,6 +162,33 @@
 | SpecViewerPanel: read-only YAML viewer with SCR guidance | UI | P0 | **DONE** |
 | Run dashboard: "View Spec" toggle + collapsible panel | UI | P0 | **DONE** |
 
+### Session 16b — UX Fixes (committed in Session 17)
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| GET /api/projects/:projectId/runs route | API | P0 | **DONE** |
+| SCR delta: set AUTHORIZED not auto-execute | S14 | P0 | **DONE** |
+| Fixer context injection (original code + failure reason) | S7 | P0 | **DONE** |
+| Clickable DAG nodes with selection highlighting | UI | P1 | **DONE** |
+| FixerDiffView: proper state detection + user guidance | UI | P0 | **DONE** |
+| SpecActions: restore state from server on mount | UI | P0 | **DONE** |
+| RunHistory component (status badges, auto-refresh) | UI | P0 | **DONE** |
+| ValidationPanel: integrate RunHistory | UI | P1 | **DONE** |
+| DeltaImpactMap: truncated IDs + change breakdown | UI | P1 | **DONE** |
+| SCRPanel DiffPack: word-wrap + change type display | UI | P1 | **DONE** |
+
+### Session 17 — Post-Execution Deployment Workflow
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| DeploymentStep + DeploymentState shared types | Shared | P0 | **DONE** |
+| Deployment service (syncToGitHub, getCIStatus, triggerDeploy) | API | P0 | **DONE** |
+| Deployment API routes (3 endpoints) | API | P0 | **DONE** |
+| deploymentState on RunState + GET response | S7 | P0 | **DONE** |
+| PostRunActionsPanel container component | UI | P0 | **DONE** |
+| GitHubSyncSection (commit message + push) | UI | P0 | **DONE** |
+| CIStatusPanel (live CI polling + deploy button) | UI | P0 | **DONE** |
+| Graceful fallback when GitHub not configured | UI | P1 | **DONE** |
+| Run dashboard integration (mount on COMPLETED/PARTIAL) | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -179,10 +206,12 @@
 - **Session 14 UX Fixes**: 11/11 (execution flow, stats, delta detection, retry, CI)
 - **Session 15 Failure UX**: 7/7 (loading state, failure reasons, completion banner, docs rule)
 - **Session 16 Spec Viewer**: 3/3 (API response, SpecViewerPanel, run dashboard toggle)
+- **Session 16b UX Fixes**: 10/10 (run history, fixer context, DAG interaction, SpecActions state)
+- **Session 17 Deployment**: 9/9 (types, service, routes, orchestrator, 3 UI components, fallback, integration)
 - **Integration Fixes**: CI/CD + Dockerfile + Cosmos container + API contracts
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
-- **Grand Total**: 94/99 complete (2 deferred, 2 demo remaining, 1 skipped)
+- **Grand Total**: 113/118 complete (2 deferred, 2 demo remaining, 1 skipped)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
