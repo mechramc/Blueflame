@@ -39,6 +39,7 @@ import {
 	updateAgentStatus,
 } from "./agent-spawner.js";
 import { logAuditEvent } from "./audit-logger.js";
+import { checkBudget as checkBudgetThresholds, initBudget } from "./budget-monitor.js";
 import { recordCost } from "./cost-tracker.js";
 import { allTasksTerminal, getReadyTasks, hasFailedTasks } from "./dag-executor.js";
 import { storeFailure } from "./failure-store.js";
@@ -212,6 +213,10 @@ export async function startExecution(plan: TaskPlan, lock: PlanLock): Promise<Re
 	runs.set(plan.runId, runState);
 	checkpointRun(runState);
 
+	// Auto-init budget with default ceiling based on estimated task costs
+	const estimatedCeiling = plan.tasks.reduce((sum, t) => sum + (t.estimatedCost ?? 0.1), 0) * 3;
+	initBudget(plan.runId, Math.max(estimatedCeiling, 5.0), plan.projectId);
+
 	// Increment project runCount
 	incrementProjectStat(plan.projectId, "runCount").catch((err) =>
 		console.error("[Orchestrator] Failed to increment runCount:", err),
@@ -350,12 +355,13 @@ export async function completeTask(
 		return { ok: false, error: new Error(`Task not found: ${taskId}`) };
 	}
 
-	// Record usage + cost tracking
+	// Record usage + cost tracking + budget check
 	await recordAgentUsage(agentId, tokensUsed, costIncurred, sigmaValue);
 	await updateAgentStatus(agentId, AgentStatus.Completed);
 	const agent = getAgent(agentId);
 	if (agent) {
 		recordCost(agentId, runId, agent.model, tokensUsed, Math.ceil(tokensUsed * 0.3), run.projectId);
+		checkBudgetThresholds(runId);
 	}
 
 	// Use explicit completingRole if provided, otherwise fall back to task.agentRole
@@ -464,9 +470,17 @@ export async function failTask(
 
 	await recordAgentUsage(agentId, tokensUsed, costIncurred);
 	await updateAgentStatus(agentId, AgentStatus.Failed);
-	const agent = getAgent(agentId);
-	if (agent) {
-		recordCost(agentId, runId, agent.model, tokensUsed, Math.ceil(tokensUsed * 0.3), run.projectId);
+	const failAgent = getAgent(agentId);
+	if (failAgent) {
+		recordCost(
+			agentId,
+			runId,
+			failAgent.model,
+			tokensUsed,
+			Math.ceil(tokensUsed * 0.3),
+			run.projectId,
+		);
+		checkBudgetThresholds(runId);
 	}
 
 	// Use explicit failingRole if provided, otherwise fall back to task.agentRole

@@ -15,10 +15,10 @@ export const budgetRouter = Router();
 /** GET /api/budget/:runId — get budget state + cost breakdown */
 budgetRouter.get("/:runId", (req, res) => {
 	const { runId } = req.params;
-	const state = getBudgetStateSync(runId);
+	let state = getBudgetStateSync(runId);
 	if (!state) {
-		res.status(404).json({ error: "Budget not found for run" });
-		return;
+		// Auto-init with default ceiling so costs always display
+		state = initBudget(runId, 10.0);
 	}
 
 	const byAgent = getRunCostByAgent(runId);

@@ -24,6 +24,13 @@
 
 ## What Just Happened (Sessions 10–17)
 
+### Session 17f: Auto-init budget on run start + checkBudget after cost recording
+
+Budget was never initialized because the user was never asked to set one. Fixed:
+- `startExecution()` now auto-calls `initBudget()` with 3x estimated task costs (min $5)
+- `GET /api/budget/:runId` auto-inits with $10 default if not found (no more 404)
+- `checkBudgetThresholds()` called after every `recordCost()` so spend updates in real-time
+
 ### Session 17e: Wire cost tracking + failure recording + audit log startup
 
 Three data gaps that caused empty dashboards:
