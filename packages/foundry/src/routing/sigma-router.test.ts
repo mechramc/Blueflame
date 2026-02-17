@@ -60,12 +60,13 @@ describe("SigmaRouter.route", () => {
 		expect(decision.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
-	it("should route high σ Builder to Complex tier with claude-sonnet-4-5", () => {
+	it("should route high σ Builder to Complex tier", () => {
 		resetRegistry();
 		const decision = router.route(AgentRole.Builder, 0.8);
 		expect(decision.tier).toBe(ExecutionTier.Complex);
-		expect(decision.model).toBe("claude-sonnet-4-5");
-		expect(decision.provider).toBe(ProviderType.Anthropic);
+		// Without ANTHROPIC_API_KEY, falls back to gpt-4o; with it, uses claude-sonnet-4-5
+		const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+		expect(decision.model).toBe(hasAnthropic ? "claude-sonnet-4-5" : "gpt-4o");
 	});
 
 	it("should route high σ Verifier to Complex tier with gpt-4o", () => {

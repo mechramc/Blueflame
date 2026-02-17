@@ -50,11 +50,14 @@ function initDefaults(): void {
 		apiKey: anthropicKey,
 	};
 
+	// Complex tier for code generation: Claude if available, else gpt-4o
+	const complexCodeGen = anthropicKey ? { ...claudeSonnet } : { ...azure4o };
+
 	// Role-specific model routing — ACAR selects optimal model per role + tier
-	// Builder: needs strongest code generation → 4o for standard, Claude for complex
+	// Builder: needs strongest code generation → 4o for standard, Claude (or 4o) for complex
 	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Routine), { ...azureMini });
 	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Standard), { ...azure4o });
-	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Complex), { ...claudeSonnet });
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Complex), complexCodeGen);
 
 	// Verifier: code review is less token-intensive → mini for routine/standard, 4o for complex
 	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Routine), { ...azureMini });
@@ -64,7 +67,7 @@ function initDefaults(): void {
 	// Fixer: same as Builder — needs strong code generation
 	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Routine), { ...azureMini });
 	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Standard), { ...azure4o });
-	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Complex), { ...claudeSonnet });
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Complex), complexCodeGen);
 
 	// Planner: task decomposition benefits from stronger reasoning at standard+
 	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Routine), { ...azureMini });
