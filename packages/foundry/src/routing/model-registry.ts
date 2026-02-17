@@ -43,6 +43,30 @@ function initDefaults(): void {
 		apiVersion: "2024-10-21",
 	};
 
+	const phi4: ProviderConfig = {
+		provider: ProviderType.AzureOpenAI,
+		model: foundryDeployment ?? "Phi-4",
+		endpoint: azureEndpoint,
+		apiKey: azureKey,
+		apiVersion: "2024-10-21",
+	};
+
+	const llama33: ProviderConfig = {
+		provider: ProviderType.AzureOpenAI,
+		model: foundryDeployment ?? "Llama-3.3-70B-Instruct",
+		endpoint: azureEndpoint,
+		apiKey: azureKey,
+		apiVersion: "2024-10-21",
+	};
+
+	const o3Mini: ProviderConfig = {
+		provider: ProviderType.AzureOpenAI,
+		model: foundryDeployment ?? "o3-mini",
+		endpoint: azureEndpoint,
+		apiKey: azureKey,
+		apiVersion: "2024-10-21",
+	};
+
 	const claudeSonnet: ProviderConfig = {
 		provider: ProviderType.Anthropic,
 		model: "claude-sonnet-4-5",
@@ -54,30 +78,33 @@ function initDefaults(): void {
 	const complexCodeGen = anthropicKey ? { ...claudeSonnet } : { ...azure4o };
 
 	// Role-specific model routing — ACAR selects optimal model per role + tier
-	// Builder: needs strongest code generation → 4o for standard, Claude (or 4o) for complex
-	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Routine), { ...azureMini });
-	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Standard), { ...azure4o });
+	// 8 models across 5 providers: Phi-4 (nano), gpt-4o-mini (routine), Llama 3.3 70B (standard),
+	// gpt-4o (standard+), Claude Sonnet (complex code), o3-mini (complex reasoning)
+
+	// Builder: code generation — Phi-4 for trivial, Llama 3.3 for standard, Claude/4o for complex
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Routine), { ...phi4 });
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Standard), { ...llama33 });
 	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Complex), complexCodeGen);
 
-	// Verifier: code review is less token-intensive → mini for routine/standard, 4o for complex
-	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Routine), { ...azureMini });
+	// Verifier: code review — Phi-4 for routine, gpt-4o-mini for standard, o3-mini for complex (reasoning)
+	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Routine), { ...phi4 });
 	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Standard), { ...azureMini });
-	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Complex), { ...azure4o });
+	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Complex), { ...o3Mini });
 
 	// Fixer: same as Builder — needs strong code generation
-	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Routine), { ...azureMini });
-	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Standard), { ...azure4o });
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Routine), { ...phi4 });
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Standard), { ...llama33 });
 	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Complex), complexCodeGen);
 
-	// Planner: task decomposition benefits from stronger reasoning at standard+
-	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Routine), { ...azureMini });
+	// Planner: task decomposition — Phi-4 for routine, gpt-4o for standard, o3-mini for complex (reasoning)
+	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Routine), { ...phi4 });
 	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Standard), { ...azure4o });
-	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Complex), { ...azure4o });
+	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Complex), { ...o3Mini });
 
-	// Explainer: lightweight summarization → mini for all tiers
-	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Routine), { ...azureMini });
-	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Standard), { ...azureMini });
-	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Complex), { ...azure4o });
+	// Explainer: lightweight summarization — Phi-4 for routine/standard, gpt-4o-mini for complex
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Routine), { ...phi4 });
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Standard), { ...phi4 });
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Complex), { ...azureMini });
 }
 
 // Initialize on module load

@@ -26,6 +26,9 @@ const COST_PER_1K_TOKENS: Record<string, number> = {
 	"gpt-4o-mini": 0.00015,
 	"claude-sonnet-4-5": 0.003,
 	"claude-opus-4-6": 0.015,
+	"Phi-4": 0.00007,
+	"Llama-3.3-70B-Instruct": 0.00068,
+	"o3-mini": 0.0011,
 };
 
 function getCostRate(model: string): number {

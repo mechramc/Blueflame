@@ -46,17 +46,17 @@ describe("sigmaToTier", () => {
 describe("SigmaRouter.route", () => {
 	const router = new SigmaRouter();
 
-	it("should route low σ to Routine tier with gpt-4o-mini", () => {
+	it("should route low σ to Routine tier with Phi-4", () => {
 		const decision = router.route(AgentRole.Builder, 0.1);
 		expect(decision.tier).toBe(ExecutionTier.Routine);
-		expect(decision.model).toBe("gpt-4o-mini");
+		expect(decision.model).toBe("Phi-4");
 		expect(decision.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
-	it("should route medium σ to Standard tier with gpt-4o", () => {
+	it("should route medium σ to Standard tier with Llama-3.3-70B-Instruct", () => {
 		const decision = router.route(AgentRole.Builder, 0.5);
 		expect(decision.tier).toBe(ExecutionTier.Standard);
-		expect(decision.model).toBe("gpt-4o");
+		expect(decision.model).toBe("Llama-3.3-70B-Instruct");
 		expect(decision.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
@@ -69,11 +69,11 @@ describe("SigmaRouter.route", () => {
 		expect(decision.model).toBe(hasAnthropic ? "claude-sonnet-4-5" : "gpt-4o");
 	});
 
-	it("should route high σ Verifier to Complex tier with gpt-4o", () => {
+	it("should route high σ Verifier to Complex tier with o3-mini", () => {
 		resetRegistry();
 		const decision = router.route(AgentRole.Verifier, 0.8);
 		expect(decision.tier).toBe(ExecutionTier.Complex);
-		expect(decision.model).toBe("gpt-4o");
+		expect(decision.model).toBe("o3-mini");
 	});
 
 	it("should route medium σ Verifier to Standard tier with gpt-4o-mini", () => {
@@ -83,18 +83,18 @@ describe("SigmaRouter.route", () => {
 		expect(decision.model).toBe("gpt-4o-mini");
 	});
 
-	it("should route Explainer to gpt-4o-mini at Standard tier", () => {
+	it("should route Explainer to Phi-4 at Standard tier", () => {
 		resetRegistry();
 		const decision = router.route(AgentRole.Explainer, 0.5);
 		expect(decision.tier).toBe(ExecutionTier.Standard);
-		expect(decision.model).toBe("gpt-4o-mini");
+		expect(decision.model).toBe("Phi-4");
 	});
 
 	it("should include providerConfig in routing decision", () => {
 		resetRegistry();
 		const decision = router.route(AgentRole.Builder, 0.5);
 		expect(decision.providerConfig).toBeDefined();
-		expect(decision.providerConfig?.model).toBe("gpt-4o");
+		expect(decision.providerConfig?.model).toBe("Llama-3.3-70B-Instruct");
 	});
 
 	it("should clamp negative σ values", () => {
