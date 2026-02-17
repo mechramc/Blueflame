@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**Demo Preparation** — All features implemented including post-execution deployment workflow with PAT auth support. Full build passes (6/6). Spec→Plan→Execute→Deploy pipeline complete. Next: E2E testing and demo recording.
+**Demo Preparation** — All features implemented. Cost tracking, failure recording, and audit log persistence wired end-to-end. Full build passes (6/6). Next: E2E testing and demo recording.
 
 ## Sprint Progress
 

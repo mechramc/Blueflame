@@ -10,6 +10,7 @@ import { db } from "../db.js";
 
 let auditCounter = 0;
 const memoryBuffer: AuditLogEntry[] = [];
+let cosmosLoaded = false;
 
 export interface LogAuditEventParams {
 	eventType: AuditEventType;
@@ -51,6 +52,30 @@ export async function logAuditEvent(params: LogAuditEventParams): Promise<AuditL
 		});
 
 	return entry;
+}
+
+/**
+ * Load persisted audit events from Cosmos DB into memory buffer. Idempotent.
+ */
+export async function loadAuditLogFromCosmos(): Promise<void> {
+	if (cosmosLoaded) return;
+	try {
+		const docs = await db.documents.queryAll({
+			query:
+				"SELECT * FROM c WHERE c.type = 'audit-log' ORDER BY c.timestamp DESC OFFSET 0 LIMIT 500",
+			parameters: [],
+		});
+		for (const doc of docs) {
+			const entry = doc as unknown as AuditLogEntry;
+			const exists = memoryBuffer.some((e) => e.id === entry.id);
+			if (!exists) {
+				memoryBuffer.push(entry);
+			}
+		}
+		cosmosLoaded = true;
+	} catch {
+		// Cosmos unavailable — continue with in-memory only
+	}
 }
 
 export interface AuditQueryFilters {

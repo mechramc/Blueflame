@@ -104,8 +104,17 @@ process.on("uncaughtException", (err) => {
 	console.error("[API] Uncaught exception:", err.message, err.stack);
 });
 
+// Load persisted data from Cosmos on startup
+import { loadAuditLogFromCosmos } from "./services/audit-logger.js";
+import { loadCostEntriesFromCosmos } from "./services/cost-tracker.js";
+
 httpServer.listen(PORT, () => {
 	console.log(`Blueflame API listening on http://localhost:${PORT}`);
+	// Fire-and-forget: warm caches from Cosmos
+	loadAuditLogFromCosmos().catch((err) => console.warn("[Startup] Audit log load failed:", err));
+	loadCostEntriesFromCosmos("global").catch((err) =>
+		console.warn("[Startup] Cost entries load failed:", err),
+	);
 });
 
 export default app;

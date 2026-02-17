@@ -21,17 +21,27 @@ import type {
 	TaskPatch,
 	TaskPlan,
 } from "@blueflame/shared";
-import { AgentRole, AgentStatus, RunStatus, TaskStatus } from "@blueflame/shared";
+import {
+	AgentRole,
+	AgentStatus,
+	FailureSource,
+	FailureType,
+	RunStatus,
+	TaskStatus,
+} from "@blueflame/shared";
 import type { Result } from "@blueflame/shared";
 import { db } from "../db.js";
 import {
+	getAgent,
 	getRunTotalCost,
 	recordAgentUsage,
 	spawnAgent,
 	updateAgentStatus,
 } from "./agent-spawner.js";
 import { logAuditEvent } from "./audit-logger.js";
+import { recordCost } from "./cost-tracker.js";
 import { allTasksTerminal, getReadyTasks, hasFailedTasks } from "./dag-executor.js";
+import { storeFailure } from "./failure-store.js";
 import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
 import { extractPatternsFromRun } from "./knowledge-store.js";
 import { incrementProjectStat } from "./spec-generation.js";
@@ -340,9 +350,13 @@ export async function completeTask(
 		return { ok: false, error: new Error(`Task not found: ${taskId}`) };
 	}
 
-	// Record usage
+	// Record usage + cost tracking
 	await recordAgentUsage(agentId, tokensUsed, costIncurred, sigmaValue);
 	await updateAgentStatus(agentId, AgentStatus.Completed);
+	const agent = getAgent(agentId);
+	if (agent) {
+		recordCost(agentId, runId, agent.model, tokensUsed, Math.ceil(tokensUsed * 0.3), run.projectId);
+	}
 
 	// Use explicit completingRole if provided, otherwise fall back to task.agentRole
 	const agentRole = completingRole ?? task.agentRole;
@@ -450,6 +464,10 @@ export async function failTask(
 
 	await recordAgentUsage(agentId, tokensUsed, costIncurred);
 	await updateAgentStatus(agentId, AgentStatus.Failed);
+	const agent = getAgent(agentId);
+	if (agent) {
+		recordCost(agentId, runId, agent.model, tokensUsed, Math.ceil(tokensUsed * 0.3), run.projectId);
+	}
 
 	// Use explicit failingRole if provided, otherwise fall back to task.agentRole
 	const agentRole = failingRole ?? task.agentRole;
@@ -458,6 +476,34 @@ export async function failTask(
 	if (errorMessage) {
 		task.failureReason = errorMessage;
 	}
+
+	// Record failure for Failure Intelligence dashboard
+	const failId = `fail-${runId}-${taskId}-${Date.now()}`;
+	storeFailure({
+		id: failId,
+		failureId: failId,
+		runId,
+		projectId: run.projectId,
+		source: FailureSource.GitHubActions,
+		pipelineId: `blueflame-${agentRole}`,
+		buildNumber: `${taskId}-${Date.now()}`,
+		failureType: agentRole === AgentRole.Verifier ? FailureType.Test : FailureType.Build,
+		failedSteps: [
+			{
+				name: `${agentRole} — ${taskId}`,
+				exitCode: 1,
+				logExcerpt: (errorMessage ?? `${agentRole} failed`).slice(0, 2000),
+				durationSeconds: 0,
+			},
+		],
+		testResults: null,
+		environment: { os: "blueflame", runtimeVersion: "1.0" },
+		branchRef: `blueflame/${runId}`,
+		commitSha: "",
+		timestamp: new Date().toISOString(),
+		rawLogUrl: "",
+		ttl: 2592000,
+	}).catch(() => {});
 
 	// WF3 Fixer Loop: On Verifier failure, spawn Fixer if retries remain
 	const retryCount = run.retryCountByTask[taskId] ?? 0;

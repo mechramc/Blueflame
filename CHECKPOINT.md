@@ -24,6 +24,13 @@
 
 ## What Just Happened (Sessions 10–17)
 
+### Session 17e: Wire cost tracking + failure recording + audit log startup
+
+Three data gaps that caused empty dashboards:
+1. **Chargeback empty**: `recordCost()` was never called from the orchestrator. Now called in both `completeTask()` and `failTask()` with agent model + token counts.
+2. **Failures empty**: `storeFailure()` was only wired to webhook handlers, not agent failures. Now called in `failTask()` to record agent failures as `NormalizedFailure` documents in Cosmos.
+3. **Audit log lost on restart**: `memoryBuffer` started empty each session. Added `loadAuditLogFromCosmos()` that loads last 500 entries on startup. Also loads cost entries via `loadCostEntriesFromCosmos()`.
+
 ### Session 17d: PAT-based GitHub auth for deployment
 
 Simplified GitHub auth for deployment workflow. Instead of requiring full GitHub App setup (5 env vars), users can now just set `GITHUB_TOKEN` (a Personal Access Token) + `GITHUB_OWNER` + `GITHUB_REPO`. PAT auth takes priority; falls back to GitHub App if no token set. Updated PostRunActionsPanel fallback message to show PAT as the simplest option.
