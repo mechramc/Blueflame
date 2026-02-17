@@ -33,7 +33,9 @@
       "Bash(grep:*)",
       "Bash(python3:*)",
       "Bash(git status:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(gh api:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
