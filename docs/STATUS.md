@@ -248,6 +248,10 @@
 | Admin override: POST /api/execution/:runId/override-task (Admin RBAC) | API | P0 | **DONE** |
 | Admin override: per-task Override button on run dashboard (Admin only) | UI | P0 | **DONE** |
 | Admin override: governance audit trail via `logAuditEvent` | S13 | P0 | **DONE** |
+| Auto-analyze failures: orchestrator creates Remediation + triggers Fixer agent | S11 | P0 | **DONE** |
+| Failures page: CSS vars + MS Azure service branding badges | UI | P0 | **DONE** |
+| Root cause display: Azure OpenAI model badge | UI | P0 | **DONE** |
+| Remediation view: Cosmos DB persistence badge | UI | P0 | **DONE** |
 
 ### Final — Demo + Submit
 | Task | Priority | Status |
@@ -274,7 +278,7 @@
 - **Session 18 MS Visibility**: 6/6 (services strip, infra selection, Azure branding, toasts, usage panel, landing page)
 - **Session 18b Foundry Multi-Model**: 6/6 (deploy, registry, lazy init, api-version, agents, lint — catalog JSON parsing RESOLVED in Session 19)
 - **Session 19 Orchestrator Fixes**: 8/8 (auto-approve fixer, unreachable deferral, model escalation, providerConfig fix, routing fix, healing dedup, scrollbar, tests)
-- **Session 20 Plan Preview + Admin Override**: 10/10 (state lifting, plan fetch, summary, mini DAG, task list, σ color-coding, override function, override API route, override UI button, audit trail)
+- **Session 20 Plan Preview + Admin Override + Failure Intelligence**: 14/14
 - **Grand Total**: 139/142 complete (2 deferred, 3 demo remaining)
 - **Critical path**: E2E testing → demo recording → submission package
 

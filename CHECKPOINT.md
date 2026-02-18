@@ -64,6 +64,20 @@
 
 **Tests**: All 128 web + 242 API tests pass. Typecheck clean.
 
+#### Failure Intelligence — Auto Root Cause Analysis (same session)
+
+**Problem**: Failures tab showed "Root cause analysis not yet available" and "No remediation in progress" for every failure. The `storeFailure()` call in `failTask()` created `NormalizedFailure` records but never created a `Remediation` or triggered the Fixer agent's `analyzeFailure()`.
+
+**Fix (2 files):**
+1. `apps/api/src/services/orchestrator.ts` — New `autoAnalyzeFailure()` function: after `storeFailure()`, auto-creates a Remediation (PENDING → ANALYZING), calls `analyzeFailure()` via Azure OpenAI (gpt-4o-mini), and attaches the `RootCauseAnalysis` (→ PLAN_READY). All fire-and-forget.
+2. `apps/web/app/project/[projectId]/failures/page.tsx` — Full redesign:
+   - Applied CSS custom properties (was using hardcoded gray-800/gray-950)
+   - Added MS Azure service badges in header: Azure OpenAI (root cause), Cosmos DB (persistence), Entra ID (governance gate)
+   - "via Azure OpenAI (gpt-4o-mini)" badge next to root cause analysis section
+   - "persisted to Azure Cosmos DB" badge next to remediation section
+   - Loading state: "Azure OpenAI Fixer Agent analyzing failure..."
+   - Fixed remediation query to use per-project runIds (was hardcoded to "demo-run-1")
+
 ### Session 19: Orchestrator Workflow Fixes + Model Routing Stabilization
 
 Diagnosed and fixed workflow stalling (runs completing with only 1/9 tasks done). Root cause: 3 orchestrator bugs + Phi-4 JSON parsing failures.

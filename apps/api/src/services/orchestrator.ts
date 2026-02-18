@@ -10,12 +10,13 @@
  * Hybrid: in-memory RunState for hot execution + Cosmos DB for persistence.
  */
 
-import { SigmaRouter } from "@blueflame/foundry";
-import type { RoutingDecision } from "@blueflame/foundry";
+import { SigmaRouter, analyzeFailure } from "@blueflame/foundry";
+import type { FixerConfig, RoutingDecision } from "@blueflame/foundry";
 import type {
 	ActionEvent,
 	AgentState,
 	DeploymentState,
+	NormalizedFailure,
 	PendingFix,
 	PlanLock,
 	TaskPatch,
@@ -50,6 +51,7 @@ import {
 import { storeFailure } from "./failure-store.js";
 import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
 import { extractPatternsFromRun } from "./knowledge-store.js";
+import { attachRootCause, createRemediation, startAnalysis } from "./remediation.js";
 import { incrementProjectStat } from "./spec-generation.js";
 import { executeTask } from "./task-executor.js";
 
@@ -581,6 +583,33 @@ export async function failTask(
 		rawLogUrl: "",
 		ttl: 2592000,
 	}).catch(() => {});
+
+	// Auto-create remediation and trigger AI root cause analysis (fire-and-forget)
+	autoAnalyzeFailure(failId, runId, run.projectId, run.lockId, {
+		id: failId,
+		failureId: failId,
+		runId,
+		projectId: run.projectId,
+		source: FailureSource.GitHubActions,
+		pipelineId: `blueflame-${agentRole}`,
+		buildNumber: `${taskId}-${Date.now()}`,
+		failureType: agentRole === AgentRole.Verifier ? FailureType.Test : FailureType.Build,
+		failedSteps: [
+			{
+				name: `${agentRole} — ${taskId}`,
+				exitCode: 1,
+				logExcerpt: (errorMessage ?? `${agentRole} failed`).slice(0, 2000),
+				durationSeconds: 0,
+			},
+		],
+		testResults: null,
+		environment: { os: "blueflame", runtimeVersion: "1.0" },
+		branchRef: `blueflame/${runId}`,
+		commitSha: "",
+		timestamp: new Date().toISOString(),
+		rawLogUrl: "",
+		ttl: 2592000,
+	});
 
 	// WF3 Fixer Loop: On Verifier failure, spawn Fixer if retries remain
 	const retryCount = run.retryCountByTask[taskId] ?? 0;
@@ -1142,6 +1171,49 @@ export function clearAllRuns(): void {
 	statusCallback = null;
 	budgetCallback = null;
 	routingLog.length = 0;
+}
+
+// ─── Auto-Analyze Failure ────────────────────────────────────
+
+/**
+ * Fire-and-forget: create a Remediation for a failure and run AI root cause
+ * analysis via Azure OpenAI Fixer agent. Populates the Failure Intelligence
+ * dashboard with root cause + remediation tasks.
+ */
+function autoAnalyzeFailure(
+	failureId: string,
+	runId: string,
+	projectId: string,
+	lockId: string,
+	failure: NormalizedFailure,
+): void {
+	const endpoint = process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "";
+	const apiKey = process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "";
+	if (!endpoint || !apiKey) return;
+
+	// Create remediation record + transition to ANALYZING
+	const rem = createRemediation({ failureId, runId, projectId, parentLockId: lockId });
+	startAnalysis(rem.remediationId);
+
+	const config: FixerConfig = {
+		endpoint,
+		apiKey,
+		deployment: "gpt-4o-mini",
+		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-12-01-preview",
+	};
+
+	analyzeFailure(config, failure)
+		.then((result) => {
+			if (result.ok) {
+				attachRootCause(rem.remediationId, result.value.rootCause);
+				console.log(`[Orchestrator] Root cause analysis attached for ${failureId}`);
+			} else {
+				console.error(`[Orchestrator] Fixer analysis failed for ${failureId}:`, result.error.error);
+			}
+		})
+		.catch((err) => {
+			console.error(`[Orchestrator] Auto-analyze error for ${failureId}:`, err);
+		});
 }
 
 // ─── Internal ────────────────────────────────────────────────
