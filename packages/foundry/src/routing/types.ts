@@ -77,22 +77,12 @@ export interface FoundryModelClient {
 	chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse>;
 }
 
-/** OpenAI-native models that use the /openai/deployments/ path */
-const OPENAI_MODEL_PREFIXES = ["gpt-", "o1", "o3-", "dall-e", "text-", "whisper"];
-
 /**
- * Returns the correct Azure base URL for a model deployment.
+ * Returns the Azure base URL for a model deployment.
  *
- * - OpenAI models (gpt-4o, o3-mini, etc.) use: {endpoint}/openai/deployments/{deployment}
- * - Catalog models (Phi-4, Llama, etc.) use:   {endpoint}/models
- *
- * Catalog models are routed by the `model` field in the request body.
+ * Azure AI Foundry uses /openai/deployments/{deployment} for ALL models
+ * deployed in the resource, including catalog models (Phi-4, Llama, etc.).
  */
 export function getAzureBaseURL(endpoint: string, deployment: string): string {
-	const lower = deployment.toLowerCase();
-	const isOpenAI = OPENAI_MODEL_PREFIXES.some((p) => lower.startsWith(p));
-	if (isOpenAI) {
-		return `${endpoint}/openai/deployments/${deployment}`;
-	}
-	return `${endpoint}/models`;
+	return `${endpoint}/openai/deployments/${deployment}`;
 }
