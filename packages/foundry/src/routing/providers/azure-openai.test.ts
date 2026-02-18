@@ -27,7 +27,7 @@ const config: ProviderConfig = {
 	model: "gpt-4o",
 	endpoint: "https://my-resource.openai.azure.com",
 	apiKey: "test-key",
-	apiVersion: "2024-10-21",
+	apiVersion: "2024-12-01-preview",
 };
 
 describe("AzureOpenAIClient", () => {

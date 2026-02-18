@@ -16,7 +16,7 @@ function getPlannerConfig(): PlannerConfig {
 		apiKey: process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "",
 		deployment:
 			process.env.FOUNDRY_PLANNER_DEPLOYMENT ?? process.env.AZURE_OPENAI_DEPLOYMENT ?? "gpt-4o",
-		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-10-21",
+		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-12-01-preview",
 	};
 }
 

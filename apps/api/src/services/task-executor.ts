@@ -43,7 +43,7 @@ function getFoundryConfig(agent: AgentState): BuilderConfig & VerifierConfig {
 			endpoint: decision.providerConfig.endpoint,
 			apiKey: decision.providerConfig.apiKey,
 			deployment: decision.providerConfig.model,
-			apiVersion: decision.providerConfig.apiVersion ?? "2024-10-21",
+			apiVersion: decision.providerConfig.apiVersion ?? "2024-12-01-preview",
 		};
 	}
 	// Fallback: Azure OpenAI with agent's model name
@@ -51,7 +51,7 @@ function getFoundryConfig(agent: AgentState): BuilderConfig & VerifierConfig {
 		endpoint: process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "",
 		apiKey: process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "",
 		deployment: agent.model,
-		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-10-21",
+		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-12-01-preview",
 	};
 }
 

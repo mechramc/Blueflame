@@ -19,7 +19,7 @@ export interface FixerConfig {
 	apiKey: string;
 	/** Deployment name (e.g., "gpt-4o") */
 	deployment: string;
-	/** API version (default: "2024-10-21") */
+	/** API version (default: "2024-12-01-preview") */
 	apiVersion?: string;
 }
 
@@ -42,7 +42,7 @@ function createClient(config: FixerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: { "api-version": config.apiVersion ?? "2024-10-21" },
+		defaultQuery: { "api-version": config.apiVersion ?? "2024-12-01-preview" },
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }

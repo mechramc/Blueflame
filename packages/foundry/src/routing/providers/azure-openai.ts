@@ -23,7 +23,7 @@ export class AzureOpenAIClient implements FoundryModelClient {
 		this.client = new OpenAI({
 			apiKey: config.apiKey,
 			baseURL: getAzureBaseURL(config.endpoint, config.model),
-			defaultQuery: { "api-version": config.apiVersion ?? "2024-10-21" },
+			defaultQuery: { "api-version": config.apiVersion ?? "2024-12-01-preview" },
 			defaultHeaders: { "api-key": config.apiKey },
 		});
 	}

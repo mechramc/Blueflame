@@ -52,7 +52,7 @@ function initDefaults(): void {
 		model: foundryDeployment ?? "gpt-4o-mini",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
-		apiVersion: "2024-10-21",
+		apiVersion: "2024-12-01-preview",
 	};
 
 	const azure4o: ProviderConfig = {
@@ -60,7 +60,7 @@ function initDefaults(): void {
 		model: foundryDeployment ?? "gpt-4o",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
-		apiVersion: "2024-10-21",
+		apiVersion: "2024-12-01-preview",
 	};
 
 	const phi4: ProviderConfig = {
@@ -68,7 +68,7 @@ function initDefaults(): void {
 		model: foundryDeployment ?? "Phi-4",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
-		apiVersion: "2024-10-21",
+		apiVersion: "2024-12-01-preview",
 	};
 
 	const llama33: ProviderConfig = {
@@ -76,7 +76,7 @@ function initDefaults(): void {
 		model: foundryDeployment ?? "Llama-3.3-70B-Instruct",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
-		apiVersion: "2024-10-21",
+		apiVersion: "2024-12-01-preview",
 	};
 
 	const o3Mini: ProviderConfig = {
@@ -84,7 +84,7 @@ function initDefaults(): void {
 		model: foundryDeployment ?? "o3-mini",
 		endpoint: azureEndpoint,
 		apiKey: azureKey,
-		apiVersion: "2024-10-21",
+		apiVersion: "2024-12-01-preview",
 	};
 
 	const claudeSonnet: ProviderConfig = {
@@ -183,7 +183,7 @@ export function getProviderConfig(role: AgentRole, tier: ExecutionTier): Provide
 		model: process.env.FOUNDRY_DEPLOYMENT ?? "gpt-4o",
 		endpoint: process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "",
 		apiKey: process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "",
-		apiVersion: "2024-10-21",
+		apiVersion: "2024-12-01-preview",
 	};
 }
 
