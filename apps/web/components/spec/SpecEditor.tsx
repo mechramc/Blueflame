@@ -106,7 +106,7 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 		} finally {
 			setIsGenerating(false);
 		}
-	}, [projectId]);
+	}, [projectId, showToast]);
 
 	const handleAccept = useCallback(async () => {
 		if (!specId) return;
@@ -135,7 +135,7 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 		} catch {
 			setError("Failed to freeze spec");
 		}
-	}, [specId]);
+	}, [specId, showToast]);
 
 	const handleEditorChange = useCallback(
 		(value: string | undefined) => {

@@ -67,7 +67,14 @@ export function MicrosoftServicesStrip() {
 					onClick={() => setExpanded(!expanded)}
 					className="flex items-center gap-1.5 text-[10px] text-[--text-muted] hover:text-[--text-secondary] transition-colors shrink-0 mr-1"
 				>
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+					<svg
+						aria-hidden="true"
+						width="12"
+						height="12"
+						viewBox="0 0 24 24"
+						fill="none"
+						className="text-blue-400"
+					>
 						<rect x="1" y="1" width="10" height="10" rx="1" fill="currentColor" fillOpacity="0.8" />
 						<rect
 							x="13"

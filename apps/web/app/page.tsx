@@ -83,7 +83,14 @@ export default function Home() {
 				{/* Microsoft Azure integration highlights */}
 				<div className="mt-12">
 					<div className="flex items-center gap-2 mb-3">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+						<svg
+							aria-hidden="true"
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							className="text-blue-400"
+						>
 							<rect
 								x="1"
 								y="1"

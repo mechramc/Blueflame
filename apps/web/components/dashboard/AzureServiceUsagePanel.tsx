@@ -78,7 +78,14 @@ export function AzureServiceUsagePanel({
 				className="w-full flex items-center justify-between px-3 py-2 hover:bg-[--bg-tertiary]/50 transition-colors"
 			>
 				<div className="flex items-center gap-2">
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+					<svg
+						aria-hidden="true"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						className="text-blue-400"
+					>
 						<rect x="1" y="1" width="10" height="10" rx="1" fill="currentColor" fillOpacity="0.8" />
 						<rect
 							x="13"
