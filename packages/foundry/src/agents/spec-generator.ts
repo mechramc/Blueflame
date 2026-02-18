@@ -7,6 +7,7 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { SPEC_GENERATION_SYSTEM_PROMPT } from "./prompts/spec-generation-system.js";
+import { getAzureBaseURL } from "../routing/types.js";
 
 export interface SpecGeneratorConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -30,7 +31,7 @@ export async function generateSpec(
 ): Promise<string> {
 	const client = new OpenAI({
 		apiKey: config.apiKey,
-		baseURL: `${config.endpoint}/openai/deployments/${config.deployment}`,
+		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
 		defaultQuery: { "api-version": config.apiVersion ?? "2024-10-21" },
 		defaultHeaders: { "api-key": config.apiKey },
 	});

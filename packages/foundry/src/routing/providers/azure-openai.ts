@@ -5,12 +5,13 @@
 
 import OpenAI from "openai";
 
-import type {
-	ChatMessage,
-	ChatOptions,
-	ChatResponse,
-	FoundryModelClient,
-	ProviderConfig,
+import {
+	type ChatMessage,
+	type ChatOptions,
+	type ChatResponse,
+	type FoundryModelClient,
+	type ProviderConfig,
+	getAzureBaseURL,
 } from "../types.js";
 
 export class AzureOpenAIClient implements FoundryModelClient {
@@ -21,7 +22,7 @@ export class AzureOpenAIClient implements FoundryModelClient {
 		this.model = config.model;
 		this.client = new OpenAI({
 			apiKey: config.apiKey,
-			baseURL: `${config.endpoint}/openai/deployments/${config.model}`,
+			baseURL: getAzureBaseURL(config.endpoint, config.model),
 			defaultQuery: { "api-version": config.apiVersion ?? "2024-10-21" },
 			defaultHeaders: { "api-key": config.apiKey },
 		});

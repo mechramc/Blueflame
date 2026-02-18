@@ -7,6 +7,7 @@
 
 import OpenAI from "openai";
 import { BUILDER_SYSTEM_PROMPT } from "./prompts/builder-system.js";
+import { getAzureBaseURL } from "../routing/types.js";
 
 export interface BuilderConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -64,7 +65,7 @@ export type BuilderResult = { ok: true; value: BuilderOutput } | { ok: false; er
 function createClient(config: BuilderConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
-		baseURL: `${config.endpoint}/openai/deployments/${config.deployment}`,
+		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
 		defaultQuery: { "api-version": config.apiVersion ?? "2024-10-21" },
 		defaultHeaders: { "api-key": config.apiKey },
 	});

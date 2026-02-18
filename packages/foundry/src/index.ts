@@ -98,6 +98,7 @@ export {
 	type RoutingDecision,
 	ExecutionTier,
 	ProviderType,
+	getAzureBaseURL,
 } from "./routing/types.js";
 
 export { getProviderConfig, resetRegistry, setProviderConfig } from "./routing/model-registry.js";

@@ -7,6 +7,7 @@
 
 import OpenAI from "openai";
 import { VERIFIER_SYSTEM_PROMPT } from "./prompts/verifier-system.js";
+import { getAzureBaseURL } from "../routing/types.js";
 
 export interface VerifierConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -71,7 +72,7 @@ export type VerifierResult =
 function createClient(config: VerifierConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
-		baseURL: `${config.endpoint}/openai/deployments/${config.deployment}`,
+		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
 		defaultQuery: { "api-version": config.apiVersion ?? "2024-10-21" },
 		defaultHeaders: { "api-key": config.apiKey },
 	});
