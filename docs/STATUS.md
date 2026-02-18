@@ -212,11 +212,23 @@
 | AzureServiceUsagePanel on run dashboard | UI | P0 | **DONE** |
 | Landing page: 6 MS-branded feature cards | UI | P0 | **DONE** |
 
+### Session 18b — Azure AI Foundry Multi-Model Routing
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Deploy Phi-4, Llama-3.3-70B, o3-mini to Foundry | S12 | P0 | **DONE** |
+| Update model registry routing table (7 models) | S12 | P0 | **DONE** |
+| Lazy init model registry (ESM hoisting fix) | S12 | P0 | **DONE** |
+| Fix API version per model type (OpenAI vs catalog) | S12 | P0 | **DONE** |
+| Update all 7 agents + provider to use getAzureDefaultQuery | S12 | P0 | **DONE** |
+| Biome lint CI fix (diagnostic-level=error) | CI/CD | P0 | **DONE** |
+| Catalog model JSON parsing (Phi-4 returns markdown) | S12 | P0 | **KNOWN ISSUE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
 | S16-004: Azure SignalR migration | P1 | Deferred (Socket.IO adequate) |
 | S16-005: Application Insights SDK | P1 | Deferred (OTel spans cover this) |
+| Fix catalog model response parsing (markdown→JSON) | P0 | Not started |
 | End-to-end testing (Spec→Plan→Execute flow) | P0 | In progress |
 | Demo recording (7 workflows) | P0 | Not started |
 | Submission package | P0 | Not started |
@@ -235,8 +247,9 @@
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
 - **Session 18 MS Visibility**: 6/6 (services strip, infra selection, Azure branding, toasts, usage panel, landing page)
-- **Grand Total**: 119/124 complete (2 deferred, 2 demo remaining, 1 skipped)
-- **Critical path**: E2E testing → demo recording → submission package
+- **Session 18b Foundry Multi-Model**: 6/7 (deploy, registry, lazy init, api-version, agents, lint — 1 known issue: catalog JSON parsing)
+- **Grand Total**: 125/131 complete (2 deferred, 3 demo remaining, 1 known issue)
+- **Critical path**: Fix catalog model JSON parsing → E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
 
@@ -273,6 +286,7 @@
 | 2026-02-12 | Defer AppInsights SDK (S16-005) | OTel spans already provide instrumentation |
 
 ## Blockers
+- **Catalog model JSON parsing**: Phi-4 (and likely Llama) returns markdown instead of JSON — `JSON.parse()` fails with "Unexpected token '#'". Need to add structured output instructions or response format enforcement for catalog models.
 - **E2E flow partially tested**: User tested Spec→Plan→Execute and SCR flows — found and fixed 11 UX/backend bugs in Session 14
 - **Demo recording not started**: All features implemented + polished; need to record 7 workflow demos
 
