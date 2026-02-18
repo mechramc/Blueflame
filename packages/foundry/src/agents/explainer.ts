@@ -7,7 +7,7 @@
 
 import OpenAI from "openai";
 import { EXPLAINER_SYSTEM_PROMPT } from "./prompts/explainer-system.js";
-import { getAzureBaseURL } from "../routing/types.js";
+import { getAzureBaseURL, isOpenAIModel } from "../routing/types.js";
 
 export interface ExplainerConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -75,7 +75,9 @@ function createClient(config: ExplainerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: { "api-version": config.apiVersion ?? "2024-12-01-preview" },
+		defaultQuery: isOpenAIModel(config.deployment)
+			? { "api-version": config.apiVersion ?? "2024-12-01-preview" }
+			: {},
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }

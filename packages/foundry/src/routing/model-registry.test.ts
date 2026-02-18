@@ -9,27 +9,33 @@ afterEach(() => {
 });
 
 describe("getProviderConfig defaults", () => {
-	it("should return gpt-4o-mini for Routine tier", () => {
+	it("should return Phi-4 for Builder Routine tier", () => {
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Routine);
-		expect(config.model).toBe("gpt-4o-mini");
+		expect(config.model).toBe("Phi-4");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
-	it("should return gpt-4o for Standard tier", () => {
+	it("should return Llama-3.3-70B-Instruct for Builder Standard tier", () => {
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Standard);
-		expect(config.model).toBe("gpt-4o");
+		expect(config.model).toBe("Llama-3.3-70B-Instruct");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
-	it("should return claude-sonnet-4-5 for Builder Complex tier", () => {
+	it("should return claude or gpt-4o for Builder Complex tier", () => {
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Complex);
-		expect(config.model).toBe("claude-sonnet-4-5");
-		expect(config.provider).toBe(ProviderType.Anthropic);
+		const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+		if (hasAnthropic) {
+			expect(config.model).toBe("claude-sonnet-4-5");
+			expect(config.provider).toBe(ProviderType.Anthropic);
+		} else {
+			expect(config.model).toBe("gpt-4o");
+			expect(config.provider).toBe(ProviderType.AzureOpenAI);
+		}
 	});
 
-	it("should return gpt-4o for non-Builder Complex tier", () => {
+	it("should return o3-mini for Verifier Complex tier", () => {
 		const config = getProviderConfig(AgentRole.Verifier, ExecutionTier.Complex);
-		expect(config.model).toBe("gpt-4o");
+		expect(config.model).toBe("o3-mini");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
@@ -92,7 +98,7 @@ describe("resetRegistry", () => {
 		resetRegistry();
 
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Standard);
-		expect(config.model).toBe("gpt-4o");
+		expect(config.model).toBe("Llama-3.3-70B-Instruct");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 });

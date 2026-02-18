@@ -10,7 +10,7 @@
 import type { NormalizedFailure, RemediationTask, RootCauseAnalysis } from "@blueflame/shared";
 import OpenAI from "openai";
 import { FIXER_SYSTEM_PROMPT } from "./prompts/fixer-system.js";
-import { getAzureBaseURL } from "../routing/types.js";
+import { getAzureBaseURL, isOpenAIModel } from "../routing/types.js";
 
 export interface FixerConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -42,7 +42,9 @@ function createClient(config: FixerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: { "api-version": config.apiVersion ?? "2024-12-01-preview" },
+		defaultQuery: isOpenAIModel(config.deployment)
+			? { "api-version": config.apiVersion ?? "2024-12-01-preview" }
+			: {},
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }

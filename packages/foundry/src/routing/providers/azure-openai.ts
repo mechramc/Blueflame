@@ -12,6 +12,7 @@ import {
 	type FoundryModelClient,
 	type ProviderConfig,
 	getAzureBaseURL,
+	isOpenAIModel,
 } from "../types.js";
 
 export class AzureOpenAIClient implements FoundryModelClient {
@@ -23,7 +24,9 @@ export class AzureOpenAIClient implements FoundryModelClient {
 		this.client = new OpenAI({
 			apiKey: config.apiKey,
 			baseURL: getAzureBaseURL(config.endpoint, config.model),
-			defaultQuery: { "api-version": config.apiVersion ?? "2024-12-01-preview" },
+			defaultQuery: isOpenAIModel(config.model)
+				? { "api-version": config.apiVersion ?? "2024-12-01-preview" }
+				: {},
 			defaultHeaders: { "api-key": config.apiKey },
 		});
 	}

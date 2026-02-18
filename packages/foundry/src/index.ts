@@ -99,6 +99,7 @@ export {
 	ExecutionTier,
 	ProviderType,
 	getAzureBaseURL,
+	isOpenAIModel,
 } from "./routing/types.js";
 
 export { getProviderConfig, resetRegistry, setProviderConfig } from "./routing/model-registry.js";

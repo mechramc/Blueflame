@@ -7,7 +7,7 @@
 
 import OpenAI from "openai";
 import { PLANNER_SYSTEM_PROMPT } from "./prompts/planner-system.js";
-import { getAzureBaseURL } from "../routing/types.js";
+import { getAzureBaseURL, isOpenAIModel } from "../routing/types.js";
 
 export interface PlannerConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -47,7 +47,9 @@ function createClient(config: PlannerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: { "api-version": config.apiVersion ?? "2024-12-01-preview" },
+		defaultQuery: isOpenAIModel(config.deployment)
+			? { "api-version": config.apiVersion ?? "2024-12-01-preview" }
+			: {},
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }
