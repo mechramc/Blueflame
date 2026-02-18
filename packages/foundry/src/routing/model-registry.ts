@@ -42,8 +42,8 @@ function initDefaults(): void {
 	const foundryDeployment = process.env.FOUNDRY_DEPLOYMENT;
 
 	console.log(
-		`[ModelRegistry] Initializing with endpoint=${azureEndpoint ? azureEndpoint.substring(0, 40) + "..." : "(empty)"}, ` +
-			`key=${azureKey ? "***" + azureKey.slice(-4) : "(empty)"}, ` +
+		`[ModelRegistry] Initializing with endpoint=${azureEndpoint ? `${azureEndpoint.substring(0, 40)}...` : "(empty)"}, ` +
+			`key=${azureKey ? `***${azureKey.slice(-4)}` : "(empty)"}, ` +
 			`anthropic=${anthropicKey ? "set" : "not set"}`,
 	);
 

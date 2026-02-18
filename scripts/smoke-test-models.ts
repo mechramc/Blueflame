@@ -33,7 +33,7 @@ function buildTests(): ModelTest[] {
 		const body: Record<string, unknown> = {
 			model,
 			messages: [
-				{ role: "system", content: "Reply with exactly this json: {\"status\":\"ok\"}" },
+				{ role: "system", content: 'Reply with exactly this json: {"status":"ok"}' },
 				{ role: "user", content: "ping" },
 			],
 			...tokenParam,
@@ -56,7 +56,7 @@ function buildTests(): ModelTest[] {
 			body: {
 				model,
 				messages: [
-					{ role: "system", content: "Reply with valid json: {\"status\":\"ok\"}" },
+					{ role: "system", content: 'Reply with valid json: {"status":"ok"}' },
 					{ role: "user", content: "ping" },
 				],
 				max_tokens: 50,
@@ -75,7 +75,7 @@ function buildTests(): ModelTest[] {
 			body: {
 				model,
 				messages: [
-					{ role: "system", content: "Reply with exactly: {\"status\":\"ok\"}" },
+					{ role: "system", content: 'Reply with exactly: {"status":"ok"}' },
 					{ role: "user", content: "ping" },
 				],
 				max_tokens: 50,
@@ -103,7 +103,7 @@ async function runTest(test: ModelTest): Promise<void> {
 			return;
 		}
 
-		const json = await res.json() as {
+		const json = (await res.json()) as {
 			choices?: Array<{ message?: { content?: string } }>;
 			model?: string;
 			usage?: { total_tokens?: number };
@@ -111,7 +111,9 @@ async function runTest(test: ModelTest): Promise<void> {
 		const content = json.choices?.[0]?.message?.content ?? "(empty)";
 		const tokens = json.usage?.total_tokens ?? "?";
 		const returnedModel = json.model ?? "?";
-		console.log(`✅ ${label} model=${returnedModel} tokens=${tokens} response="${content.slice(0, 80)}"`);
+		console.log(
+			`✅ ${label} model=${returnedModel} tokens=${tokens} response="${content.slice(0, 80)}"`,
+		);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
 		console.log(`❌ ${label} ERROR: ${msg.slice(0, 200)}`);

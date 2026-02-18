@@ -41,7 +41,12 @@ import {
 import { logAuditEvent } from "./audit-logger.js";
 import { checkBudget as checkBudgetThresholds, initBudget } from "./budget-monitor.js";
 import { recordCost } from "./cost-tracker.js";
-import { allTasksTerminal, getReadyTasks, getUnreachableTasks, hasFailedTasks } from "./dag-executor.js";
+import {
+	allTasksTerminal,
+	getReadyTasks,
+	getUnreachableTasks,
+	hasFailedTasks,
+} from "./dag-executor.js";
 import { storeFailure } from "./failure-store.js";
 import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
 import { extractPatternsFromRun } from "./knowledge-store.js";
@@ -297,7 +302,9 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 	}
 
 	const readyTasks = getReadyTasks(run.plan.tasks);
-	console.log(`[executeNextWave] readyTasks=${readyTasks.length} ids=[${readyTasks.map((t) => t.id).join(", ")}]`);
+	console.log(
+		`[executeNextWave] readyTasks=${readyTasks.length} ids=[${readyTasks.map((t) => t.id).join(", ")}]`,
+	);
 
 	if (readyTasks.length === 0) {
 		// Defer any PENDING tasks blocked by failed dependencies (unreachable)
@@ -450,16 +457,17 @@ export async function completeTask(
 		// to avoid Phi-4/catalog model JSON parsing failures in the verifier
 		const retryCount = run.retryCountByTask[taskId] ?? 0;
 		const baseVerifierDecision = router.route(AgentRole.Verifier, task.sigmaEstimate);
-		const verifierDecision = pendingFix || retryCount > 0
-			? {
-				...baseVerifierDecision,
-				model: "gpt-4o-mini",
-				providerConfig: baseVerifierDecision.providerConfig
-					? { ...baseVerifierDecision.providerConfig, model: "gpt-4o-mini" }
-					: baseVerifierDecision.providerConfig,
-				reason: `${baseVerifierDecision.reason} (escalated: retry/fix re-verify)`,
-			}
-			: baseVerifierDecision;
+		const verifierDecision =
+			pendingFix || retryCount > 0
+				? {
+						...baseVerifierDecision,
+						model: "gpt-4o-mini",
+						providerConfig: baseVerifierDecision.providerConfig
+							? { ...baseVerifierDecision.providerConfig, model: "gpt-4o-mini" }
+							: baseVerifierDecision.providerConfig,
+						reason: `${baseVerifierDecision.reason} (escalated: retry/fix re-verify)`,
+					}
+				: baseVerifierDecision;
 		routingLog.push(verifierDecision);
 		const verifier = await spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
 		await updateAgentStatus(verifier.agentId, AgentStatus.Executing);
@@ -484,7 +492,9 @@ export async function completeTask(
 	pushEvent(run, agentId, agentRole, "TASK_COMPLETED", `Task ${taskId} completed`);
 	checkpointRun(run);
 
-	console.log(`[completeTask] Task ${taskId} completed (role=${agentRole}), triggering auto-advance`);
+	console.log(
+		`[completeTask] Task ${taskId} completed (role=${agentRole}), triggering auto-advance`,
+	);
 
 	// Auto-advance: try to execute next wave of ready tasks
 	executeNextWave(runId).catch((err) => {
@@ -588,16 +598,17 @@ export async function failTask(
 		// Spawn Fixer agent — escalate to more reliable model on retries
 		// On retry 2+, force gpt-4o-mini to avoid repeated failures from catalog models
 		const baseFixerDecision = router.route(AgentRole.Builder, task.sigmaEstimate);
-		const fixerDecision = retryCount >= 1
-			? {
-				...baseFixerDecision,
-				model: "gpt-4o-mini",
-				providerConfig: baseFixerDecision.providerConfig
-					? { ...baseFixerDecision.providerConfig, model: "gpt-4o-mini" }
-					: baseFixerDecision.providerConfig,
-				reason: `${baseFixerDecision.reason} (escalated: fixer retry ${retryCount + 1})`,
-			}
-			: baseFixerDecision;
+		const fixerDecision =
+			retryCount >= 1
+				? {
+						...baseFixerDecision,
+						model: "gpt-4o-mini",
+						providerConfig: baseFixerDecision.providerConfig
+							? { ...baseFixerDecision.providerConfig, model: "gpt-4o-mini" }
+							: baseFixerDecision.providerConfig,
+						reason: `${baseFixerDecision.reason} (escalated: fixer retry ${retryCount + 1})`,
+					}
+				: baseFixerDecision;
 		routingLog.push(fixerDecision);
 		const fixer = await spawnAgent(runId, AgentRole.Builder, taskId, fixerDecision.model);
 		await updateAgentStatus(fixer.agentId, AgentStatus.Executing);
@@ -1079,7 +1090,9 @@ function checkBudget(run: RunState): Result<AgentState[]> {
 	const ceiling = run.lock.budgetCeiling;
 	const percentUsed = ceiling > 0 ? (currentSpend / ceiling) * 100 : 0;
 
-	console.log(`[checkBudget] run=${run.runId} spend=$${currentSpend.toFixed(4)} ceiling=$${ceiling} percent=${percentUsed.toFixed(1)}%`);
+	console.log(
+		`[checkBudget] run=${run.runId} spend=$${currentSpend.toFixed(4)} ceiling=$${ceiling} percent=${percentUsed.toFixed(1)}%`,
+	);
 
 	// Alert at 80%
 	if (percentUsed >= 80 && budgetCallback) {
@@ -1088,7 +1101,9 @@ function checkBudget(run: RunState): Result<AgentState[]> {
 
 	// Pause at 95%
 	if (percentUsed >= 95) {
-		console.log(`[checkBudget] BUDGET EXCEEDED 95% — deferring pending tasks and pausing run ${run.runId}`);
+		console.log(
+			`[checkBudget] BUDGET EXCEEDED 95% — deferring pending tasks and pausing run ${run.runId}`,
+		);
 		// Defer pending tasks
 		for (const task of run.plan.tasks) {
 			if (task.status === TaskStatus.Pending) {
@@ -1133,7 +1148,9 @@ function completeRun(run: RunState): void {
 	} else {
 		run.status = RunStatus.Completed;
 	}
-	console.log(`[completeRun] run=${run.runId} finalStatus=${run.status} hasFailed=${hasFailed} tasks=[${taskSummary}]`);
+	console.log(
+		`[completeRun] run=${run.runId} finalStatus=${run.status} hasFailed=${hasFailed} tasks=[${taskSummary}]`,
+	);
 	run.completedAt = new Date().toISOString();
 	checkpointRun(run);
 	notifyStatusChange(run.runId, run.status);

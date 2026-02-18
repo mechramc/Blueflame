@@ -106,9 +106,7 @@ export function allTasksTerminal(tasks: PlanTask[]): boolean {
  * These tasks are "unreachable" and should be deferred to prevent the run from hanging.
  */
 export function getUnreachableTasks(tasks: PlanTask[]): PlanTask[] {
-	const failedIds = new Set(
-		tasks.filter((t) => t.status === TaskStatus.Failed).map((t) => t.id),
-	);
+	const failedIds = new Set(tasks.filter((t) => t.status === TaskStatus.Failed).map((t) => t.id));
 
 	if (failedIds.size === 0) return [];
 

@@ -134,9 +134,7 @@ export function getModelParams(
 ): Record<string, unknown> {
 	const reasoning = isReasoningModel(deployment);
 	return {
-		...(reasoning
-			? { max_completion_tokens: opts.maxTokens }
-			: { max_tokens: opts.maxTokens }),
+		...(reasoning ? { max_completion_tokens: opts.maxTokens } : { max_tokens: opts.maxTokens }),
 		...(reasoning ? {} : { temperature: opts.temperature }),
 		...(!reasoning && opts.jsonMode && supportsJsonFormat(deployment)
 			? { response_format: { type: "json_object" as const } }

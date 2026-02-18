@@ -56,7 +56,9 @@ export class AzureOpenAIClient implements FoundryModelClient {
 			messages: mappedMessages as OpenAI.ChatCompletionMessageParam[],
 			...(reasoning ? {} : { temperature: options?.temperature }),
 			...tokenParam,
-			...(options?.responseFormat && !reasoning ? { response_format: { type: "json_object" } } : {}),
+			...(options?.responseFormat && !reasoning
+				? { response_format: { type: "json_object" } }
+				: {}),
 		};
 
 		// Try primary model with retries
@@ -110,7 +112,11 @@ export class AzureOpenAIClient implements FoundryModelClient {
 		const fallbackClient = new OpenAI({
 			apiKey: this.config.apiKey,
 			baseURL: getAzureBaseURL(this.config.endpoint, fallbackModel),
-			defaultQuery: getAzureDefaultQuery(this.config.endpoint, fallbackModel, this.config.apiVersion),
+			defaultQuery: getAzureDefaultQuery(
+				this.config.endpoint,
+				fallbackModel,
+				this.config.apiVersion,
+			),
 			defaultHeaders: { "api-key": this.config.apiKey },
 		});
 
