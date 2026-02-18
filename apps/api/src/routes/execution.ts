@@ -3,7 +3,9 @@
  */
 
 import { Router } from "express";
+import { requireRole } from "../middleware/auth.js";
 import { getAgentsByRunId } from "../services/agent-spawner.js";
+import { logAuditEvent } from "../services/audit-logger.js";
 import { getLockByRunId } from "../services/authorization.js";
 import {
 	approveFix,
@@ -11,6 +13,7 @@ import {
 	executeNextWave,
 	failTask,
 	getRun,
+	overrideTask,
 	rejectFix,
 	requestInterrupt,
 	retryFailedTasks,
@@ -249,6 +252,44 @@ executionRouter.post("/:runId/retry-failed", async (req, res) => {
 		return;
 	}
 	res.json({ runId, retriedCount: result.value.retriedCount });
+});
+
+/**
+ * POST /api/execution/:runId/override-task
+ * Body: { taskId, reason }
+ * Admin-only: Force-complete a failed/deferred task so the run can proceed.
+ * The human takes responsibility for testing this task manually.
+ */
+executionRouter.post("/:runId/override-task", requireRole("Blueflame_Admin"), async (req, res) => {
+	const { runId } = req.params;
+	const { taskId, reason } = req.body as { taskId: string; reason?: string };
+
+	if (!runId || !taskId) {
+		res.status(400).json({ error: "runId and taskId are required" });
+		return;
+	}
+
+	const adminUser = String(req.user?.name ?? req.user?.oid ?? "admin");
+	const overrideReason = reason || "Admin override — will test manually";
+
+	const result = await overrideTask(String(runId), taskId, overrideReason, adminUser);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+
+	// Audit trail
+	logAuditEvent({
+		eventType: "GOVERNANCE",
+		actor: adminUser,
+		action: "OVERRIDE_TASK",
+		resource: `run:${runId}/task:${taskId}`,
+		outcome: "ALLOWED",
+		details: `Admin override: ${overrideReason}`,
+		runId: String(runId),
+	}).catch(() => {});
+
+	res.json({ runId, taskId, status: "COMPLETED", overriddenBy: adminUser, reason: overrideReason });
 });
 
 /**

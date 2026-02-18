@@ -1076,6 +1076,67 @@ export async function retryFailedTasks(runId: string): Promise<Result<{ retriedC
 	return { ok: true, value: { retriedCount: failedTasks.length } };
 }
 
+/**
+ * Admin override — force-complete a failed task so the run can proceed.
+ * Marks the task as COMPLETED with an admin override note, logs an audit event,
+ * and triggers executeNextWave to unblock dependent tasks.
+ */
+export async function overrideTask(
+	runId: string,
+	taskId: string,
+	reason: string,
+	adminUser: string,
+): Promise<Result<void>> {
+	const run = await getRun(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	const task = run.plan.tasks.find((t) => t.id === taskId);
+	if (!task) {
+		return { ok: false, error: new Error(`Task not found: ${taskId}`) };
+	}
+
+	if (task.status !== TaskStatus.Failed && task.status !== TaskStatus.Deferred) {
+		return {
+			ok: false,
+			error: new Error(
+				`Task ${taskId} is ${task.status}, can only override FAILED or DEFERRED tasks`,
+			),
+		};
+	}
+
+	const previousStatus = task.status;
+	task.status = TaskStatus.Completed;
+	task.failureReason = `[ADMIN OVERRIDE by ${adminUser}] ${reason}`;
+
+	// Clear any pending fixes for this task
+	run.pendingFixes = run.pendingFixes.filter((f) => f.taskId !== taskId);
+
+	// If run was PARTIAL or COMPLETED, set back to EXECUTING so wave can proceed
+	if (run.status === RunStatus.Partial || run.status === RunStatus.Completed) {
+		run.status = RunStatus.Executing;
+		run.completedAt = null;
+		run.interruptRequested = false;
+	}
+
+	pushEvent(
+		run,
+		"admin",
+		"SYSTEM",
+		"TASK_OVERRIDDEN",
+		`Task ${taskId} overridden by ${adminUser} (was ${previousStatus}): ${reason}`,
+	);
+	checkpointRun(run);
+
+	// Trigger next wave to unblock dependent tasks
+	executeNextWave(runId).catch((err) => {
+		console.error(`[Orchestrator] Auto-advance failed after override of ${taskId}:`, err);
+	});
+
+	return { ok: true, value: undefined };
+}
+
 export function clearAllRuns(): void {
 	runs.clear();
 	statusCallback = null;

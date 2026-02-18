@@ -15,7 +15,9 @@ import { FixerDiffView } from "@/components/dashboard/FixerDiffView";
 import { RunDashboardPanes } from "@/components/dashboard/RunDashboardPanes";
 import { PostRunActionsPanel } from "@/components/deployment/PostRunActionsPanel";
 import { SpecViewerPanel } from "@/components/spec/SpecViewerPanel";
+import { useRole } from "@/hooks/useRole";
 import { apiGet, apiPost } from "@/lib/api-client";
+import { UserRole } from "@blueflame/shared";
 import type { BudgetDecision, DeploymentState, PendingFix, PlanTask } from "@blueflame/shared";
 
 interface RunApiResponse {
@@ -278,6 +280,20 @@ export default function RunPage() {
 		fetchStatus();
 	}, [runId, fetchStatus]);
 
+	const { hasMinimumRole } = useRole();
+	const isAdmin = hasMinimumRole(UserRole.Admin);
+
+	const handleOverrideTask = useCallback(
+		async (taskId: string) => {
+			await apiPost(`/api/execution/${runId}/override-task`, {
+				taskId,
+				reason: "Admin override — will test manually",
+			}).catch(() => {});
+			fetchStatus();
+		},
+		[runId, fetchStatus],
+	);
+
 	const handleSelectTask = useCallback((task: PlanTask) => {
 		setSelectedTask((prev) => (prev?.id === task.id ? null : task));
 	}, []);
@@ -395,15 +411,27 @@ export default function RunPage() {
 					<p className="text-xs font-medium text-amber-400 mb-1">
 						{failedTasks.length} task{failedTasks.length !== 1 ? "s" : ""} failed after all retries:
 					</p>
-					<div className="flex flex-wrap gap-2">
+					<div className="space-y-1.5">
 						{failedTasks.map((t) => (
-							<span
-								key={t.id}
-								className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded"
-								title={t.failureReason ?? t.description}
-							>
-								{t.id}: {t.failureReason ?? t.description.slice(0, 60)}
-							</span>
+							<div key={t.id} className="flex items-center gap-2">
+								<span
+									className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded flex-1 min-w-0 truncate"
+									title={t.failureReason ?? t.description}
+								>
+									{t.id}: {t.failureReason ?? t.description.slice(0, 60)}
+								</span>
+								{isAdmin && (
+									<button
+										type="button"
+										onClick={() => handleOverrideTask(t.id)}
+										data-testid={`override-task-${t.id}`}
+										title="Admin: Skip this task and mark as complete (you will test manually)"
+										className="shrink-0 rounded border border-purple-500/50 bg-purple-500/10 px-2 py-0.5 text-[10px] font-medium text-purple-400 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+									>
+										Override
+									</button>
+								)}
+							</div>
 						))}
 					</div>
 				</div>

@@ -46,6 +46,24 @@
 
 **Tests**: All 128 web tests pass. Typecheck clean. No new lint errors.
 
+#### Admin Task Override (same session)
+
+**Problem**: Tasks like TASK-007/008 fail permanently because they require test frameworks that don't exist in the project context. Retry + fixer loop can't help — the verifier re-fails on the same missing prerequisite. User tried adding guidance via fixer reject, but the agent loop has no concept of "skip this."
+
+**Fix (3 files):**
+1. `apps/api/src/services/orchestrator.ts` — New `overrideTask()` function: sets FAILED/DEFERRED task to COMPLETED with admin override note, clears pending fixes, re-triggers `executeNextWave()` to unblock dependents
+2. `apps/api/src/routes/execution.ts` — `POST /api/execution/:runId/override-task` with `requireRole("Blueflame_Admin")`, logs governance audit event
+3. `apps/web/app/project/[projectId]/run/[runId]/page.tsx` — Purple "Override" button per failed task, visible only to Admin role users. Uses `useRole()` hook for RBAC check.
+
+**Key design decisions:**
+- Admin-only (RBAC enforced server-side + UI hidden for non-admins)
+- Audit trail: logged as `GOVERNANCE` event in compliance dashboard
+- Task marked COMPLETED (not DEFERRED) so dependents proceed
+- `failureReason` prefixed with `[ADMIN OVERRIDE by <user>]` for traceability
+- Run auto-advances: `executeNextWave()` called to unblock downstream tasks
+
+**Tests**: All 128 web + 242 API tests pass. Typecheck clean.
+
 ### Session 19: Orchestrator Workflow Fixes + Model Routing Stabilization
 
 Diagnosed and fixed workflow stalling (runs completing with only 1/9 tasks done). Root cause: 3 orchestrator bugs + Phi-4 JSON parsing failures.
