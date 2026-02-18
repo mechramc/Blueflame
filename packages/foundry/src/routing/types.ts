@@ -88,17 +88,29 @@ export function isOpenAIModel(deployment: string): boolean {
 	return OPENAI_MODEL_PREFIXES.some((p) => lower.startsWith(p));
 }
 
+/** Default API versions per endpoint type */
+export const OPENAI_API_VERSION = "2024-12-01-preview";
+export const FOUNDRY_INFERENCE_API_VERSION = "2024-05-01-preview";
+
 /**
  * Returns the Azure base URL for a model deployment.
  *
  * - OpenAI models (gpt-4o, o3-mini): {endpoint}/openai/deployments/{deployment}
- *   (uses api-version query param)
  * - Catalog models (Phi-4, Llama): {endpoint}/deployments/{deployment}
- *   (Azure AI Model Inference API, no api-version)
  */
 export function getAzureBaseURL(endpoint: string, deployment: string): string {
 	if (isOpenAIModel(deployment)) {
 		return `${endpoint}/openai/deployments/${deployment}`;
 	}
 	return `${endpoint}/deployments/${deployment}`;
+}
+
+/**
+ * Returns the correct api-version for a model deployment.
+ */
+export function getApiVersion(deployment: string, configVersion?: string): string {
+	if (isOpenAIModel(deployment)) {
+		return configVersion ?? OPENAI_API_VERSION;
+	}
+	return FOUNDRY_INFERENCE_API_VERSION;
 }
