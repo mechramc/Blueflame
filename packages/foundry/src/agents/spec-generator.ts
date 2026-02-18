@@ -6,8 +6,9 @@
 
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { getAzureBaseURL, getAzureDefaultQuery, getModelParams } from "../routing/types.js";
+import { chatWithRetry } from "../utils/retry.js";
 import { SPEC_GENERATION_SYSTEM_PROMPT } from "./prompts/spec-generation-system.js";
-import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface SpecGeneratorConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -32,7 +33,7 @@ export async function generateSpec(
 	const client = new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
+		defaultQuery: getAzureDefaultQuery(config.endpoint, config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 
@@ -44,12 +45,20 @@ export async function generateSpec(
 		},
 	];
 
-	const response = await client.chat.completions.create({
-		model: config.deployment,
-		messages,
-		temperature: 0.3,
-		max_tokens: 2048,
-	});
+	const response = await chatWithRetry(
+		{
+			client,
+			model: config.deployment,
+			apiKey: config.apiKey,
+			endpoint: config.endpoint,
+			apiVersion: config.apiVersion,
+		},
+		{
+			model: config.deployment,
+			messages,
+			...getModelParams(config.deployment, { maxTokens: 2048, temperature: 0.3 }),
+		},
+	);
 
 	const content = response.choices[0]?.message?.content;
 	if (!content) {

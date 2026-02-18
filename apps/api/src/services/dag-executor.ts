@@ -102,6 +102,47 @@ export function allTasksTerminal(tasks: PlanTask[]): boolean {
 }
 
 /**
+ * Find PENDING tasks that can never become ready because a dependency has FAILED.
+ * These tasks are "unreachable" and should be deferred to prevent the run from hanging.
+ */
+export function getUnreachableTasks(tasks: PlanTask[]): PlanTask[] {
+	const failedIds = new Set(
+		tasks.filter((t) => t.status === TaskStatus.Failed).map((t) => t.id),
+	);
+
+	if (failedIds.size === 0) return [];
+
+	// A task is unreachable if any dependency (transitively) has failed
+	const unreachableIds = new Set<string>();
+
+	function isUnreachable(task: PlanTask): boolean {
+		if (unreachableIds.has(task.id)) return true;
+		for (const depId of task.dependencies) {
+			if (failedIds.has(depId) || unreachableIds.has(depId)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Multi-pass: cascade through dependency chains
+	let changed = true;
+	while (changed) {
+		changed = false;
+		for (const task of tasks) {
+			if (task.status !== TaskStatus.Pending) continue;
+			if (unreachableIds.has(task.id)) continue;
+			if (isUnreachable(task)) {
+				unreachableIds.add(task.id);
+				changed = true;
+			}
+		}
+	}
+
+	return tasks.filter((t) => unreachableIds.has(t.id));
+}
+
+/**
  * Check if any tasks have failed.
  */
 export function hasFailedTasks(tasks: PlanTask[]): boolean {

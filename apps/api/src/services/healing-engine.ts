@@ -79,11 +79,25 @@ export function shouldAutoHeal(failures: NormalizedFailure[]): boolean {
 /**
  * Create a healing project from systematic failures.
  * Generates a new project that addresses the root causes.
+ * Deduplicates: only creates one healing project per source project.
  */
 export async function createHealingProject(
 	failures: NormalizedFailure[],
 	sourceProjectId: string,
 ): Promise<Project> {
+	// Dedup: check if a healing project already exists for this source project
+	try {
+		const existing = await db.projects.queryAll({
+			query: "SELECT * FROM c WHERE STARTSWITH(c.id, @prefix) AND c.createdBy = 'healing-engine'",
+			parameters: [{ name: "@prefix", value: `heal-${sourceProjectId}` }],
+		});
+		if (existing.length > 0) {
+			return existing[0] as unknown as Project;
+		}
+	} catch {
+		// Cosmos unavailable — proceed with creation (may create duplicate)
+	}
+
 	const clusters = clusterFailures(failures);
 	const topCluster = clusters.sort((a, b) => b.count - a.count)[0];
 

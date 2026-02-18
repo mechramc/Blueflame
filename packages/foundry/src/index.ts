@@ -86,6 +86,11 @@ export {
 
 export { FIXER_SYSTEM_PROMPT } from "./agents/prompts/fixer-system.js";
 
+// ─── Utilities ───────────────────────────────────────────────
+
+export { extractJson } from "./utils/json-parser.js";
+export { chatWithRetry } from "./utils/retry.js";
+
 // ─── Routing (ACAR σ-routing) ────────────────────────────────
 
 export {
@@ -100,7 +105,11 @@ export {
 	ProviderType,
 	getAzureBaseURL,
 	getAzureDefaultQuery,
+	getModelParams,
+	getTokenParams,
 	isOpenAIModel,
+	isReasoningModel,
+	supportsJsonFormat,
 } from "./routing/types.js";
 
 export { getProviderConfig, resetRegistry, setProviderConfig } from "./routing/model-registry.js";

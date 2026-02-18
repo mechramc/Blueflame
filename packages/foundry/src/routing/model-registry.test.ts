@@ -9,15 +9,15 @@ afterEach(() => {
 });
 
 describe("getProviderConfig defaults", () => {
-	it("should return Phi-4 for Builder Routine tier", () => {
+	it("should return gpt-4o-mini for Builder Routine tier (JSON-requiring roles skip Phi-4)", () => {
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Routine);
-		expect(config.model).toBe("Phi-4");
+		expect(config.model).toBe("gpt-4o-mini");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
-	it("should return Llama-3.3-70B-Instruct for Builder Standard tier", () => {
+	it("should return gpt-4o-mini for Builder Standard tier", () => {
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Standard);
-		expect(config.model).toBe("Llama-3.3-70B-Instruct");
+		expect(config.model).toBe("gpt-4o-mini");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 
@@ -98,7 +98,7 @@ describe("resetRegistry", () => {
 		resetRegistry();
 
 		const config = getProviderConfig(AgentRole.Builder, ExecutionTier.Standard);
-		expect(config.model).toBe("Llama-3.3-70B-Instruct");
+		expect(config.model).toBe("gpt-4o-mini");
 		expect(config.provider).toBe(ProviderType.AzureOpenAI);
 	});
 });

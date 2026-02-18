@@ -9,8 +9,10 @@
 
 import type { NormalizedFailure, RemediationTask, RootCauseAnalysis } from "@blueflame/shared";
 import OpenAI from "openai";
+import { getAzureBaseURL, getAzureDefaultQuery, getModelParams } from "../routing/types.js";
+import { extractJson } from "../utils/json-parser.js";
+import { chatWithRetry } from "../utils/retry.js";
 import { FIXER_SYSTEM_PROMPT } from "./prompts/fixer-system.js";
-import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface FixerConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -42,7 +44,7 @@ function createClient(config: FixerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
+		defaultQuery: getAzureDefaultQuery(config.endpoint, config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }
@@ -106,15 +108,23 @@ export async function analyzeFailure(
 	const client = createClient(config);
 	const userPrompt = buildFixerPrompt(failure);
 
-	const response = await client.chat.completions.create({
-		model: config.deployment,
-		messages: [
-			{ role: "system", content: FIXER_SYSTEM_PROMPT },
-			{ role: "user", content: userPrompt },
-		],
-		temperature: 0.1,
-		max_tokens: 4096,
-	});
+	const response = await chatWithRetry(
+		{
+			client,
+			model: config.deployment,
+			apiKey: config.apiKey,
+			endpoint: config.endpoint,
+			apiVersion: config.apiVersion,
+		},
+		{
+			model: config.deployment,
+			messages: [
+				{ role: "system", content: FIXER_SYSTEM_PROMPT },
+				{ role: "user", content: userPrompt },
+			],
+			...getModelParams(config.deployment, { maxTokens: 4096, temperature: 0.1, jsonMode: true }),
+		},
+	);
 
 	const content = response.choices[0]?.message?.content ?? "";
 	return parseFixerOutput(content, failure.failureId);
@@ -124,8 +134,7 @@ export async function analyzeFailure(
  * Parses raw LLM output into a FixerResult.
  */
 export function parseFixerOutput(raw: string, failureId: string): FixerResult {
-	const cleaned = cleanJsonOutput(raw);
-	const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+	const parsed = extractJson<Record<string, unknown>>(raw);
 
 	const summary = String(parsed.summary ?? "");
 	const rootCause = String(parsed.rootCause ?? "");
@@ -157,20 +166,4 @@ export function parseFixerOutput(raw: string, failureId: string): FixerResult {
 			},
 		},
 	};
-}
-
-/**
- * Strips markdown code fences from LLM output.
- */
-function cleanJsonOutput(raw: string): string {
-	let cleaned = raw.trim();
-	if (cleaned.startsWith("```json")) {
-		cleaned = cleaned.slice(7);
-	} else if (cleaned.startsWith("```")) {
-		cleaned = cleaned.slice(3);
-	}
-	if (cleaned.endsWith("```")) {
-		cleaned = cleaned.slice(0, -3);
-	}
-	return cleaned.trim();
 }

@@ -8,22 +8,49 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-17
-- **Session**: 18b
+- **Date**: 2026-02-18
+- **Session**: 19
 
 ## Current State
-- **Phase**: Demo Preparation — Multi-model routing implemented, catalog model parsing issue to fix
-- **Last completed task**: Session 18b Azure AI Foundry multi-model routing (7 models across 2 providers)
-- **Next task**: Fix catalog model JSON parsing (Phi-4/Llama return markdown not JSON), then E2E test + demo
+- **Phase**: Demo Preparation — All orchestrator bugs fixed, model routing stabilized, ready for E2E testing + demo
+- **Last completed task**: Session 19 orchestrator workflow fixes + model routing + healing dedup + scrollbar fix
+- **Next task**: E2E test all flows → demo recording → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
 - **CI/CD**: All changes committed and pushed
-- **Known issue**: Catalog models (Phi-4, Llama-3.3-70B) return markdown instead of JSON — `JSON.parse()` fails with "Unexpected token '#'"
+- **Known issue**: None — catalog model JSON parsing resolved (Phi-4 removed from JSON-requiring roles)
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–18b)
+## What Just Happened (Sessions 10–19)
+
+### Session 19: Orchestrator Workflow Fixes + Model Routing Stabilization
+
+Diagnosed and fixed workflow stalling (runs completing with only 1/9 tasks done). Root cause: 3 orchestrator bugs + Phi-4 JSON parsing failures.
+
+**5 Orchestrator Fixes:**
+1. **Auto-approve fixer fixes** — Removed human approval gate that stalled tasks indefinitely. Fixer now auto-spawns Verifier after completing a fix.
+2. **Unreachable task deferral** — Added `getUnreachableTasks()` to detect PENDING tasks blocked by failed dependencies (transitive cascade). These get deferred instead of causing deadlock.
+3. **Model escalation on retries** — Forces gpt-4o-mini for verifier re-verify and fixer retry 2+. Prevents routing failures from compounding.
+4. **providerConfig.model mismatch** — When overriding `decision.model` for escalation, `decision.providerConfig.model` wasn't updated. Fixed by spreading providerConfig and overriding model in both places.
+5. **Healing engine dedup** — `createHealingProject()` now checks for existing healing project before creating a new one. Prevents dashboard spam.
+
+**Model Routing Fix:**
+- Removed Phi-4 from all JSON-requiring roles (Builder, Verifier, Fixer, Planner Routine). Phi-4 kept only for Explainer (prose output).
+- All JSON-requiring roles now use gpt-4o-mini at Routine tier.
+
+**UX Fix:**
+- Dashboard scrollbar: added `overflow-y-auto` to `<main>` element in `layout.tsx`.
+
+**Tests:**
+- 7 new unit tests for `getUnreachableTasks` (empty, direct, transitive, mixed, only-pending, all-terminal, diamond)
+- All 242 API + 170 Foundry + 128 Web tests pass (540+ total)
+
+**Verification:**
+- Clean test run `run-clean-test-1`: 6/8 tasks COMPLETED, 0 JSON parsing failures. Only TASK-006/007 failed legitimately (need real CI data).
+
+**Files changed:** 18 modified + 2 new (utils/ dir + smoke test script)
 
 ### Session 18b: Azure AI Foundry Multi-Model Routing
 
@@ -283,14 +310,14 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 17**: Post-execution deployment workflow + Session 16 UX fixes committed
 - **Session 18**: Microsoft visibility features (6 features for hackathon wow factor)
 - **Session 18b**: Azure AI Foundry multi-model routing (7 models, dual API pattern, lazy init fix)
+- **Session 19**: Orchestrator workflow fixes (5 bugs), model routing stabilization, healing dedup, scrollbar fix
 
 ## What To Pick Up Next
 
-### Immediate (Session 19)
-1. **Fix catalog model JSON parsing** — Phi-4/Llama return markdown not JSON. Options: (a) add `response_format: { type: "json_object" }` to API calls, (b) add stronger "respond ONLY in JSON" instructions to system prompts, (c) add a markdown-to-JSON fallback parser. Option (a) is preferred if catalog models support it.
-2. **E2E test all flows** — Spec→Plan→Execute, SCR, failure→fix→approve
-3. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
-4. **Submission package** — README (done), architecture diagram, demo video
+### Immediate (Session 20)
+1. **E2E test all flows** — Spec→Plan→Execute, SCR, failure→fix→approve — verify with live API
+2. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
+3. **Submission package** — README (done), architecture diagram, demo video
 
 ### What's Deferred (OK to skip)
 - **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical
@@ -298,10 +325,6 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 
 ## Staged But Uncommitted Changes
 None — all changes committed and pushed.
-
-## Files Changed in Session 17
-**Commit 1 (deployment workflow):** 11 files (5 new, 6 modified)
-**Commit 2 (Session 16 UX fixes):** 16 files (1 new, 15 modified)
 
 ## Type Gotchas (Learned the Hard Way)
 - `FailedStep.name` (not `stepName`)
@@ -345,13 +368,13 @@ None — all changes committed and pushed.
 ## Test Counts
 | Scope | Count |
 |-------|-------|
-| apps/api | 235 |
+| apps/api | 242 |
 | apps/web | 128 |
-| packages/foundry | 154 |
+| packages/foundry | 170 |
 | packages/cosmos | 44 |
 | packages/shared | 28 |
 | packages/github-app | 24 |
-| **Total** | **613** |
+| **Total** | **636** |
 
 ## Warnings for Next Tool
 - `packages/shared` must be built before dependent packages (`npx turbo build`)
@@ -364,7 +387,7 @@ None — all changes committed and pushed.
 - ACR admin credentials are persistent; GHCR tokens are ephemeral (don't use GHCR)
 - On Windows/MSYS: use `MSYS_NO_PATHCONV=1` prefix for az CLI commands with `/` paths
 - Express route ordering: static routes before catch-all `/:id` routes
-- Catalog models (Phi-4, Llama) use `/openai/v1/` path with NO api-version; OpenAI models use `/openai/deployments/{name}` with api-version
+- Catalog models (Phi-4, Llama) use `/openai/v1/` path with NO api-version; OpenAI models use `/openai/deployments/{name}` with api-version. Phi-4 removed from JSON-requiring roles (only used for Explainer prose).
 - ESM import hoisting: never call functions that read `process.env` at module load time — use lazy initialization
 - Authorize endpoint requires `Blueflame_Authorizer` role (dev mode: set `X-Dev-Role` header)
 - **Licensing**: BSL 1.1 — treat as commercially owned, not open source

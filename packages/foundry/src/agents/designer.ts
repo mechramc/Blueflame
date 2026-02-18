@@ -7,8 +7,8 @@
 
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { getAzureBaseURL, getAzureDefaultQuery, getModelParams } from "../routing/types.js";
 import { DESIGNER_SYSTEM_PROMPT } from "./prompts/designer-system.js";
-import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface DesignerConfig {
 	/** Azure OpenAI or Foundry endpoint (e.g., https://<resource>.openai.azure.com) */
@@ -37,7 +37,7 @@ function createClient(config: DesignerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
+		defaultQuery: getAzureDefaultQuery(config.endpoint, config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }
@@ -80,8 +80,7 @@ export async function streamDesignerResponse(
 			model: config.deployment,
 			messages,
 			stream: true,
-			temperature: 0.7,
-			max_tokens: 4096,
+			...getModelParams(config.deployment, { maxTokens: 4096, temperature: 0.7 }),
 		});
 
 		let fullResponse = "";

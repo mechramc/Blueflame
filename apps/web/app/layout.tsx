@@ -36,7 +36,7 @@ export default function RootLayout({
 						<div className="flex flex-col h-screen overflow-hidden">
 							<NavHeader />
 							<MicrosoftServicesStrip />
-							<main className="flex-1 min-h-0 animate-fade-in">{children}</main>
+							<main className="flex-1 min-h-0 overflow-y-auto animate-fade-in">{children}</main>
 						</div>
 					</AzureToastProvider>
 				</AuthWrapper>

@@ -5,6 +5,7 @@ import {
 	allTasksTerminal,
 	computeExecutionWaves,
 	getReadyTasks,
+	getUnreachableTasks,
 	hasFailedTasks,
 } from "./dag-executor.js";
 
@@ -156,6 +157,80 @@ describe("allTasksTerminal", () => {
 	it("should return false when any task is running", () => {
 		const tasks = [makeTask({ id: "T1", status: TaskStatus.Running })];
 		expect(allTasksTerminal(tasks)).toBe(false);
+	});
+});
+
+describe("getUnreachableTasks", () => {
+	it("should return empty when no tasks have failed", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Completed }),
+			makeTask({ id: "T2", dependencies: ["T1"] }),
+		];
+		expect(getUnreachableTasks(tasks)).toHaveLength(0);
+	});
+
+	it("should detect task directly blocked by a failed dependency", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Failed }),
+			makeTask({ id: "T2", dependencies: ["T1"] }),
+		];
+		const unreachable = getUnreachableTasks(tasks);
+		expect(unreachable).toHaveLength(1);
+		expect(unreachable[0]?.id).toBe("T2");
+	});
+
+	it("should cascade through transitive dependencies", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Failed }),
+			makeTask({ id: "T2", dependencies: ["T1"] }),
+			makeTask({ id: "T3", dependencies: ["T2"] }),
+		];
+		const unreachable = getUnreachableTasks(tasks);
+		expect(unreachable).toHaveLength(2);
+		expect(unreachable.map((t) => t.id).sort()).toEqual(["T2", "T3"]);
+	});
+
+	it("should handle mixed reachable and unreachable tasks", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Failed }),
+			makeTask({ id: "T2", status: TaskStatus.Completed }),
+			makeTask({ id: "T3", dependencies: ["T1"] }), // unreachable
+			makeTask({ id: "T4", dependencies: ["T2"] }), // reachable
+			makeTask({ id: "T5", dependencies: ["T3", "T4"] }), // unreachable (T3 blocked)
+		];
+		const unreachable = getUnreachableTasks(tasks);
+		expect(unreachable.map((t) => t.id).sort()).toEqual(["T3", "T5"]);
+	});
+
+	it("should only consider PENDING tasks as unreachable", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Failed }),
+			makeTask({ id: "T2", status: TaskStatus.Running, dependencies: ["T1"] }),
+			makeTask({ id: "T3", status: TaskStatus.Completed, dependencies: ["T1"] }),
+		];
+		// Running and Completed tasks are not considered unreachable (already in progress or done)
+		expect(getUnreachableTasks(tasks)).toHaveLength(0);
+	});
+
+	it("should return empty when all tasks are already terminal", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Completed }),
+			makeTask({ id: "T2", status: TaskStatus.Failed }),
+			makeTask({ id: "T3", status: TaskStatus.Deferred }),
+		];
+		expect(getUnreachableTasks(tasks)).toHaveLength(0);
+	});
+
+	it("should handle diamond dependency with one failed branch", () => {
+		const tasks = [
+			makeTask({ id: "T1", status: TaskStatus.Completed }),
+			makeTask({ id: "T2", status: TaskStatus.Failed }),
+			makeTask({ id: "T3", dependencies: ["T1"] }), // reachable
+			makeTask({ id: "T4", dependencies: ["T1", "T2"] }), // unreachable (T2 failed)
+		];
+		const unreachable = getUnreachableTasks(tasks);
+		expect(unreachable).toHaveLength(1);
+		expect(unreachable[0]?.id).toBe("T4");
 	});
 });
 

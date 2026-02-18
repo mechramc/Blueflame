@@ -98,32 +98,37 @@ function initDefaults(): void {
 	const complexCodeGen = anthropicKey ? { ...claudeSonnet } : { ...azure4o };
 
 	// Role-specific model routing — ACAR selects optimal model per role + tier
-	// 7 models across 2 active providers: Phi-4 (routine), gpt-4o-mini, Llama 3.3 70B (standard),
+	// 7 models across 2 active providers: Phi-4 (routine), gpt-4o-mini, Llama 3.3 70B (low-token),
 	// gpt-4o (standard+), Claude Sonnet (complex code), o3-mini (complex reasoning)
+	//
+	// NOTE: Llama-3.3-70B has 20K TPM on S0 tier — too low for Builder/Fixer which need 5K-50K tokens.
+	// Use gpt-4o-mini for Builder/Fixer Standard tier. Llama reserved for Explainer Standard (small output).
+	// Retry+fallback in chatWithRetry() provides safety net for any catalog model rate limits.
 
-	// Builder: code generation — Phi-4 for trivial, Llama 3.3 for standard, Claude/4o for complex
-	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Routine), { ...phi4 });
-	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Standard), { ...llama33 });
+	// Builder: code generation — gpt-4o-mini for routine+standard (JSON required), Claude/4o for complex
+	// NOTE: Phi-4 cannot reliably produce structured JSON output, so all JSON-requiring roles use gpt-4o-mini as floor
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Standard), { ...azureMini });
 	registry.set(registryKey(AgentRole.Builder, ExecutionTier.Complex), complexCodeGen);
 
-	// Verifier: code review — Phi-4 for routine, gpt-4o-mini for standard, o3-mini for complex (reasoning)
-	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Routine), { ...phi4 });
+	// Verifier: code review — gpt-4o-mini for routine+standard (JSON required), o3-mini for complex (reasoning)
+	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Routine), { ...azureMini });
 	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Standard), { ...azureMini });
 	registry.set(registryKey(AgentRole.Verifier, ExecutionTier.Complex), { ...o3Mini });
 
-	// Fixer: same as Builder — needs strong code generation
-	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Routine), { ...phi4 });
-	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Standard), { ...llama33 });
+	// Fixer: same as Builder — needs strong code generation + JSON output
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Routine), { ...azureMini });
+	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Standard), { ...azureMini });
 	registry.set(registryKey(AgentRole.Fixer, ExecutionTier.Complex), complexCodeGen);
 
-	// Planner: task decomposition — Phi-4 for routine, gpt-4o for standard, o3-mini for complex (reasoning)
-	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Routine), { ...phi4 });
+	// Planner: task decomposition — gpt-4o-mini for routine (JSON required), gpt-4o for standard, o3-mini for complex
+	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Routine), { ...azureMini });
 	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Standard), { ...azure4o });
 	registry.set(registryKey(AgentRole.Planner, ExecutionTier.Complex), { ...o3Mini });
 
-	// Explainer: lightweight summarization — Phi-4 for routine/standard, gpt-4o-mini for complex
+	// Explainer: lightweight summarization — Phi-4 for routine, Llama 3.3 for standard (small output fits 20K TPM), gpt-4o-mini for complex
 	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Routine), { ...phi4 });
-	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Standard), { ...phi4 });
+	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Standard), { ...llama33 });
 	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Complex), { ...azureMini });
 }
 

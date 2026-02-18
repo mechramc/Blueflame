@@ -6,8 +6,10 @@
  */
 
 import OpenAI from "openai";
+import { getAzureBaseURL, getAzureDefaultQuery, getModelParams } from "../routing/types.js";
+import { extractJson } from "../utils/json-parser.js";
+import { chatWithRetry } from "../utils/retry.js";
 import { PLANNER_SYSTEM_PROMPT } from "./prompts/planner-system.js";
-import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface PlannerConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -47,7 +49,7 @@ function createClient(config: PlannerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
+		defaultQuery: getAzureDefaultQuery(config.endpoint, config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }
@@ -65,18 +67,26 @@ export async function generatePlan(
 ): Promise<RawPlanOutput> {
 	const client = createClient(config);
 
-	const response = await client.chat.completions.create({
-		model: config.deployment,
-		messages: [
-			{ role: "system", content: PLANNER_SYSTEM_PROMPT },
-			{
-				role: "user",
-				content: `Decompose the following frozen specification into implementation tasks:\n\n${specContent}`,
-			},
-		],
-		temperature: 0.3,
-		max_tokens: 4096,
-	});
+	const response = await chatWithRetry(
+		{
+			client,
+			model: config.deployment,
+			apiKey: config.apiKey,
+			endpoint: config.endpoint,
+			apiVersion: config.apiVersion,
+		},
+		{
+			model: config.deployment,
+			messages: [
+				{ role: "system", content: PLANNER_SYSTEM_PROMPT },
+				{
+					role: "user",
+					content: `Decompose the following frozen specification into implementation tasks:\n\n${specContent}`,
+				},
+			],
+			...getModelParams(config.deployment, { maxTokens: 4096, temperature: 0.3, jsonMode: true }),
+		},
+	);
 
 	const content = response.choices[0]?.message?.content ?? "";
 	return parsePlanOutput(content);
@@ -87,30 +97,13 @@ export async function generatePlan(
  * Strips markdown fences if present and validates basic structure.
  */
 export function parsePlanOutput(raw: string): RawPlanOutput {
-	const cleaned = cleanJsonOutput(raw);
-	const parsed = JSON.parse(cleaned) as RawPlanOutput;
+	const parsed = extractJson<RawPlanOutput>(raw);
 
 	if (!Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
 		throw new Error("Plan must contain at least one task");
 	}
 
 	return parsed;
-}
-
-/**
- * Strips markdown code fences from LLM output.
- */
-function cleanJsonOutput(raw: string): string {
-	let cleaned = raw.trim();
-	if (cleaned.startsWith("```json")) {
-		cleaned = cleaned.slice(7);
-	} else if (cleaned.startsWith("```")) {
-		cleaned = cleaned.slice(3);
-	}
-	if (cleaned.endsWith("```")) {
-		cleaned = cleaned.slice(0, -3);
-	}
-	return cleaned.trim();
 }
 
 /**

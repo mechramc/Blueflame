@@ -6,8 +6,10 @@
  */
 
 import OpenAI from "openai";
+import { getAzureBaseURL, getAzureDefaultQuery, getModelParams } from "../routing/types.js";
+import { extractJson } from "../utils/json-parser.js";
+import { chatWithRetry } from "../utils/retry.js";
 import { BUILDER_SYSTEM_PROMPT } from "./prompts/builder-system.js";
-import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface BuilderConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -66,7 +68,7 @@ function createClient(config: BuilderConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
+		defaultQuery: getAzureDefaultQuery(config.endpoint, config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }
@@ -111,15 +113,23 @@ export async function generateCode(
 	const client = createClient(config);
 	const userPrompt = buildBuilderPrompt(input);
 
-	const response = await client.chat.completions.create({
-		model: config.deployment,
-		messages: [
-			{ role: "system", content: BUILDER_SYSTEM_PROMPT },
-			{ role: "user", content: userPrompt },
-		],
-		temperature: 0.2,
-		max_tokens: 8192,
-	});
+	const response = await chatWithRetry(
+		{
+			client,
+			model: config.deployment,
+			apiKey: config.apiKey,
+			endpoint: config.endpoint,
+			apiVersion: config.apiVersion,
+		},
+		{
+			model: config.deployment,
+			messages: [
+				{ role: "system", content: BUILDER_SYSTEM_PROMPT },
+				{ role: "user", content: userPrompt },
+			],
+			...getModelParams(config.deployment, { maxTokens: 8192, temperature: 0.2, jsonMode: true }),
+		},
+	);
 
 	const content = response.choices[0]?.message?.content ?? "";
 	return parseBuilderOutput(content);
@@ -129,8 +139,7 @@ export async function generateCode(
  * Parses the raw LLM output into a structured BuilderResult.
  */
 export function parseBuilderOutput(raw: string): BuilderResult {
-	const cleaned = cleanJsonOutput(raw);
-	const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+	const parsed = extractJson<Record<string, unknown>>(raw);
 
 	// Check for error response
 	if ("error" in parsed && typeof parsed.error === "string") {
@@ -170,20 +179,4 @@ export function parseBuilderOutput(raw: string): BuilderResult {
 			notes: String(parsed.notes ?? ""),
 		},
 	};
-}
-
-/**
- * Strips markdown code fences from LLM output.
- */
-function cleanJsonOutput(raw: string): string {
-	let cleaned = raw.trim();
-	if (cleaned.startsWith("```json")) {
-		cleaned = cleaned.slice(7);
-	} else if (cleaned.startsWith("```")) {
-		cleaned = cleaned.slice(3);
-	}
-	if (cleaned.endsWith("```")) {
-		cleaned = cleaned.slice(0, -3);
-	}
-	return cleaned.trim();
 }

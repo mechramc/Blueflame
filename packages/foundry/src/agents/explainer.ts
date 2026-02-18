@@ -6,8 +6,10 @@
  */
 
 import OpenAI from "openai";
+import { getAzureBaseURL, getAzureDefaultQuery, getModelParams } from "../routing/types.js";
+import { extractJson } from "../utils/json-parser.js";
+import { chatWithRetry } from "../utils/retry.js";
 import { EXPLAINER_SYSTEM_PROMPT } from "./prompts/explainer-system.js";
-import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface ExplainerConfig {
 	/** Azure OpenAI or Foundry endpoint */
@@ -75,7 +77,7 @@ function createClient(config: ExplainerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
+		defaultQuery: getAzureDefaultQuery(config.endpoint, config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }
@@ -123,15 +125,23 @@ export async function generateExplanation(
 	const client = createClient(config);
 	const userPrompt = buildExplainerPrompt(input);
 
-	const response = await client.chat.completions.create({
-		model: config.deployment,
-		messages: [
-			{ role: "system", content: EXPLAINER_SYSTEM_PROMPT },
-			{ role: "user", content: userPrompt },
-		],
-		temperature: 0.3,
-		max_tokens: 4096,
-	});
+	const response = await chatWithRetry(
+		{
+			client,
+			model: config.deployment,
+			apiKey: config.apiKey,
+			endpoint: config.endpoint,
+			apiVersion: config.apiVersion,
+		},
+		{
+			model: config.deployment,
+			messages: [
+				{ role: "system", content: EXPLAINER_SYSTEM_PROMPT },
+				{ role: "user", content: userPrompt },
+			],
+			...getModelParams(config.deployment, { maxTokens: 4096, temperature: 0.3, jsonMode: true }),
+		},
+	);
 
 	const content = response.choices[0]?.message?.content ?? "";
 	return parseExplainerOutput(content);
@@ -141,8 +151,7 @@ export async function generateExplanation(
  * Parses the raw LLM output into an ExplainerResult.
  */
 export function parseExplainerOutput(raw: string): ExplainerResult {
-	const cleaned = cleanJsonOutput(raw);
-	const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+	const parsed = extractJson<Record<string, unknown>>(raw);
 
 	if (!parsed.prTitle || !parsed.prBody) {
 		return { ok: false, error: "Explainer output must include prTitle and prBody" };
@@ -182,20 +191,4 @@ function toStatus(s: string): "SATISFIED" | "NOT_SATISFIED" | "UNCERTAIN" {
 	if (s === "SATISFIED") return "SATISFIED";
 	if (s === "NOT_SATISFIED") return "NOT_SATISFIED";
 	return "UNCERTAIN";
-}
-
-/**
- * Strips markdown code fences from LLM output.
- */
-function cleanJsonOutput(raw: string): string {
-	let cleaned = raw.trim();
-	if (cleaned.startsWith("```json")) {
-		cleaned = cleaned.slice(7);
-	} else if (cleaned.startsWith("```")) {
-		cleaned = cleaned.slice(3);
-	}
-	if (cleaned.endsWith("```")) {
-		cleaned = cleaned.slice(0, -3);
-	}
-	return cleaned.trim();
 }

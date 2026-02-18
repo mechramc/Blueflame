@@ -223,12 +223,23 @@
 | Biome lint CI fix (diagnostic-level=error) | CI/CD | P0 | **DONE** |
 | Catalog model JSON parsing (Phi-4 returns markdown) | S12 | P0 | **KNOWN ISSUE** |
 
+### Session 19 — Orchestrator Workflow Fixes + Model Routing + UX
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Auto-approve fixer fixes (remove human approval gate) | S7 | P0 | **DONE** |
+| Unreachable task deferral (getUnreachableTasks + DAG cascade) | S7 | P0 | **DONE** |
+| Model escalation on retries (gpt-4o-mini for fixer/verifier) | S12 | P0 | **DONE** |
+| providerConfig.model mismatch fix | S12 | P0 | **DONE** |
+| Phi-4 → gpt-4o-mini for JSON-requiring roles (Builder, Verifier, Fixer, Planner) | S12 | P0 | **DONE** |
+| Healing engine dedup (one healing project per source) | S7 | P0 | **DONE** |
+| Dashboard scrollbar fix (overflow-y-auto on main) | UI | P0 | **DONE** |
+| getUnreachableTasks unit tests (7 tests) | Tests | P1 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
 | S16-004: Azure SignalR migration | P1 | Deferred (Socket.IO adequate) |
 | S16-005: Application Insights SDK | P1 | Deferred (OTel spans cover this) |
-| Fix catalog model response parsing (markdown→JSON) | P0 | Not started |
 | End-to-end testing (Spec→Plan→Execute flow) | P0 | In progress |
 | Demo recording (7 workflows) | P0 | Not started |
 | Submission package | P0 | Not started |
@@ -247,9 +258,10 @@
 - **Documentation**: README, STATUS, CHECKPOINT, PRD, spec, CHANGELOG updated
 - **Demo/Submit**: 0/2
 - **Session 18 MS Visibility**: 6/6 (services strip, infra selection, Azure branding, toasts, usage panel, landing page)
-- **Session 18b Foundry Multi-Model**: 6/7 (deploy, registry, lazy init, api-version, agents, lint — 1 known issue: catalog JSON parsing)
-- **Grand Total**: 125/131 complete (2 deferred, 3 demo remaining, 1 known issue)
-- **Critical path**: Fix catalog model JSON parsing → E2E testing → demo recording → submission package
+- **Session 18b Foundry Multi-Model**: 6/6 (deploy, registry, lazy init, api-version, agents, lint — catalog JSON parsing RESOLVED in Session 19)
+- **Session 19 Orchestrator Fixes**: 8/8 (auto-approve fixer, unreachable deferral, model escalation, providerConfig fix, routing fix, healing dedup, scrollbar, tests)
+- **Grand Total**: 133/136 complete (2 deferred, 3 demo remaining)
+- **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
 
@@ -286,8 +298,8 @@
 | 2026-02-12 | Defer AppInsights SDK (S16-005) | OTel spans already provide instrumentation |
 
 ## Blockers
-- **Catalog model JSON parsing**: Phi-4 (and likely Llama) returns markdown instead of JSON — `JSON.parse()` fails with "Unexpected token '#'". Need to add structured output instructions or response format enforcement for catalog models.
-- **E2E flow partially tested**: User tested Spec→Plan→Execute and SCR flows — found and fixed 11 UX/backend bugs in Session 14
+- **None** — All known blockers resolved
+- **E2E flow partially tested**: User tested Spec→Plan→Execute and SCR flows — found and fixed 11 UX/backend bugs in Session 14, orchestrator fixes in Session 19
 - **Demo recording not started**: All features implemented + polished; need to record 7 workflow demos
 
 ## Risks
@@ -301,9 +313,9 @@
 | Scope | Count |
 |-------|-------|
 | apps/web | 128 |
-| apps/api | 234 |
-| packages/foundry | 150 |
+| apps/api | 242 |
+| packages/foundry | 170 |
 | packages/cosmos | 44 |
 | packages/github-app | 24 |
 | packages/shared | 28 |
-| **Total** | **540** (was 453 → +87 in session 8) |
+| **Total** | **560** (was 540 → +20 in session 19) |
