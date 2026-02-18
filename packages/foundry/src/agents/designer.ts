@@ -8,7 +8,7 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { DESIGNER_SYSTEM_PROMPT } from "./prompts/designer-system.js";
-import { getApiVersion, getAzureBaseURL } from "../routing/types.js";
+import { getAzureBaseURL, getAzureDefaultQuery } from "../routing/types.js";
 
 export interface DesignerConfig {
 	/** Azure OpenAI or Foundry endpoint (e.g., https://<resource>.openai.azure.com) */
@@ -37,7 +37,7 @@ function createClient(config: DesignerConfig): OpenAI {
 	return new OpenAI({
 		apiKey: config.apiKey,
 		baseURL: getAzureBaseURL(config.endpoint, config.deployment),
-		defaultQuery: { "api-version": getApiVersion(config.deployment, config.apiVersion) },
+		defaultQuery: getAzureDefaultQuery(config.deployment, config.apiVersion),
 		defaultHeaders: { "api-key": config.apiKey },
 	});
 }

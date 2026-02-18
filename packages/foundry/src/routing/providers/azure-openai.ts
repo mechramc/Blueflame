@@ -11,8 +11,8 @@ import {
 	type ChatResponse,
 	type FoundryModelClient,
 	type ProviderConfig,
-	getApiVersion,
 	getAzureBaseURL,
+	getAzureDefaultQuery,
 } from "../types.js";
 
 export class AzureOpenAIClient implements FoundryModelClient {
@@ -24,7 +24,7 @@ export class AzureOpenAIClient implements FoundryModelClient {
 		this.client = new OpenAI({
 			apiKey: config.apiKey,
 			baseURL: getAzureBaseURL(config.endpoint, config.model),
-			defaultQuery: { "api-version": getApiVersion(config.model, config.apiVersion) },
+			defaultQuery: getAzureDefaultQuery(config.model, config.apiVersion),
 			defaultHeaders: { "api-key": config.apiKey },
 		});
 	}

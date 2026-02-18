@@ -96,21 +96,28 @@ export const FOUNDRY_INFERENCE_API_VERSION = "2024-05-01-preview";
  * Returns the Azure base URL for a model deployment.
  *
  * - OpenAI models (gpt-4o, o3-mini): {endpoint}/openai/deployments/{deployment}
- * - Catalog models (Phi-4, Llama): {endpoint}/deployments/{deployment}
+ * - Catalog models (Phi-4, Llama): {resource-endpoint}/openai/v1
+ *   (model name is sent in the request body via OpenAI SDK)
  */
 export function getAzureBaseURL(endpoint: string, deployment: string): string {
 	if (isOpenAIModel(deployment)) {
 		return `${endpoint}/openai/deployments/${deployment}`;
 	}
-	return `${endpoint}/deployments/${deployment}`;
+	// Catalog models use {resource-endpoint}/openai/v1 — strip /api/projects/* if present
+	const resourceEndpoint = endpoint.replace(/\/api\/projects\/[^/]+\/?$/, "");
+	return `${resourceEndpoint}/openai/v1`;
 }
 
 /**
- * Returns the correct api-version for a model deployment.
+ * Returns the correct defaultQuery for an Azure model deployment.
+ * OpenAI models need api-version; catalog models on /openai/v1 don't.
  */
-export function getApiVersion(deployment: string, configVersion?: string): string {
+export function getAzureDefaultQuery(
+	deployment: string,
+	configVersion?: string,
+): Record<string, string> {
 	if (isOpenAIModel(deployment)) {
-		return configVersion ?? OPENAI_API_VERSION;
+		return { "api-version": configVersion ?? OPENAI_API_VERSION };
 	}
-	return FOUNDRY_INFERENCE_API_VERSION;
+	return {};
 }

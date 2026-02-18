@@ -99,7 +99,7 @@ export {
 	ExecutionTier,
 	ProviderType,
 	getAzureBaseURL,
-	getApiVersion,
+	getAzureDefaultQuery,
 	isOpenAIModel,
 } from "./routing/types.js";
 
