@@ -4,6 +4,10 @@
  * Defaults are sensible for Azure OpenAI + multi-provider routing.
  * Override via env vars: SIGMA_ROUTER_<ROLE>_<TIER>_MODEL (e.g., SIGMA_ROUTER_BUILDER_COMPLEX_MODEL)
  * or at runtime via setProviderConfig().
+ *
+ * IMPORTANT: Initialization is lazy (on first access) so that dotenv has loaded
+ * before we read process.env. ESM imports hoist above runtime code, so module-load
+ * initialization would capture empty env vars.
  */
 
 import { AgentRole } from "@blueflame/shared";
@@ -18,6 +22,16 @@ function registryKey(role: AgentRole, tier: ExecutionTier): string {
 /** Default provider configs per (role, tier) */
 const registry = new Map<string, ProviderConfig>();
 
+/** Track whether defaults have been initialized */
+let initialized = false;
+
+/** Ensure registry is initialized (lazy — waits for dotenv) */
+function ensureInitialized(): void {
+	if (initialized) return;
+	initialized = true;
+	initDefaults();
+}
+
 /** Build the default registry */
 function initDefaults(): void {
 	const azureEndpoint = process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "";
@@ -26,6 +40,12 @@ function initDefaults(): void {
 
 	// If FOUNDRY_DEPLOYMENT is set, use it for all Azure tiers (single-deployment setup)
 	const foundryDeployment = process.env.FOUNDRY_DEPLOYMENT;
+
+	console.log(
+		`[ModelRegistry] Initializing with endpoint=${azureEndpoint ? azureEndpoint.substring(0, 40) + "..." : "(empty)"}, ` +
+			`key=${azureKey ? "***" + azureKey.slice(-4) : "(empty)"}, ` +
+			`anthropic=${anthropicKey ? "set" : "not set"}`,
+	);
 
 	const azureMini: ProviderConfig = {
 		provider: ProviderType.AzureOpenAI,
@@ -78,7 +98,7 @@ function initDefaults(): void {
 	const complexCodeGen = anthropicKey ? { ...claudeSonnet } : { ...azure4o };
 
 	// Role-specific model routing — ACAR selects optimal model per role + tier
-	// 8 models across 5 providers: Phi-4 (nano), gpt-4o-mini (routine), Llama 3.3 70B (standard),
+	// 7 models across 2 active providers: Phi-4 (routine), gpt-4o-mini, Llama 3.3 70B (standard),
 	// gpt-4o (standard+), Claude Sonnet (complex code), o3-mini (complex reasoning)
 
 	// Builder: code generation — Phi-4 for trivial, Llama 3.3 for standard, Claude/4o for complex
@@ -106,9 +126,6 @@ function initDefaults(): void {
 	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Standard), { ...phi4 });
 	registry.set(registryKey(AgentRole.Explainer, ExecutionTier.Complex), { ...azureMini });
 }
-
-// Initialize on module load
-initDefaults();
 
 /**
  * Apply environment variable overrides.
@@ -146,6 +163,8 @@ function applyEnvOverrides(role: AgentRole, tier: ExecutionTier): ProviderConfig
  * Checks env overrides first, then registry, then falls back to Standard tier.
  */
 export function getProviderConfig(role: AgentRole, tier: ExecutionTier): ProviderConfig {
+	ensureInitialized();
+
 	// Check env override first
 	const envOverride = applyEnvOverrides(role, tier);
 	if (envOverride) return envOverride;
@@ -176,6 +195,7 @@ export function setProviderConfig(
 	tier: ExecutionTier,
 	config: ProviderConfig,
 ): void {
+	ensureInitialized();
 	registry.set(registryKey(role, tier), config);
 }
 
@@ -184,5 +204,6 @@ export function setProviderConfig(
  */
 export function resetRegistry(): void {
 	registry.clear();
-	initDefaults();
+	initialized = false;
+	ensureInitialized();
 }
