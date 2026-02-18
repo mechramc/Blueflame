@@ -1,7 +1,8 @@
 "use client";
 
-import { apiPost } from "@/lib/api-client";
-import type { SpecStatus } from "@blueflame/shared";
+import { DAGProgress } from "@/components/dashboard/DAGProgress";
+import { apiGet, apiPost } from "@/lib/api-client";
+import type { PlanTask, SpecStatus, TaskPlan } from "@blueflame/shared";
 import { useCallback, useEffect, useState } from "react";
 import { RunHistory } from "./RunHistory";
 import { WorkflowProgressBar } from "./WorkflowProgressBar";
@@ -11,6 +12,7 @@ interface ValidationPanelProps {
 	specContent: string;
 	status: SpecStatus;
 	projectId: string;
+	runId: string | null;
 }
 
 interface SchemaCheck {
@@ -49,9 +51,29 @@ function CheckIcon({ pass }: { pass: boolean }) {
 	);
 }
 
-export function ValidationPanel({ specId, specContent, status, projectId }: ValidationPanelProps) {
+function sigmaColor(sigma: number): string {
+	if (sigma < 0.3) return "text-emerald-400";
+	if (sigma <= 0.7) return "text-blue-400";
+	return "text-purple-400";
+}
+
+function sigmaLabel(sigma: number): string {
+	if (sigma < 0.3) return "routine";
+	if (sigma <= 0.7) return "standard";
+	return "complex";
+}
+
+export function ValidationPanel({
+	specId,
+	specContent,
+	status,
+	projectId,
+	runId,
+}: ValidationPanelProps) {
 	const [validation, setValidation] = useState<ValidationResult | null>(null);
 	const [isValidating, setIsValidating] = useState(false);
+	const [plan, setPlan] = useState<TaskPlan | null>(null);
+	const [planLoading, setPlanLoading] = useState(false);
 
 	const runValidation = useCallback(async () => {
 		if (!specId || !specContent.trim()) return;
@@ -69,6 +91,39 @@ export function ValidationPanel({ specId, specContent, status, projectId }: Vali
 			setIsValidating(false);
 		}
 	}, [specId, specContent]);
+
+	// Fetch plan when runId changes
+	useEffect(() => {
+		if (!runId) {
+			setPlan(null);
+			return;
+		}
+
+		let cancelled = false;
+		setPlanLoading(true);
+
+		async function fetchPlan() {
+			try {
+				const data = await apiGet<{ plan: TaskPlan }>(`/api/plans/${runId}`);
+				if (!cancelled) {
+					setPlan(data.plan);
+				}
+			} catch {
+				if (!cancelled) {
+					setPlan(null);
+				}
+			} finally {
+				if (!cancelled) {
+					setPlanLoading(false);
+				}
+			}
+		}
+		fetchPlan();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [runId]);
 
 	// Auto-validate on content change (debounced)
 	// biome-ignore lint/correctness/useExhaustiveDependencies: specContent triggers runValidation refresh via useCallback
@@ -176,6 +231,80 @@ export function ValidationPanel({ specId, specContent, status, projectId }: Vali
 								<span className="text-[--text-muted]">Model tier</span>
 								<span className="text-[--text-secondary]">{validation.budget.modelTier}</span>
 							</div>
+						</div>
+					</div>
+				)}
+
+				{/* Plan Preview */}
+				{planLoading && (
+					<div className="text-xs text-[--accent] animate-pulse">Loading plan...</div>
+				)}
+				{plan && plan.tasks.length > 0 && (
+					<div>
+						<div className="flex items-center gap-2 mb-2">
+							<span className="text-xs text-purple-400">&#9670;</span>
+							<span className="text-xs font-medium text-[--text-primary]">Plan Preview</span>
+						</div>
+
+						{/* Summary */}
+						<div className="ml-5 mb-3 space-y-1">
+							<div className="flex justify-between text-[10px]">
+								<span className="text-[--text-muted]">Tasks</span>
+								<span className="text-[--text-primary] font-mono">{plan.tasks.length}</span>
+							</div>
+							<div className="flex justify-between text-[10px]">
+								<span className="text-[--text-muted]">Estimated cost</span>
+								<span className="text-emerald-400 font-mono">
+									${plan.totalEstimatedCost.toFixed(2)}
+								</span>
+							</div>
+							<div className="flex justify-between text-[10px]">
+								<span className="text-[--text-muted]">Estimated tokens</span>
+								<span className="text-[--text-secondary] font-mono">
+									{plan.totalEstimatedTokens.toLocaleString()}
+								</span>
+							</div>
+						</div>
+
+						{/* Mini DAG */}
+						<div className="mb-3">
+							<DAGProgress tasks={plan.tasks} />
+						</div>
+
+						{/* Task list */}
+						<div className="space-y-1.5">
+							{plan.tasks.map((task: PlanTask) => (
+								<div
+									key={task.id}
+									className="rounded border border-[--border] bg-[--bg-secondary] px-2 py-1.5"
+								>
+									<div className="flex items-center justify-between">
+										<span className="text-[10px] font-mono text-[--text-primary]">{task.id}</span>
+										<span
+											className={`text-[10px] font-mono font-medium ${sigmaColor(task.sigmaEstimate)}`}
+										>
+											{"\u03C3"}
+											{task.sigmaEstimate.toFixed(2)} {sigmaLabel(task.sigmaEstimate)}
+										</span>
+									</div>
+									<p className="text-[10px] text-[--text-muted] mt-0.5 line-clamp-2">
+										{task.description}
+									</p>
+									<div className="flex items-center gap-2 mt-1">
+										<span className="text-[9px] px-1 py-0.5 rounded bg-[--bg-tertiary] text-[--text-secondary]">
+											{task.agentRole}
+										</span>
+										<span className="text-[9px] text-emerald-400/70 font-mono">
+											${task.estimatedCost.toFixed(2)}
+										</span>
+										{task.dependencies.length > 0 && (
+											<span className="text-[9px] text-[--text-muted]">
+												dep: {task.dependencies.join(", ")}
+											</span>
+										)}
+									</div>
+								</div>
+							))}
 						</div>
 					</div>
 				)}

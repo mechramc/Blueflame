@@ -18,6 +18,7 @@ export default function ProjectPage() {
 	const [specId, setSpecId] = useState<string | null>(null);
 	const [specContent, setSpecContent] = useState("");
 	const [specStatus, setSpecStatus] = useState<SpecStatus>(SpecStatus.Draft);
+	const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
 	return (
 		<div className="h-[calc(100vh-44px)] flex">
@@ -40,6 +41,7 @@ export default function ProjectPage() {
 						setSpecContent(content);
 						setSpecStatus(status);
 					}}
+					onRunIdChange={setActiveRunId}
 				/>
 			</div>
 
@@ -50,6 +52,7 @@ export default function ProjectPage() {
 					specContent={specContent}
 					status={specStatus}
 					projectId={projectId}
+					runId={activeRunId}
 				/>
 			</div>
 		</div>

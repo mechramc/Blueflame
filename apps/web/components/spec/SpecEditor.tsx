@@ -21,6 +21,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 interface SpecEditorProps {
 	projectId: string;
 	onSpecChange?: (specId: string | null, content: string, status: SpecStatus) => void;
+	onRunIdChange?: (runId: string | null) => void;
 }
 
 interface SpecData {
@@ -44,7 +45,7 @@ risks: []
 definition_of_done: ""
 `;
 
-export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
+export function SpecEditor({ projectId, onSpecChange, onRunIdChange }: SpecEditorProps) {
 	const { showToast } = useAzureToast();
 	const [content, setContent] = useState(PLACEHOLDER_YAML);
 	const [status, setStatus] = useState<SpecStatus>(SpecStatus.Draft);
@@ -163,6 +164,7 @@ export function SpecEditor({ projectId, onSpecChange }: SpecEditorProps) {
 					onAccept={handleAccept}
 					onFreeze={handleFreeze}
 					onGenerateSpec={handleGenerateSpec}
+					onRunIdChange={onRunIdChange}
 				/>
 			</div>
 

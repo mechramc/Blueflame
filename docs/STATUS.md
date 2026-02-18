@@ -235,6 +235,16 @@
 | Dashboard scrollbar fix (overflow-y-auto on main) | UI | P0 | **DONE** |
 | getUnreachableTasks unit tests (7 tests) | Tests | P1 | **DONE** |
 
+### Session 20 — Plan Preview in ValidationPanel
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Lift runId from SpecActions → ProjectPage → ValidationPanel | UI | P0 | **DONE** |
+| Fetch plan via GET /api/plans/:runId in ValidationPanel | UI | P0 | **DONE** |
+| Plan summary (task count, cost, tokens) | UI | P0 | **DONE** |
+| Mini DAG (reuses DAGProgress component) | UI | P0 | **DONE** |
+| Task list with σ-estimates, agent roles, dependencies | UI | P0 | **DONE** |
+| σ color-coding (green routine / blue standard / purple complex) | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -260,7 +270,8 @@
 - **Session 18 MS Visibility**: 6/6 (services strip, infra selection, Azure branding, toasts, usage panel, landing page)
 - **Session 18b Foundry Multi-Model**: 6/6 (deploy, registry, lazy init, api-version, agents, lint — catalog JSON parsing RESOLVED in Session 19)
 - **Session 19 Orchestrator Fixes**: 8/8 (auto-approve fixer, unreachable deferral, model escalation, providerConfig fix, routing fix, healing dedup, scrollbar, tests)
-- **Grand Total**: 133/136 complete (2 deferred, 3 demo remaining)
+- **Session 20 Plan Preview**: 6/6 (state lifting, plan fetch, summary, mini DAG, task list, σ color-coding)
+- **Grand Total**: 139/142 complete (2 deferred, 3 demo remaining)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview

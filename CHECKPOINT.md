@@ -9,11 +9,11 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-18
-- **Session**: 19
+- **Session**: 20
 
 ## Current State
-- **Phase**: Demo Preparation — All orchestrator bugs fixed, model routing stabilized, ready for E2E testing + demo
-- **Last completed task**: Session 19 orchestrator workflow fixes + model routing + healing dedup + scrollbar fix
+- **Phase**: Demo Preparation — Plan preview added to ValidationPanel, ready for E2E testing + demo
+- **Last completed task**: Session 20 — Plan preview in ValidationPanel (state lifting, plan fetch, DAG, task list, σ-estimates)
 - **Next task**: E2E test all flows → demo recording → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
@@ -23,7 +23,28 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–19)
+## What Just Happened (Sessions 10–20)
+
+### Session 20: Plan Preview in ValidationPanel
+
+**Problem**: After clicking "Generate Plan", the 3rd pane (ValidationPanel) showed validation checks and run history but zero plan data — no tasks, no DAG, no σ-estimates. The user saw only "Plan ready" text in the SpecActions bar. This was part of the spec but was missed because SpecActions managed `runId` internally with no state bridge to ValidationPanel.
+
+**Root cause**: Sibling component data isolation. SpecActions and ValidationPanel were built in separate sessions. Each worked in isolation, but `runId` was never lifted to the parent `ProjectPage` where it could be shared.
+
+**Fix (4 files):**
+1. `apps/web/app/project/[projectId]/page.tsx` — Added `activeRunId` state, passed to SpecEditor and ValidationPanel
+2. `apps/web/components/spec/SpecEditor.tsx` — Threaded `onRunIdChange` callback to SpecActions
+3. `apps/web/components/spec/SpecActions.tsx` — Emits `onRunIdChange` on plan generation, existing run detection, and reset
+4. `apps/web/components/spec/ValidationPanel.tsx` — New PlanPreview section:
+   - Fetches plan via `GET /api/plans/:runId`
+   - Summary: task count, estimated cost, estimated tokens
+   - Mini DAG using existing `DAGProgress` component
+   - Task list: ID, description, σ-estimate (color-coded), agent role, cost, dependencies
+   - σ color-coding: green (< 0.3 routine), blue (0.3–0.7 standard), purple (> 0.7 complex)
+
+**Lesson learned**: Added to MEMORY.md — after building any component that produces state, always ask "which sibling component needs this data?"
+
+**Tests**: All 128 web tests pass. Typecheck clean. No new lint errors.
 
 ### Session 19: Orchestrator Workflow Fixes + Model Routing Stabilization
 
@@ -311,6 +332,7 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 18**: Microsoft visibility features (6 features for hackathon wow factor)
 - **Session 18b**: Azure AI Foundry multi-model routing (7 models, dual API pattern, lazy init fix)
 - **Session 19**: Orchestrator workflow fixes (5 bugs), model routing stabilization, healing dedup, scrollbar fix
+- **Session 20**: Plan preview in ValidationPanel (state lifting, DAG, task list, σ-estimates)
 
 ## What To Pick Up Next
 

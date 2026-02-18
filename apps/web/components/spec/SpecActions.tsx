@@ -32,6 +32,7 @@ interface SpecActionsProps {
 	onAccept: () => void;
 	onFreeze: () => void;
 	onGenerateSpec: () => void;
+	onRunIdChange?: (runId: string | null) => void;
 	disabled?: boolean;
 }
 
@@ -42,6 +43,7 @@ export function SpecActions({
 	onAccept,
 	onFreeze,
 	onGenerateSpec,
+	onRunIdChange,
 	disabled = false,
 }: SpecActionsProps) {
 	const router = useRouter();
@@ -53,6 +55,7 @@ export function SpecActions({
 	const [loadingState, setLoadingState] = useState(true);
 
 	// On mount: check for existing runs for this spec
+	// biome-ignore lint/correctness/useExhaustiveDependencies: onRunIdChange is a stable parent callback
 	useEffect(() => {
 		if (!specId || status !== SpecStatus.Frozen) {
 			setLoadingState(false);
@@ -68,6 +71,7 @@ export function SpecActions({
 				if (latest) {
 					setLatestRun(latest);
 					setRunId(latest.runId);
+					onRunIdChange?.(latest.runId);
 
 					const s = latest.status;
 					if (s === "COMPLETED") {
@@ -112,6 +116,7 @@ export function SpecActions({
 				800,
 			);
 			setExecStep("planned");
+			onRunIdChange?.(newRunId);
 		} catch (err) {
 			console.error("[SpecActions] Plan generation error:", err);
 			setLaunchError(err instanceof Error ? err.message : "Failed to generate plan");
@@ -164,7 +169,8 @@ export function SpecActions({
 		setRunId(null);
 		setLatestRun(null);
 		setLaunchError(null);
-	}, []);
+		onRunIdChange?.(null);
+	}, [onRunIdChange]);
 
 	const handleViewRun = useCallback(() => {
 		if (runId) {
