@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**Demo Preparation** — All features implemented. Microsoft service visibility added throughout all workflows (toast notifications, service strip, provisioning animation, Azure branding on agents/DAG). Full build passes (6/6), 128 web tests pass. Next: E2E testing and demo recording.
+**Live Deployment** — All features deployed to Azure. API and Web container apps running on Azure Container Apps with dev mode auth (no Entra ID required). Cosmos DB connected, Azure OpenAI configured. Live URLs accessible by hackathon judges. Next: demo recording + submission.
 
 ## Sprint Progress
 
@@ -269,6 +269,16 @@
 | POST /api/remediation/analyze-failure endpoint | S11 | P0 | **DONE** |
 | Frontend auto-trigger analysis on failure select (no rootCause → call API) | UI | P0 | **DONE** |
 
+### Session 23 — Azure Deployment (Live for Judges)
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| API server bind to 0.0.0.0 (Container Apps ingress) | API | P0 | **DONE** |
+| Web Dockerfile: NEXT_PUBLIC_API_URL build arg | CI/CD | P0 | **DONE** |
+| Docker build + push to ACR (both images) | CI/CD | P0 | **DONE** |
+| Deploy API container app (remove Entra, add OpenAI creds) | Infra | P0 | **DONE** |
+| Deploy Web container app (NEXT_PUBLIC_API_URL baked) | Infra | P0 | **DONE** |
+| Smoke test: health, auth, projects, web render | QA | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -297,7 +307,8 @@
 - **Session 20 Plan Preview + Admin Override + Failure Intelligence**: 14/14
 - **Session 21 Demo Polish**: 5/5 (Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos fallback, Budget auto-init)
 - **Session 22 On-Demand RCA**: 3/3 (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
-- **Grand Total**: 147/150 complete (2 deferred, 3 demo remaining)
+- **Session 23 Azure Deployment**: 6/6 (0.0.0.0 bind, Dockerfile build arg, Docker build+push, API deploy, Web deploy, smoke test)
+- **Grand Total**: 153/156 complete (2 deferred, 3 demo remaining)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview

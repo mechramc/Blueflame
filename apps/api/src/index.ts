@@ -108,8 +108,8 @@ process.on("uncaughtException", (err) => {
 import { loadAuditLogFromCosmos } from "./services/audit-logger.js";
 import { loadCostEntriesFromCosmos } from "./services/cost-tracker.js";
 
-httpServer.listen(PORT, () => {
-	console.log(`Blueflame API listening on http://localhost:${PORT}`);
+httpServer.listen(Number(PORT), "0.0.0.0", () => {
+	console.log(`Blueflame API listening on http://0.0.0.0:${PORT}`);
 	// Fire-and-forget: warm caches from Cosmos
 	loadAuditLogFromCosmos().catch((err) => console.warn("[Startup] Audit log load failed:", err));
 	loadCostEntriesFromCosmos("global").catch((err) =>

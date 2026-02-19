@@ -23,6 +23,10 @@ COPY apps/api/src/ apps/api/src/
 COPY apps/api/tsconfig.json apps/api/
 COPY apps/web/ apps/web/
 
+# Accept NEXT_PUBLIC_* vars at build time (baked into the Next.js bundle)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build (turbo handles dependency order: shared → web)
 RUN npx turbo build --filter=@blueflame/web
 

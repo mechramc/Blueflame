@@ -9,12 +9,12 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-19
-- **Session**: 22
+- **Session**: 23
 
 ## Current State
-- **Phase**: Demo Preparation — On-demand root cause analysis fixed, ready for E2E testing + demo recording
-- **Last completed task**: Session 22 — On-demand root cause analysis (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
-- **Next task**: E2E test all flows → demo recording → submission package
+- **Phase**: Live Deployment — App deployed to Azure, accessible by hackathon judges
+- **Last completed task**: Session 23 — Azure deployment (API bind 0.0.0.0, Dockerfile build arg, Docker build+push, container app deploy, smoke test verified)
+- **Next task**: Demo recording (7 workflows) → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
 - **CI/CD**: All changes committed and pushed
@@ -23,7 +23,30 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–22)
+## What Just Happened (Sessions 10–23)
+
+### Session 23: Azure Deployment (Live for Judges)
+
+**Goal**: Deploy Blueflame to Azure so hackathon judges can access it via public URLs without Microsoft accounts.
+
+**Changes (2 files):**
+1. `apps/api/src/index.ts` — Changed `httpServer.listen(PORT)` → `httpServer.listen(Number(PORT), "0.0.0.0")` so Azure Container Apps ingress can reach the server.
+2. `apps/web/Dockerfile` — Added `ARG NEXT_PUBLIC_API_URL` + `ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL` before build step. Next.js `NEXT_PUBLIC_*` vars are baked at build time, not runtime — without this the web app calls `localhost:4000`.
+
+**Deployment steps:**
+- Built + pushed both Docker images to `blueflamecr.azurecr.io` (API + Web)
+- Updated API container app: added Azure OpenAI creds, **removed `ENTRA_TENANT_ID` and `ENTRA_CLIENT_ID`** to keep dev mode auth active
+- Updated Web container app: `NEXT_PUBLIC_API_URL` set to API FQDN, `HOSTNAME=0.0.0.0`
+
+**Smoke test results:**
+- API `/health` → 200 OK: `cosmos: true`, `devMode: true`, `telemetry: true`
+- Auth `/api/auth/me` → returns `Blueflame_Admin` dev user (no login required)
+- Projects `/api/projects` → 6 projects with real data from Cosmos DB
+- Web → Full dashboard renders with dev mode banner, 6 Azure services connected
+
+**Live URLs:**
+- API: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
+- Web: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 
 ### Session 22: On-Demand Root Cause Analysis
 
@@ -408,13 +431,14 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 20**: Plan preview in ValidationPanel (state lifting, DAG, task list, σ-estimates)
 - **Session 21**: Demo polish (5 issues: Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos, Budget auto-init)
 - **Session 22**: On-demand root cause analysis (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
+- **Session 23**: Azure deployment — live for hackathon judges (0.0.0.0 bind, Dockerfile build arg, Docker push, container deploy, Entra removed for dev mode)
 
 ## What To Pick Up Next
 
-### Immediate (Session 20)
-1. **E2E test all flows** — Spec→Plan→Execute, SCR, failure→fix→approve — verify with live API
-2. **Demo recording** — 7 workflow demonstrations (WF1-WF7)
-3. **Submission package** — README (done), architecture diagram, demo video
+### Immediate (Session 24)
+1. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
+2. **Submission package** — README (done), architecture diagram, demo video
+3. **Final E2E validation** — Run through all flows on the live deployment
 
 ### What's Deferred (OK to skip)
 - **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical
