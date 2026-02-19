@@ -138,10 +138,18 @@ export function DAGProgress({
 								textAnchor="middle"
 								fontFamily="sans-serif"
 								fontSize={8}
-								fill="#60a5fa"
-								opacity={0.7}
+								fill={
+									node.task.sigmaEstimate < 0.3
+										? "#22c55e"
+										: node.task.sigmaEstimate <= 0.7
+											? "#60a5fa"
+											: "#a78bfa"
+								}
+								opacity={0.85}
 							>
-								Azure OpenAI
+								{node.task.sigmaEstimate != null
+									? `σ ${node.task.sigmaEstimate.toFixed(2)} · ${node.task.sigmaEstimate < 0.3 ? "routine" : node.task.sigmaEstimate <= 0.7 ? "standard" : "complex"}`
+									: "Azure OpenAI"}
 							</text>
 							{isPreserved && (
 								<text

@@ -9,12 +9,12 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-19
-- **Session**: 23
+- **Session**: 24
 
 ## Current State
-- **Phase**: Live Deployment — App deployed to Azure, accessible by hackathon judges
-- **Last completed task**: Session 23 — Azure deployment (API bind 0.0.0.0, Dockerfile build arg, Docker build+push, container app deploy, smoke test verified)
-- **Next task**: Demo recording (7 workflows) → submission package
+- **Phase**: Demo Ready — All 6 demo script gaps fixed, build green
+- **Last completed task**: Session 24 — Demo script gap fixes (PRD upload, constraint registry, budget input, remediation execute, sigma on DAG, task output panel)
+- **Next task**: Docker build + push → redeploy to Azure → demo recording (7 workflows) → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
 - **CI/CD**: All changes committed and pushed
@@ -23,7 +23,27 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–23)
+## What Just Happened (Sessions 10–24)
+
+### Session 24: Demo Script Gap Fixes (6 Missing Features)
+
+**Goal**: Fix 6 features referenced in the demo script that didn't exist or were partially wired.
+
+**Changes (8 files modified, +537/-91 lines):**
+
+1. **Fix 1: PRD Upload (WF2)** — `ChatInput.tsx`: Added paperclip/upload button, hidden file input (`.txt`/`.md`), attachment badge, file content prepended to message as `[PRD: filename]`.
+
+2. **Fix 2: Constraint Registry (WF3)** — `projects.ts`: 3 new API routes (GET/POST/DELETE constraints using existing Cosmos `constraints` container + `ConstraintsRepository`). `ValidationPanel.tsx`: "Constraint Registry" section with add form (rule text + type dropdown + enforcement dropdown), constraint list with type/enforcement badges, delete button.
+
+3. **Fix 3: Budget Input at Authorization (WF5)** — `SpecActions.tsx`: Imported `BudgetInput` component, added `budgetCeiling`/`estimatedCost` state, renders BudgetInput in "planned" step. Approve & Lock disabled until budget is set. Uses actual estimated cost from plan generation response.
+
+4. **Fix 4: Remediation Execute (WF7)** — `RemediationPlanView.tsx`: Added `onExecute` prop + green "Execute Remediation" button for AUTHORIZED state. `failures/page.tsx`: Added `handleExecute` callback calling `POST /api/remediation/:id/execute`.
+
+5. **Fix 5: Sigma on DAG (WF1)** — `DAGProgress.tsx`: Replaced hardcoded "Azure OpenAI" text with `σ {value} · {tier}`. Color-coded: green (#22c55e) for routine (<0.3), blue (#60a5fa) for standard (0.3-0.7), purple (#a78bfa) for complex (>0.7). Falls back to "Azure OpenAI" if no sigma estimate.
+
+6. **Fix 6: Task Output (WF4)** — `run/[runId]/page.tsx`: Collapsible "Agent Output" `<details>` section in task detail panel. Shows file count, commit message, file list (path + action + content preview), and error messages.
+
+**Build**: 6/6 turbo tasks pass. 0 lint errors (only pre-existing complexity warnings).
 
 ### Session 23: Azure Deployment (Live for Judges)
 
@@ -432,13 +452,16 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 21**: Demo polish (5 issues: Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos, Budget auto-init)
 - **Session 22**: On-demand root cause analysis (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
 - **Session 23**: Azure deployment — live for hackathon judges (0.0.0.0 bind, Dockerfile build arg, Docker push, container deploy, Entra removed for dev mode)
+- **Session 24**: Demo script gap fixes — 6 features (PRD upload, constraint registry, budget input, remediation execute, sigma on DAG, task output panel)
 
 ## What To Pick Up Next
 
-### Immediate (Session 24)
-1. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
-2. **Submission package** — README (done), architecture diagram, demo video
-3. **Final E2E validation** — Run through all flows on the live deployment
+### Immediate (Session 25)
+1. **Docker build + push** — Rebuild both images with demo fixes, push to ACR
+2. **Redeploy to Azure** — `az containerapp update` for API and Web
+3. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
+4. **Submission package** — README (done), architecture diagram, demo video
+5. **Final E2E validation** — Run through all flows on the live deployment
 
 ### What's Deferred (OK to skip)
 - **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical

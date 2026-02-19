@@ -79,23 +79,50 @@ export default function FailuresPage() {
 		loadFailures();
 	}, [projectId]);
 
-	const handleSelect = useCallback(async (failureId: string) => {
-		setSelectedId(failureId);
-		setRootCause(null);
-		setRemediation(null);
-		setAnalyzing(true);
+	const handleSelect = useCallback(
+		async (failureId: string) => {
+			setSelectedId(failureId);
+			setRootCause(null);
+			setRemediation(null);
+			setAnalyzing(true);
 
-		try {
-			// Fetch existing remediation for this failure
-			const remRes = await fetch(`${API_BASE}/api/remediation?failureId=${failureId}`);
-			let hasRootCause = false;
+			try {
+				// Fetch existing remediation for this failure
+				const remRes = await fetch(`${API_BASE}/api/remediation?failureId=${failureId}`);
+				let hasRootCause = false;
 
-			if (remRes.ok) {
-				const remediations = (await remRes.json()) as Remediation[];
-				if (remediations.length > 0) {
-					const rem = remediations[0] as Remediation;
-					if (rem.rootCause) {
-						hasRootCause = true;
+				if (remRes.ok) {
+					const remediations = (await remRes.json()) as Remediation[];
+					if (remediations.length > 0) {
+						const rem = remediations[0] as Remediation;
+						if (rem.rootCause) {
+							hasRootCause = true;
+							setRootCause(rem.rootCause);
+							setRemediation({
+								remediationId: rem.remediationId,
+								status: rem.status,
+								failureId: rem.failureId,
+								parentLockId: rem.parentLockId,
+								remediationLockId: rem.remediationLockId,
+								createdAt: rem.createdAt,
+								updatedAt: rem.updatedAt,
+							});
+						}
+					}
+				}
+
+				// If no root cause exists, trigger on-demand analysis
+				if (!hasRootCause) {
+					const failure = failureMap.get(failureId);
+					const runId = failure?.runId ?? "";
+					const analyzeRes = await fetch(`${API_BASE}/api/remediation/analyze-failure`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ failureId, runId, projectId }),
+					});
+					if (analyzeRes.ok) {
+						const data = (await analyzeRes.json()) as { remediation: Remediation };
+						const rem = data.remediation;
 						setRootCause(rem.rootCause);
 						setRemediation({
 							remediationId: rem.remediationId,
@@ -108,38 +135,14 @@ export default function FailuresPage() {
 						});
 					}
 				}
+			} catch {
+				// API not available
+			} finally {
+				setAnalyzing(false);
 			}
-
-			// If no root cause exists, trigger on-demand analysis
-			if (!hasRootCause) {
-				const failure = failureMap.get(failureId);
-				const runId = failure?.runId ?? "";
-				const analyzeRes = await fetch(`${API_BASE}/api/remediation/analyze-failure`, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ failureId, runId, projectId }),
-				});
-				if (analyzeRes.ok) {
-					const data = (await analyzeRes.json()) as { remediation: Remediation };
-					const rem = data.remediation;
-					setRootCause(rem.rootCause);
-					setRemediation({
-						remediationId: rem.remediationId,
-						status: rem.status,
-						failureId: rem.failureId,
-						parentLockId: rem.parentLockId,
-						remediationLockId: rem.remediationLockId,
-						createdAt: rem.createdAt,
-						updatedAt: rem.updatedAt,
-					});
-				}
-			}
-		} catch {
-			// API not available
-		} finally {
-			setAnalyzing(false);
-		}
-	}, [failureMap, projectId]);
+		},
+		[failureMap, projectId],
+	);
 
 	const handleAuthorize = useCallback(async () => {
 		if (!remediation) return;
@@ -152,6 +155,30 @@ export default function FailuresPage() {
 					body: JSON.stringify({ lockId: `lock-rem-${Date.now()}` }),
 				},
 			);
+			if (res.ok) {
+				const updated = (await res.json()) as Remediation;
+				setRemediation({
+					remediationId: updated.remediationId,
+					status: updated.status,
+					failureId: updated.failureId,
+					parentLockId: updated.parentLockId,
+					remediationLockId: updated.remediationLockId,
+					createdAt: updated.createdAt,
+					updatedAt: updated.updatedAt,
+				});
+			}
+		} catch {
+			// API error
+		}
+	}, [remediation]);
+
+	const handleExecute = useCallback(async () => {
+		if (!remediation) return;
+		try {
+			const res = await fetch(`${API_BASE}/api/remediation/${remediation.remediationId}/execute`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+			});
 			if (res.ok) {
 				const updated = (await res.json()) as Remediation;
 				setRemediation({
@@ -244,7 +271,11 @@ export default function FailuresPage() {
 												</span>
 											)}
 										</div>
-										<RemediationPlanView remediation={remediation} onAuthorize={handleAuthorize} />
+										<RemediationPlanView
+											remediation={remediation}
+											onAuthorize={handleAuthorize}
+											onExecute={handleExecute}
+										/>
 									</div>
 								</>
 							)}

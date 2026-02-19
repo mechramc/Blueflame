@@ -5,6 +5,7 @@ import { apiGet, apiPost } from "@/lib/api-client";
 import { SpecStatus } from "@blueflame/shared";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { BudgetInput } from "../plan/BudgetInput";
 
 type ExecutionStep =
 	| "idle"
@@ -53,6 +54,8 @@ export function SpecActions({
 	const [launchError, setLaunchError] = useState<string | null>(null);
 	const [latestRun, setLatestRun] = useState<RunSummary | null>(null);
 	const [loadingState, setLoadingState] = useState(true);
+	const [budgetCeiling, setBudgetCeiling] = useState<number | null>(null);
+	const [estimatedCost, setEstimatedCost] = useState<number>(0);
 
 	// On mount: check for existing runs for this spec
 	// biome-ignore lint/correctness/useExhaustiveDependencies: onRunIdChange is a stable parent callback
@@ -105,11 +108,17 @@ export function SpecActions({
 		setRunId(newRunId);
 
 		try {
-			await apiPost("/api/plans/generate", {
-				specId,
-				runId: newRunId,
-				projectId,
-			});
+			const planResult = await apiPost<{ plan?: { totalEstimatedCost?: number } }>(
+				"/api/plans/generate",
+				{
+					specId,
+					runId: newRunId,
+					projectId,
+				},
+			);
+			const est = planResult?.plan?.totalEstimatedCost ?? 0.5;
+			setEstimatedCost(est);
+			setBudgetCeiling(null);
 			showToast("Azure OpenAI", "AI", "Plan generated via GPT-4o", "blue");
 			setTimeout(
 				() => showToast("Azure Cosmos DB", "DB", "Plan persisted to Cosmos DB", "emerald"),
@@ -132,7 +141,7 @@ export function SpecActions({
 		try {
 			await apiPost("/api/authorize", {
 				runId,
-				budgetCeiling: 50,
+				budgetCeiling: budgetCeiling ?? 50,
 			});
 			showToast("Microsoft Entra ID", "ID", "Execution authorized via RBAC", "purple");
 			setTimeout(() => showToast("Azure Cosmos DB", "DB", "Plan lock persisted", "emerald"), 600);
@@ -277,24 +286,28 @@ export function SpecActions({
 
 					{/* Step 2: Approve & Lock */}
 					{execStep === "planned" && (
-						<>
+						<div className="flex flex-col gap-2">
 							<span className="text-xs text-blue-400">Plan ready</span>
-							<button
-								onClick={handleApproveLock}
-								type="button"
-								data-testid="spec-actions-approve-lock-button"
-								className="rounded bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-							>
-								Approve &amp; Lock
-							</button>
-							<button
-								onClick={handleNewRun}
-								type="button"
-								className="rounded border border-[--border] px-3 py-1.5 text-xs text-[--text-muted] hover:bg-[--bg-tertiary]"
-							>
-								Cancel
-							</button>
-						</>
+							<BudgetInput estimatedCost={estimatedCost} onBudgetSet={setBudgetCeiling} />
+							<div className="flex items-center gap-2">
+								<button
+									onClick={handleApproveLock}
+									disabled={budgetCeiling === null}
+									type="button"
+									data-testid="spec-actions-approve-lock-button"
+									className="rounded bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+								>
+									Approve &amp; Lock
+								</button>
+								<button
+									onClick={handleNewRun}
+									type="button"
+									className="rounded border border-[--border] px-3 py-1.5 text-xs text-[--text-muted] hover:bg-[--bg-tertiary]"
+								>
+									Cancel
+								</button>
+							</div>
+						</div>
 					)}
 
 					{execStep === "locking" && (

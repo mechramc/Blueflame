@@ -2,8 +2,9 @@
 
 import { CostProgressBar } from "@/components/budget/CostProgressBar";
 import { DAGProgress } from "@/components/dashboard/DAGProgress";
-import { apiGet, apiPost } from "@/lib/api-client";
-import type { PlanTask, SpecStatus, TaskPlan } from "@blueflame/shared";
+import { apiDelete, apiGet, apiPost } from "@/lib/api-client";
+import { ConstraintEnforcement, ConstraintType } from "@blueflame/shared";
+import type { Constraint, PlanTask, SpecStatus, TaskPlan } from "@blueflame/shared";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { RunHistory } from "./RunHistory";
@@ -77,6 +78,56 @@ export function ValidationPanel({
 	const [plan, setPlan] = useState<TaskPlan | null>(null);
 	const [planLoading, setPlanLoading] = useState(false);
 	const [actualSpend, setActualSpend] = useState<number | null>(null);
+	const [constraints, setConstraints] = useState<Constraint[]>([]);
+	const [showAddConstraint, setShowAddConstraint] = useState(false);
+	const [newRule, setNewRule] = useState("");
+	const [newType, setNewType] = useState<ConstraintType>(ConstraintType.Architectural);
+	const [newEnforcement, setNewEnforcement] = useState<ConstraintEnforcement>(
+		ConstraintEnforcement.Hard,
+	);
+
+	// Load constraints
+	useEffect(() => {
+		async function loadConstraints() {
+			try {
+				const data = await apiGet<{ constraints: Constraint[] }>(
+					`/api/projects/${projectId}/constraints`,
+				);
+				setConstraints(data.constraints);
+			} catch {
+				// API unavailable
+			}
+		}
+		loadConstraints();
+	}, [projectId]);
+
+	const handleAddConstraint = async () => {
+		if (!newRule.trim()) return;
+		try {
+			const data = await apiPost<{ constraint: Constraint }>(
+				`/api/projects/${projectId}/constraints`,
+				{
+					rule: newRule.trim(),
+					type: newType,
+					enforcement: newEnforcement,
+				},
+			);
+			setConstraints((prev) => [...prev, data.constraint]);
+			setNewRule("");
+			setShowAddConstraint(false);
+		} catch {
+			// API error
+		}
+	};
+
+	const handleDeleteConstraint = async (constraintId: string) => {
+		try {
+			await apiDelete(`/api/projects/${projectId}/constraints/${constraintId}`);
+			setConstraints((prev) => prev.filter((c) => c.constraintId !== constraintId));
+		} catch {
+			// API error
+		}
+	};
 
 	const runValidation = useCallback(async () => {
 		if (!specId || !specContent.trim()) return;
@@ -237,6 +288,106 @@ export function ValidationPanel({
 					</div>
 				)}
 
+				{/* Constraint Registry */}
+				<div>
+					<div className="flex items-center justify-between mb-2">
+						<div className="flex items-center gap-2">
+							<span className="text-xs text-amber-400">&#9881;</span>
+							<span className="text-xs font-medium text-[--text-primary]">Constraint Registry</span>
+							<span className="text-[9px] px-1 py-0.5 rounded bg-[--bg-tertiary] text-[--text-muted]">
+								{constraints.length}
+							</span>
+						</div>
+						<button
+							type="button"
+							onClick={() => setShowAddConstraint(!showAddConstraint)}
+							className="text-[10px] text-[--accent] hover:underline"
+						>
+							{showAddConstraint ? "Cancel" : "+ Add"}
+						</button>
+					</div>
+
+					{showAddConstraint && (
+						<div className="ml-5 mb-2 space-y-1.5 p-2 rounded border border-[--border] bg-[--bg-secondary]">
+							<input
+								type="text"
+								value={newRule}
+								onChange={(e) => setNewRule(e.target.value)}
+								placeholder="e.g. All endpoints must validate input with Zod"
+								className="w-full text-[10px] rounded border border-[--border] bg-[--bg-primary] px-2 py-1 text-[--text-primary] placeholder-[--text-muted]"
+								data-testid="constraint-rule-input"
+							/>
+							<div className="flex gap-2">
+								<select
+									value={newType}
+									onChange={(e) => setNewType(e.target.value as ConstraintType)}
+									className="text-[10px] rounded border border-[--border] bg-[--bg-primary] px-1 py-0.5 text-[--text-secondary]"
+								>
+									{Object.values(ConstraintType).map((t) => (
+										<option key={t} value={t}>
+											{t}
+										</option>
+									))}
+								</select>
+								<select
+									value={newEnforcement}
+									onChange={(e) => setNewEnforcement(e.target.value as ConstraintEnforcement)}
+									className="text-[10px] rounded border border-[--border] bg-[--bg-primary] px-1 py-0.5 text-[--text-secondary]"
+								>
+									{Object.values(ConstraintEnforcement).map((e) => (
+										<option key={e} value={e}>
+											{e}
+										</option>
+									))}
+								</select>
+								<button
+									type="button"
+									onClick={handleAddConstraint}
+									disabled={!newRule.trim()}
+									className="text-[10px] rounded bg-[--accent] px-2 py-0.5 text-white disabled:opacity-50"
+								>
+									Add
+								</button>
+							</div>
+						</div>
+					)}
+
+					{constraints.length === 0 ? (
+						<p className="text-[10px] text-[--text-muted] ml-5">No constraints defined</p>
+					) : (
+						<div className="ml-5 space-y-1">
+							{constraints.map((c) => (
+								<div
+									key={c.constraintId}
+									className="flex items-start gap-2 text-[10px] p-1.5 rounded border border-[--border] bg-[--bg-secondary]"
+								>
+									<div className="flex-1 min-w-0">
+										<p className="text-[--text-primary]">{c.rule}</p>
+										<div className="flex gap-1.5 mt-0.5">
+											<span className="px-1 py-0.5 rounded bg-[--bg-tertiary] text-[--text-muted]">
+												{c.type}
+											</span>
+											<span
+												className={`px-1 py-0.5 rounded ${c.enforcement === "hard" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}
+											>
+												{c.enforcement}
+											</span>
+										</div>
+									</div>
+									<button
+										type="button"
+										onClick={() => handleDeleteConstraint(c.constraintId)}
+										className="text-[--text-muted] hover:text-red-400 shrink-0"
+										aria-label="Delete constraint"
+									>
+										&times;
+									</button>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+
 				{/* Cost Governance */}
 				{plan && plan.tasks.length > 0 && (
 					<div>
@@ -266,16 +417,10 @@ export function ValidationPanel({
 								</div>
 							)}
 							<div className="flex gap-3 pt-1">
-								<Link
-									href="/compliance"
-									className="text-[10px] text-[--accent] hover:underline"
-								>
+								<Link href="/compliance" className="text-[10px] text-[--accent] hover:underline">
 									View Audit Trail &rarr;
 								</Link>
-								<Link
-									href="/chargeback"
-									className="text-[10px] text-[--accent] hover:underline"
-								>
+								<Link href="/chargeback" className="text-[10px] text-[--accent] hover:underline">
 									View Cost Breakdown &rarr;
 								</Link>
 							</div>

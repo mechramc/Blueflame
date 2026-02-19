@@ -279,6 +279,16 @@
 | Deploy Web container app (NEXT_PUBLIC_API_URL baked) | Infra | P0 | **DONE** |
 | Smoke test: health, auth, projects, web render | QA | P0 | **DONE** |
 
+### Session 24 — Demo Script Gap Fixes (6 Missing Features)
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Fix 1: PRD Upload in chat (paperclip + file read) | UI | P0 | **DONE** |
+| Fix 2: Constraint Registry UI (CRUD API + ValidationPanel section) | UI+API | P0 | **DONE** |
+| Fix 3: Budget Input at Authorization (BudgetInput in SpecActions) | UI | P0 | **DONE** |
+| Fix 4: Remediation Execute button (AUTHORIZED → EXECUTING) | UI | P0 | **DONE** |
+| Fix 5: Sigma values on DAG nodes (replace "Azure OpenAI" text) | UI | P0 | **DONE** |
+| Fix 6: Task output in run detail panel (Agent Output section) | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -308,7 +318,8 @@
 - **Session 21 Demo Polish**: 5/5 (Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos fallback, Budget auto-init)
 - **Session 22 On-Demand RCA**: 3/3 (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
 - **Session 23 Azure Deployment**: 6/6 (0.0.0.0 bind, Dockerfile build arg, Docker build+push, API deploy, Web deploy, smoke test)
-- **Grand Total**: 153/156 complete (2 deferred, 3 demo remaining)
+- **Session 24 Demo Script Gaps**: 6/6 (PRD upload, constraint registry, budget input, remediation execute, sigma on DAG, task output panel)
+- **Grand Total**: 159/162 complete (2 deferred, 3 demo remaining)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview

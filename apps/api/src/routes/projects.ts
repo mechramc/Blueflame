@@ -2,7 +2,13 @@
  * Projects route — CRUD for refinement projects.
  */
 
-import type { Project } from "@blueflame/shared";
+import {
+	ConstraintEnforcement,
+	ConstraintScope,
+	ConstraintSource,
+	ConstraintType,
+} from "@blueflame/shared";
+import type { Constraint, Project } from "@blueflame/shared";
 import { Router } from "express";
 import { z } from "zod";
 
@@ -141,6 +147,80 @@ router.get("/:projectId/runs", async (req, res) => {
 	} catch (error) {
 		console.error("[Projects] List runs error:", error);
 		res.status(500).json({ error: "Failed to list runs" });
+	}
+});
+
+// ---- Constraint Registry ----
+
+const CreateConstraintSchema = z.object({
+	rule: z.string().min(1).max(1000),
+	type: z.nativeEnum(ConstraintType).default(ConstraintType.Architectural),
+	enforcement: z.nativeEnum(ConstraintEnforcement).default(ConstraintEnforcement.Hard),
+});
+
+/** GET /api/projects/:projectId/constraints — list project constraints */
+router.get("/:projectId/constraints", async (req, res) => {
+	try {
+		const constraints = await db.constraints.findByProject(req.params.projectId);
+		res.json({ constraints });
+	} catch (error) {
+		console.error("[Projects] List constraints error:", error);
+		res.status(500).json({ error: "Failed to list constraints" });
+	}
+});
+
+/** POST /api/projects/:projectId/constraints — add a constraint */
+router.post("/:projectId/constraints", async (req, res) => {
+	const parsed = CreateConstraintSchema.safeParse(req.body);
+	if (!parsed.success) {
+		res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+		return;
+	}
+
+	const now = new Date().toISOString();
+	const id = `const-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+	const projectId = req.params.projectId;
+
+	const constraint: Constraint & { id: string } = {
+		id,
+		constraintId: id,
+		projectId,
+		scope: ConstraintScope.Project,
+		type: parsed.data.type,
+		rule: parsed.data.rule,
+		enforcement: parsed.data.enforcement,
+		verificationMethod: "agent-check",
+		source: ConstraintSource.UserDefined,
+		createdAt: now,
+		updatedAt: now,
+		createdBy: req.user?.name ?? req.user?.preferred_username ?? "unknown",
+	};
+
+	try {
+		const result = await db.constraints.create(constraint, projectId);
+		if (!result.ok) {
+			res.status(500).json({ error: "Failed to create constraint" });
+			return;
+		}
+		res.status(201).json({ constraint: result.value });
+	} catch (error) {
+		console.error("[Projects] Create constraint error:", error);
+		res.status(500).json({ error: "Failed to create constraint" });
+	}
+});
+
+/** DELETE /api/projects/:projectId/constraints/:constraintId — remove a constraint */
+router.delete("/:projectId/constraints/:constraintId", async (req, res) => {
+	try {
+		const result = await db.constraints.delete(req.params.constraintId, req.params.projectId);
+		if (!result.ok) {
+			res.status(404).json({ error: "Constraint not found" });
+			return;
+		}
+		res.json({ deleted: true });
+	} catch (error) {
+		console.error("[Projects] Delete constraint error:", error);
+		res.status(500).json({ error: "Failed to delete constraint" });
 	}
 });
 

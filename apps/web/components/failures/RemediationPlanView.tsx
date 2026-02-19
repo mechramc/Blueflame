@@ -15,6 +15,7 @@ export interface RemediationViewData {
 interface RemediationPlanViewProps {
 	remediation: RemediationViewData | null;
 	onAuthorize?: () => void;
+	onExecute?: () => void;
 }
 
 const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }> = {
@@ -27,7 +28,11 @@ const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }
 	FAILED: { dot: "bg-red-400", text: "text-red-400", label: "Failed" },
 };
 
-export function RemediationPlanView({ remediation, onAuthorize }: RemediationPlanViewProps) {
+export function RemediationPlanView({
+	remediation,
+	onAuthorize,
+	onExecute,
+}: RemediationPlanViewProps) {
 	if (!remediation) {
 		return (
 			<div className="text-sm text-[--text-muted] italic p-4" data-testid="no-remediation">
@@ -93,6 +98,18 @@ export function RemediationPlanView({ remediation, onAuthorize }: RemediationPla
 					data-testid="authorize-remediation-btn"
 				>
 					Authorize Remediation Plan
+				</button>
+			)}
+
+			{/* Execute button — shown after authorization */}
+			{remediation.status === "AUTHORIZED" && onExecute && (
+				<button
+					type="button"
+					onClick={onExecute}
+					className="w-full py-2 px-3 text-sm font-semibold text-white bg-[--accent] hover:bg-blue-500 rounded transition-colors"
+					data-testid="execute-remediation-btn"
+				>
+					Execute Remediation
 				</button>
 			)}
 		</div>

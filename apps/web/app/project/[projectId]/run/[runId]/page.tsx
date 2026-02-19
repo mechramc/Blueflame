@@ -529,6 +529,50 @@ export default function RunPage() {
 									</p>
 								</div>
 							)}
+							{/* Agent Output — shown for completed/failed tasks with output */}
+							{(() => {
+								const output = taskOutputs[selectedTask.id];
+								if (!output) return null;
+								return (
+									<details className="mt-2 group">
+										<summary className="text-xs font-medium text-[--accent] cursor-pointer hover:underline">
+											Agent Output ({output.files?.length ?? 0} files)
+										</summary>
+										<div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
+											{output.commitMessage && (
+												<div className="rounded border border-[--border] bg-[--bg-primary] px-3 py-2">
+													<p className="text-[10px] text-[--text-muted] mb-0.5">Commit</p>
+													<p className="text-xs text-[--text-primary] font-mono">
+														{output.commitMessage}
+													</p>
+												</div>
+											)}
+											{output.files?.map((f) => (
+												<div
+													key={f.path}
+													className="rounded border border-[--border] bg-[--bg-primary] px-3 py-2"
+												>
+													<div className="flex items-center gap-2 mb-1">
+														<span className="text-[10px] font-mono text-[--accent]">{f.path}</span>
+														<span className="text-[9px] px-1 py-0.5 rounded bg-[--bg-tertiary] text-[--text-muted]">
+															{f.action}
+														</span>
+													</div>
+													<pre className="text-[10px] text-[--text-secondary] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
+														{f.content.slice(0, 500)}
+														{f.content.length > 500 ? "\n..." : ""}
+													</pre>
+												</div>
+											))}
+											{output.error && (
+												<div className="rounded border border-red-500/30 bg-red-500/5 px-3 py-2">
+													<p className="text-xs text-red-400 font-mono">{output.error}</p>
+												</div>
+											)}
+										</div>
+									</details>
+								);
+							})()}
 						</div>
 						<button
 							type="button"
