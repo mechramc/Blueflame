@@ -60,6 +60,8 @@ export function CIStatusPanel({ runId, deploymentState, onDeploymentUpdate }: CI
 		};
 	}, [pollCI, isTerminal]);
 
+	const [markingDeployed, setMarkingDeployed] = useState(false);
+
 	const handleDeploy = async () => {
 		setDeploying(true);
 		setDeployError(null);
@@ -70,6 +72,19 @@ export function CIStatusPanel({ runId, deploymentState, onDeploymentUpdate }: CI
 			setDeployError(err instanceof Error ? err.message : "Deploy failed");
 		} finally {
 			setDeploying(false);
+		}
+	};
+
+	const handleMarkDeployed = async () => {
+		setMarkingDeployed(true);
+		setDeployError(null);
+		try {
+			await apiPost(`/api/deployment/${runId}/mark-deployed`);
+			onDeploymentUpdate();
+		} catch (err) {
+			setDeployError(err instanceof Error ? err.message : "Failed to mark as deployed");
+		} finally {
+			setMarkingDeployed(false);
 		}
 	};
 
@@ -194,6 +209,14 @@ export function CIStatusPanel({ runId, deploymentState, onDeploymentUpdate }: CI
 						) : (
 							"Deploy to Production"
 						)}
+					</button>
+					<button
+						type="button"
+						onClick={handleMarkDeployed}
+						disabled={markingDeployed}
+						className="w-full text-center text-xs text-[--text-muted] hover:text-[--text-secondary] mt-2 disabled:opacity-50"
+					>
+						{markingDeployed ? "Marking..." : "Already deployed externally? Mark as deployed"}
 					</button>
 				</div>
 			)}

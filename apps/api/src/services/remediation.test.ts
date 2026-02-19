@@ -154,7 +154,7 @@ describe("remediation service", () => {
 		expect(getRemediationSync("nonexistent")).toBeUndefined();
 	});
 
-	it("should query by failureId", () => {
+	it("should query by failureId", async () => {
 		createRemediation({
 			failureId: "FAIL-A",
 			runId: "run-1",
@@ -174,11 +174,11 @@ describe("remediation service", () => {
 			parentLockId: "lock-2",
 		});
 
-		expect(getRemediationsByFailureId("FAIL-A")).toHaveLength(2);
-		expect(getRemediationsByFailureId("FAIL-B")).toHaveLength(1);
+		expect(await getRemediationsByFailureId("FAIL-A")).toHaveLength(2);
+		expect(await getRemediationsByFailureId("FAIL-B")).toHaveLength(1);
 	});
 
-	it("should query by runId", () => {
+	it("should query by runId", async () => {
 		createRemediation({
 			failureId: "FAIL-1",
 			runId: "run-X",
@@ -192,7 +192,7 @@ describe("remediation service", () => {
 			parentLockId: "lock-1",
 		});
 
-		expect(getRemediationsByRunId("run-X")).toHaveLength(2);
-		expect(getRemediationsByRunId("run-Y")).toHaveLength(0);
+		expect(await getRemediationsByRunId("run-X")).toHaveLength(2);
+		expect(await getRemediationsByRunId("run-Y")).toHaveLength(0);
 	});
 });

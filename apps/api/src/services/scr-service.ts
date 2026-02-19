@@ -8,6 +8,7 @@
  *   3. Delta execution (patch existing plan, only re-execute affected tasks)
  */
 
+import { generateSpec, type SpecGeneratorConfig } from "@blueflame/foundry";
 import type {
 	BaselineSnapshot,
 	DiffPack,
@@ -329,6 +330,49 @@ export async function listSCRsByProject(projectId: string): Promise<SpecChangeRe
 		return Array.from(scrStore.values())
 			.filter((s) => s.projectId === projectId)
 			.sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
+	}
+}
+
+/**
+ * Generate updated spec YAML from a natural language change description.
+ * Reuses the existing spec-generator agent with a synthetic conversation.
+ */
+export async function generateSCRYaml(
+	frozenSpecId: string,
+	changeDescription: string,
+): Promise<Result<string>> {
+	const frozenSpec = await getSpec(frozenSpecId);
+	if (!frozenSpec) {
+		return { ok: false, error: new Error(`Frozen spec not found: ${frozenSpecId}`) };
+	}
+
+	const config: SpecGeneratorConfig = {
+		endpoint: process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "",
+		apiKey: process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "",
+		deployment:
+			process.env.FOUNDRY_SPEC_DEPLOYMENT ?? process.env.AZURE_OPENAI_DEPLOYMENT ?? "gpt-4o",
+		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-12-01-preview",
+	};
+
+	if (!config.endpoint || !config.apiKey) {
+		return { ok: false, error: new Error("Foundry/Azure OpenAI not configured") };
+	}
+
+	const syntheticConversation = [
+		{
+			role: "user" as const,
+			content: `Current frozen spec:\n\n${frozenSpec.content}\n\nRequested change: ${changeDescription}\n\nGenerate the complete updated YAML spec incorporating this change.`,
+		},
+	];
+
+	try {
+		const updatedYaml = await generateSpec(config, syntheticConversation);
+		return { ok: true, value: updatedYaml };
+	} catch (err) {
+		return {
+			ok: false,
+			error: new Error(err instanceof Error ? err.message : "Spec generation failed"),
+		};
 	}
 }
 

@@ -1,8 +1,10 @@
 "use client";
 
+import { CostProgressBar } from "@/components/budget/CostProgressBar";
 import { DAGProgress } from "@/components/dashboard/DAGProgress";
 import { apiGet, apiPost } from "@/lib/api-client";
 import type { PlanTask, SpecStatus, TaskPlan } from "@blueflame/shared";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { RunHistory } from "./RunHistory";
 import { WorkflowProgressBar } from "./WorkflowProgressBar";
@@ -74,6 +76,7 @@ export function ValidationPanel({
 	const [isValidating, setIsValidating] = useState(false);
 	const [plan, setPlan] = useState<TaskPlan | null>(null);
 	const [planLoading, setPlanLoading] = useState(false);
+	const [actualSpend, setActualSpend] = useState<number | null>(null);
 
 	const runValidation = useCallback(async () => {
 		if (!specId || !specContent.trim()) return;
@@ -119,6 +122,33 @@ export function ValidationPanel({
 			}
 		}
 		fetchPlan();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [runId]);
+
+	// Fetch actual spend when runId changes
+	useEffect(() => {
+		if (!runId) {
+			setActualSpend(null);
+			return;
+		}
+
+		let cancelled = false;
+		async function fetchBudget() {
+			try {
+				const data = await apiGet<{ currentSpend: number }>(`/api/budget/${runId}`);
+				if (!cancelled) {
+					setActualSpend(data.currentSpend);
+				}
+			} catch {
+				if (!cancelled) {
+					setActualSpend(null);
+				}
+			}
+		}
+		fetchBudget();
 
 		return () => {
 			cancelled = true;
@@ -207,29 +237,47 @@ export function ValidationPanel({
 					</div>
 				)}
 
-				{/* Budget Estimate */}
-				{validation && validation.budget.taskCount > 0 && (
+				{/* Cost Governance */}
+				{plan && plan.tasks.length > 0 && (
 					<div>
 						<div className="flex items-center gap-2 mb-2">
 							<span className="text-xs text-[--accent]">$</span>
-							<span className="text-xs font-medium text-[--text-primary]">Budget Estimate</span>
+							<span className="text-xs font-medium text-[--text-primary]">Cost Governance</span>
 						</div>
-						<div className="ml-5 space-y-1">
+						<div className="ml-5 space-y-1.5">
 							<div className="flex justify-between text-[10px]">
-								<span className="text-[--text-muted]">Estimated tasks</span>
-								<span className="text-[--text-primary] font-mono">
-									{validation.budget.taskCount}
-								</span>
-							</div>
-							<div className="flex justify-between text-[10px]">
-								<span className="text-[--text-muted]">Estimated cost</span>
+								<span className="text-[--text-muted]">Pre-run estimate</span>
 								<span className="text-emerald-400 font-mono">
-									${validation.budget.estimatedCost.toFixed(2)}
+									${plan.totalEstimatedCost.toFixed(2)}
 								</span>
 							</div>
 							<div className="flex justify-between text-[10px]">
-								<span className="text-[--text-muted]">Model tier</span>
-								<span className="text-[--text-secondary]">{validation.budget.modelTier}</span>
+								<span className="text-[--text-muted]">Budget ceiling</span>
+								<span className="text-[--text-primary] font-mono">
+									${Math.max(plan.totalEstimatedCost * 3, 5.0).toFixed(2)}
+								</span>
+							</div>
+							{runId && actualSpend !== null && (
+								<div className="pt-1">
+									<CostProgressBar
+										currentSpend={actualSpend}
+										ceiling={Math.max(plan.totalEstimatedCost * 3, 5.0)}
+									/>
+								</div>
+							)}
+							<div className="flex gap-3 pt-1">
+								<Link
+									href="/compliance"
+									className="text-[10px] text-[--accent] hover:underline"
+								>
+									View Audit Trail &rarr;
+								</Link>
+								<Link
+									href="/chargeback"
+									className="text-[10px] text-[--accent] hover:underline"
+								>
+									View Cost Breakdown &rarr;
+								</Link>
 							</div>
 						</div>
 					</div>

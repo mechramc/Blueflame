@@ -7,6 +7,7 @@ import {
 	approveSCR,
 	createSCR,
 	executeDeltaRun,
+	generateSCRYaml,
 	getSCR,
 	listSCRsByProject,
 	rejectSCR,
@@ -48,6 +49,31 @@ scrRouter.post("/", async (req, res) => {
 	}
 
 	res.status(201).json({ scr: result.value });
+});
+
+/**
+ * POST /api/scr/generate-yaml
+ * Generate updated spec YAML from a natural language change description.
+ * Body: { frozenSpecId, changeDescription }
+ */
+scrRouter.post("/generate-yaml", async (req, res) => {
+	const { frozenSpecId, changeDescription } = req.body as {
+		frozenSpecId: string;
+		changeDescription: string;
+	};
+
+	if (!frozenSpecId || !changeDescription) {
+		res.status(400).json({ error: "frozenSpecId and changeDescription are required" });
+		return;
+	}
+
+	const result = await generateSCRYaml(frozenSpecId, changeDescription);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+
+	res.json({ updatedYaml: result.value });
 });
 
 /**

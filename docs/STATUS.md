@@ -253,6 +253,15 @@
 | Root cause display: Azure OpenAI model badge | UI | P0 | **DONE** |
 | Remediation view: Cosmos DB persistence badge | UI | P0 | **DONE** |
 
+### Session 21 — Demo Polish (5 Issues)
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Replace Budget Estimate with Cost Governance section | UI | P0 | **DONE** |
+| SCR Designer Chat (natural language → YAML generation) | UI+API | P0 | **DONE** |
+| Mark as Deployed button (external deployments) | UI+API | P0 | **DONE** |
+| Failure Intelligence: Cosmos cross-partition query fallback | API | P0 | **DONE** |
+| Budget auto-init + cost refresh on GET | API | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -279,7 +288,8 @@
 - **Session 18b Foundry Multi-Model**: 6/6 (deploy, registry, lazy init, api-version, agents, lint — catalog JSON parsing RESOLVED in Session 19)
 - **Session 19 Orchestrator Fixes**: 8/8 (auto-approve fixer, unreachable deferral, model escalation, providerConfig fix, routing fix, healing dedup, scrollbar, tests)
 - **Session 20 Plan Preview + Admin Override + Failure Intelligence**: 14/14
-- **Grand Total**: 139/142 complete (2 deferred, 3 demo remaining)
+- **Session 21 Demo Polish**: 5/5 (Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos fallback, Budget auto-init)
+- **Grand Total**: 144/147 complete (2 deferred, 3 demo remaining)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview

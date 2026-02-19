@@ -8,12 +8,12 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-18
-- **Session**: 20
+- **Date**: 2026-02-19
+- **Session**: 21
 
 ## Current State
-- **Phase**: Demo Preparation — Plan preview added to ValidationPanel, ready for E2E testing + demo
-- **Last completed task**: Session 20 — Plan preview in ValidationPanel (state lifting, plan fetch, DAG, task list, σ-estimates)
+- **Phase**: Demo Preparation — 5 demo polish issues fixed, ready for E2E testing + demo recording
+- **Last completed task**: Session 21 — Demo polish (Cost Governance, SCR Designer Chat, Mark as Deployed, Failure Cosmos fallback, Budget auto-init)
 - **Next task**: E2E test all flows → demo recording → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
@@ -23,7 +23,37 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–20)
+## What Just Happened (Sessions 10–21)
+
+### Session 21: Demo Polish — 5 Issues Fixed
+
+Pre-demo recording polish for Microsoft AI Dev Days hackathon. Five issues identified during testing that would confuse judges or break the demo flow.
+
+**Issue 1: Deploy Button Shows After External Deployment (MEDIUM)**
+- Added `POST /api/deployment/:runId/mark-deployed` endpoint
+- Added `markAsDeployed()` in deployment-service.ts
+- CIStatusPanel: "Already deployed externally? Mark as deployed" text button below deploy button
+
+**Issue 2: SCR Should Use Designer Chat, Not Raw YAML Editor (HIGH)**
+- SCRPanel: Added `"describing"` step with natural language textarea
+- "Generate Updated Spec" button calls `POST /api/scr/generate-yaml`
+- API reuses existing `generateSpec()` from `@blueflame/foundry` with synthetic conversation
+- "Edit YAML manually instead" fallback link for power users
+- Generated YAML flows into existing editing step for review
+
+**Issue 3+5: Budget/Cost Discrepancies & Static Text (HIGH)**
+- Removed misleading "Budget Estimate" heuristic section from ValidationPanel
+- Added "Cost Governance" section: pre-run estimate from plan, budget ceiling (3x or $5 min), actual spend via CostProgressBar
+- Added "View Audit Trail →" and "View Cost Breakdown →" links to /compliance and /chargeback
+
+**Issue 4: Failure Intelligence Empty Right Pane (DONE in-session)**
+- remediation.ts: cross-partition Cosmos query fallback on cache miss
+- cost-tracker.ts: cross-partition query for all cost entries
+- budget.ts: auto-init + refresh currentSpend on GET
+
+**Files changed:** 12 modified, +372/-41 lines
+**Build:** All 6 packages build successfully
+**Tests:** All test suites pass (128 web + cached API/packages)
 
 ### Session 20: Plan Preview in ValidationPanel
 
@@ -365,6 +395,7 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 18b**: Azure AI Foundry multi-model routing (7 models, dual API pattern, lazy init fix)
 - **Session 19**: Orchestrator workflow fixes (5 bugs), model routing stabilization, healing dedup, scrollbar fix
 - **Session 20**: Plan preview in ValidationPanel (state lifting, DAG, task list, σ-estimates)
+- **Session 21**: Demo polish (5 issues: Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos, Budget auto-init)
 
 ## What To Pick Up Next
 

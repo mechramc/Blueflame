@@ -54,19 +54,19 @@ remediationRouter.post("/", (req, res) => {
 /**
  * GET /api/remediation?failureId=xxx or ?runId=xxx
  */
-remediationRouter.get("/", (req, res) => {
+remediationRouter.get("/", async (req, res) => {
 	const { failureId, runId } = req.query as {
 		failureId?: string;
 		runId?: string;
 	};
 
 	if (failureId) {
-		res.json(getRemediationsByFailureId(failureId));
+		res.json(await getRemediationsByFailureId(failureId));
 		return;
 	}
 
 	if (runId) {
-		res.json(getRemediationsByRunId(runId));
+		res.json(await getRemediationsByRunId(runId));
 		return;
 	}
 

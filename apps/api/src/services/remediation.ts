@@ -175,29 +175,65 @@ export function getRemediationSync(remediationId: string): Remediation | undefin
 }
 
 /**
- * Get all remediations for a failure.
+ * Get all remediations for a failure. Falls back to Cosmos on cache miss.
  */
-export function getRemediationsByFailureId(failureId: string): Remediation[] {
-	const results: Remediation[] = [];
+export async function getRemediationsByFailureId(failureId: string): Promise<Remediation[]> {
+	// Check in-memory cache first
+	const cached: Remediation[] = [];
 	for (const rem of remediations.values()) {
 		if (rem.failureId === failureId) {
-			results.push(rem);
+			cached.push(rem);
 		}
 	}
-	return results;
+	if (cached.length > 0) return cached;
+
+	// Fall back to Cosmos cross-partition query
+	try {
+		const docs = await db.documents.queryAll({
+			query: "SELECT * FROM c WHERE c.type = 'remediation' AND c.failureId = @failureId",
+			parameters: [{ name: "@failureId", value: failureId }],
+		});
+		for (const doc of docs) {
+			const rem = doc as unknown as Remediation;
+			if (rem.id && !remediations.has(rem.id)) {
+				remediations.set(rem.id, rem);
+			}
+		}
+		return docs.map((d) => d as unknown as Remediation);
+	} catch {
+		return [];
+	}
 }
 
 /**
- * Get all remediations for a run.
+ * Get all remediations for a run. Falls back to Cosmos on cache miss.
  */
-export function getRemediationsByRunId(runId: string): Remediation[] {
-	const results: Remediation[] = [];
+export async function getRemediationsByRunId(runId: string): Promise<Remediation[]> {
+	// Check in-memory cache first
+	const cached: Remediation[] = [];
 	for (const rem of remediations.values()) {
 		if (rem.runId === runId) {
-			results.push(rem);
+			cached.push(rem);
 		}
 	}
-	return results;
+	if (cached.length > 0) return cached;
+
+	// Fall back to Cosmos cross-partition query
+	try {
+		const docs = await db.documents.queryAll({
+			query: "SELECT * FROM c WHERE c.type = 'remediation' AND c.runId = @runId",
+			parameters: [{ name: "@runId", value: runId }],
+		});
+		for (const doc of docs) {
+			const rem = doc as unknown as Remediation;
+			if (rem.id && !remediations.has(rem.id)) {
+				remediations.set(rem.id, rem);
+			}
+		}
+		return docs.map((d) => d as unknown as Remediation);
+	} catch {
+		return [];
+	}
 }
 
 /**

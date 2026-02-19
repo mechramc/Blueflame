@@ -6,6 +6,7 @@ import { Router } from "express";
 import {
 	getCIStatus,
 	isGitHubConfigured,
+	markAsDeployed,
 	syncToGitHub,
 	triggerDeploy,
 } from "../services/deployment-service.js";
@@ -77,6 +78,22 @@ deploymentRouter.post("/:runId/deploy", async (req, res) => {
 	}
 
 	const result = await triggerDeploy(runId);
+	if (!result.ok) {
+		res.status(400).json({ error: result.error.message });
+		return;
+	}
+
+	res.json({ deployed: true, runId });
+});
+
+/**
+ * POST /api/deployment/:runId/mark-deployed
+ * Mark a run as deployed (for external deployments outside the app).
+ */
+deploymentRouter.post("/:runId/mark-deployed", async (req, res) => {
+	const { runId } = req.params;
+
+	const result = await markAsDeployed(runId);
 	if (!result.ok) {
 		res.status(400).json({ error: result.error.message });
 		return;

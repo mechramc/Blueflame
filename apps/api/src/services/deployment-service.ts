@@ -274,6 +274,28 @@ export async function triggerDeploy(runId: string): Promise<Result<void>> {
 	}
 }
 
+/**
+ * Mark a run as deployed (for external deployments not triggered through the app).
+ */
+export async function markAsDeployed(runId: string): Promise<Result<void>> {
+	const run = await getRun(runId);
+	if (!run) {
+		return { ok: false, error: new Error(`Run not found: ${runId}`) };
+	}
+
+	if (!run.deploymentState) {
+		return { ok: false, error: new Error("No deployment state — run has not been synced") };
+	}
+
+	updateDeploymentState(runId, {
+		...run.deploymentState,
+		step: "deployed",
+		deployedAt: new Date().toISOString(),
+	});
+
+	return { ok: true, value: undefined };
+}
+
 /** Build PR body markdown */
 function buildPRBody(run: import("./orchestrator.js").RunState, fileCount: number): string {
 	const taskSummaries = run.plan.tasks

@@ -21,6 +21,11 @@ budgetRouter.get("/:runId", (req, res) => {
 		state = initBudget(runId, 10.0);
 	}
 
+	// Always refresh spend from cost tracker (handles post-restart recovery)
+	const freshCost = getRunCost(runId);
+	state.currentSpend = freshCost;
+	state.percentUsed = state.ceiling > 0 ? (freshCost / state.ceiling) * 100 : 0;
+
 	const byAgent = getRunCostByAgent(runId);
 	const tokens = getRunTokenUsage(runId);
 	const agentBreakdown: Record<string, number> = {};

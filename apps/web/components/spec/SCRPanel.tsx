@@ -24,7 +24,7 @@ interface SCRPanelProps {
 	onClose?: () => void;
 }
 
-type SCRStep = "idle" | "editing" | "reviewing" | "approved" | "executing";
+type SCRStep = "idle" | "describing" | "editing" | "reviewing" | "approved" | "executing";
 
 const SEVERITY_STYLES: Record<string, { bg: string; text: string }> = {
 	PATCH: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
@@ -40,6 +40,35 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 	const [scr, setSCR] = useState<SpecChangeRequest | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [changeDescription, setChangeDescription] = useState("");
+
+	const handleStartDescribe = useCallback(() => {
+		setChangeDescription("");
+		setError(null);
+		setStep("describing");
+	}, []);
+
+	const handleGenerateFromDescription = useCallback(async () => {
+		if (!changeDescription.trim()) {
+			setError("Please describe the change you want to make.");
+			return;
+		}
+		setLoading(true);
+		setError(null);
+		try {
+			const result = await apiPost<{ updatedYaml: string }>("/api/scr/generate-yaml", {
+				frozenSpecId,
+				changeDescription,
+			});
+			setEditedContent(result.updatedYaml);
+			setReason(changeDescription);
+			setStep("editing");
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to generate updated spec");
+		} finally {
+			setLoading(false);
+		}
+	}, [frozenSpecId, changeDescription]);
 
 	const handleStartEdit = useCallback(() => {
 		setEditedContent(frozenContent);
@@ -137,7 +166,20 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 				</div>
 			)}
 
-			{step === "idle" && <IdleView onStartEdit={handleStartEdit} onClose={onClose} />}
+			{step === "idle" && (
+				<IdleView onStartDescribe={handleStartDescribe} onClose={onClose} />
+			)}
+
+			{step === "describing" && (
+				<DescribingView
+					changeDescription={changeDescription}
+					loading={loading}
+					onDescriptionChange={setChangeDescription}
+					onGenerate={handleGenerateFromDescription}
+					onManualEdit={handleStartEdit}
+					onCancel={handleCancel}
+				/>
+			)}
 
 			{step === "editing" && (
 				<EditingView
@@ -183,13 +225,16 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 
 // ─── Sub-views ───────────────────────────────────────────────
 
-function IdleView({ onStartEdit, onClose }: { onStartEdit: () => void; onClose?: () => void }) {
+function IdleView({
+	onStartDescribe,
+	onClose,
+}: { onStartDescribe: () => void; onClose?: () => void }) {
 	return (
 		<div className="px-4 py-3 space-y-2">
 			<p className="text-xs font-medium text-amber-400">Spec Change Request (SCR)</p>
 			<p className="text-xs text-[--text-muted]">
-				This is for <strong>modifying the frozen spec</strong> (e.g. adding/changing criteria). You
-				will edit the spec YAML, provide a reason, then review the diff before approval.
+				Describe the change you want in natural language, and the Designer agent will generate the
+				updated spec YAML for your review.
 			</p>
 			<p className="text-xs text-[--text-muted]">
 				To <strong>execute the current spec as-is</strong>, use the <strong>Generate Plan</strong>{" "}
@@ -198,10 +243,10 @@ function IdleView({ onStartEdit, onClose }: { onStartEdit: () => void; onClose?:
 			<div className="flex items-center gap-2">
 				<button
 					type="button"
-					onClick={onStartEdit}
+					onClick={onStartDescribe}
 					className="px-3 py-1.5 text-xs font-medium rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors"
 				>
-					Edit Frozen Spec
+					Describe Change
 				</button>
 				{onClose && (
 					<button
@@ -212,6 +257,67 @@ function IdleView({ onStartEdit, onClose }: { onStartEdit: () => void; onClose?:
 						Back
 					</button>
 				)}
+			</div>
+		</div>
+	);
+}
+
+function DescribingView({
+	changeDescription,
+	loading,
+	onDescriptionChange,
+	onGenerate,
+	onManualEdit,
+	onCancel,
+}: {
+	changeDescription: string;
+	loading: boolean;
+	onDescriptionChange: (v: string) => void;
+	onGenerate: () => void;
+	onManualEdit: () => void;
+	onCancel: () => void;
+}) {
+	return (
+		<div className="p-4 space-y-3">
+			<label className="block">
+				<span className="text-xs font-medium text-amber-400 block mb-1">
+					Describe the change you want
+				</span>
+				<textarea
+					value={changeDescription}
+					onChange={(e) => onDescriptionChange(e.target.value)}
+					rows={4}
+					placeholder="e.g., Add a new acceptance criterion requiring all API endpoints to return proper error codes..."
+					data-testid="scr-description-input"
+					className="w-full px-3 py-2 text-xs bg-[--bg-secondary] border border-amber-500/30 rounded text-[--text-primary] placeholder:text-[--text-muted] resize-y focus:border-amber-500 focus:outline-none"
+				/>
+			</label>
+			<div className="flex items-center gap-2 justify-between">
+				<button
+					type="button"
+					onClick={onManualEdit}
+					className="text-[10px] text-[--text-muted] hover:text-[--text-secondary] underline"
+				>
+					Edit YAML manually instead
+				</button>
+				<div className="flex gap-2">
+					<button
+						type="button"
+						onClick={onCancel}
+						className="px-3 py-1.5 text-xs font-medium rounded border border-[--border] text-[--text-secondary] hover:bg-[--bg-tertiary]"
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						onClick={onGenerate}
+						disabled={loading}
+						data-testid="scr-generate-button"
+						className="px-3 py-1.5 text-xs font-medium rounded bg-[--accent] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+					>
+						{loading ? "Generating..." : "Generate Updated Spec"}
+					</button>
+				</div>
 			</div>
 		</div>
 	);

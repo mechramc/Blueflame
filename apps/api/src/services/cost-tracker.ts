@@ -64,10 +64,14 @@ function persistCostEntry(entry: CostEntry, projectId: string): void {
 /**
  * Load cost entries from Cosmos for a project. Idempotent.
  */
-export async function loadCostEntriesFromCosmos(projectId: string): Promise<void> {
+export async function loadCostEntriesFromCosmos(_projectId?: string): Promise<void> {
 	if (cosmosLoaded) return;
 	try {
-		const docs = await db.documents.findByType(projectId, "cost-entry");
+		// Load all cost entries across all projects (cross-partition query)
+		const docs = await db.documents.queryAll({
+			query: "SELECT * FROM c WHERE c.type = 'cost-entry'",
+			parameters: [],
+		});
 		for (const doc of docs) {
 			const entry = doc as unknown as CostEntry & { id: string };
 			// Deduplicate — check if already in memory by timestamp + agentId
