@@ -264,6 +264,8 @@ executionRouter.post("/:runId/override-task", requireRole("Blueflame_Admin"), as
 	const { runId } = req.params;
 	const { taskId, reason } = req.body as { taskId: string; reason?: string };
 
+	console.log(`[Override] Request: runId=${runId} taskId=${taskId} reason=${reason}`);
+
 	if (!runId || !taskId) {
 		res.status(400).json({ error: "runId and taskId are required" });
 		return;
@@ -274,9 +276,11 @@ executionRouter.post("/:runId/override-task", requireRole("Blueflame_Admin"), as
 
 	const result = await overrideTask(String(runId), taskId, overrideReason, adminUser);
 	if (!result.ok) {
+		console.error(`[Override] Failed: ${result.error.message}`);
 		res.status(400).json({ error: result.error.message });
 		return;
 	}
+	console.log(`[Override] Success: task ${taskId} overridden by ${adminUser}`);
 
 	// Audit trail
 	logAuditEvent({

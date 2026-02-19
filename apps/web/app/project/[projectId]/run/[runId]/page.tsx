@@ -283,12 +283,25 @@ export default function RunPage() {
 	const { hasMinimumRole } = useRole();
 	const isAdmin = hasMinimumRole(UserRole.Admin);
 
+	const [overrideError, setOverrideError] = useState<string | null>(null);
+
 	const handleOverrideTask = useCallback(
 		async (taskId: string) => {
-			await apiPost(`/api/execution/${runId}/override-task`, {
-				taskId,
-				reason: "Admin override — will test manually",
-			}).catch(() => {});
+			setOverrideError(null);
+			try {
+				const result = await apiPost<{ runId: string; taskId: string; status: string }>(
+					`/api/execution/${runId}/override-task`,
+					{
+						taskId,
+						reason: "Admin override — will test manually",
+					},
+				);
+				console.log("[Override] Success:", result);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : "Override failed";
+				console.error("[Override] Error:", msg);
+				setOverrideError(`Override ${taskId}: ${msg}`);
+			}
 			fetchStatus();
 		},
 		[runId, fetchStatus],
@@ -434,6 +447,19 @@ export default function RunPage() {
 							</div>
 						))}
 					</div>
+				</div>
+			)}
+			{/* Override error banner */}
+			{overrideError && (
+				<div className="border-b border-red-500/30 bg-red-500/5 px-4 py-2 flex items-center justify-between">
+					<span className="text-xs text-red-400">{overrideError}</span>
+					<button
+						type="button"
+						onClick={() => setOverrideError(null)}
+						className="text-xs text-red-300 hover:text-red-200 ml-2"
+					>
+						Dismiss
+					</button>
 				</div>
 			)}
 			{/* Run completion notification banner */}
