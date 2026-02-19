@@ -1142,19 +1142,41 @@ export async function overrideTask(
 	// Clear any pending fixes for this task
 	run.pendingFixes = run.pendingFixes.filter((f) => f.taskId !== taskId);
 
+	// Unblock DEFERRED dependents: reset any DEFERRED task whose dependencies
+	// are now all COMPLETED back to PENDING so getReadyTasks picks them up
+	const completedIds = new Set(
+		run.plan.tasks.filter((t) => t.status === TaskStatus.Completed).map((t) => t.id),
+	);
+	const unblockedIds: string[] = [];
+	for (const t of run.plan.tasks) {
+		if (t.status !== TaskStatus.Deferred) continue;
+		const allDepsCompleted = t.dependencies.every((depId) => completedIds.has(depId));
+		if (allDepsCompleted) {
+			t.status = TaskStatus.Pending;
+			t.failureReason = undefined;
+			run.retryCountByTask[t.id] = 0;
+			unblockedIds.push(t.id);
+		}
+	}
+
 	// If run was PARTIAL or COMPLETED, set back to EXECUTING so wave can proceed
-	if (run.status === RunStatus.Partial || run.status === RunStatus.Completed) {
+	if (
+		run.status === RunStatus.Partial ||
+		run.status === RunStatus.Completed ||
+		run.status === RunStatus.Paused
+	) {
 		run.status = RunStatus.Executing;
 		run.completedAt = null;
 		run.interruptRequested = false;
 	}
 
+	const unblockedMsg = unblockedIds.length > 0 ? ` — unblocked: [${unblockedIds.join(", ")}]` : "";
 	pushEvent(
 		run,
 		"admin",
 		"SYSTEM",
 		"TASK_OVERRIDDEN",
-		`Task ${taskId} overridden by ${adminUser} (was ${previousStatus}): ${reason}`,
+		`Task ${taskId} overridden by ${adminUser} (was ${previousStatus}): ${reason}${unblockedMsg}`,
 	);
 	checkpointRun(run);
 
