@@ -26,6 +26,7 @@ export default function FailuresPage() {
 
 	const [selectedId, setSelectedId] = useState<string | undefined>();
 	const [failures, setFailures] = useState<FailureTimelineEntry[]>([]);
+	const [failureMap, setFailureMap] = useState<Map<string, NormalizedFailure>>(new Map());
 	const [rootCause, setRootCause] = useState<RootCauseAnalysis | null>(null);
 	const [remediation, setRemediation] = useState<RemediationViewData | null>(null);
 	const [analyzing, setAnalyzing] = useState(false);
@@ -53,6 +54,13 @@ export default function FailuresPage() {
 					}
 					const remFailureIds = new Set(allRemediations.map((r) => r.failureId));
 
+					// Store failureId → failure map for runId lookups
+					const fMap = new Map<string, NormalizedFailure>();
+					for (const f of data) {
+						fMap.set(f.failureId, f);
+					}
+					setFailureMap(fMap);
+
 					const entries: FailureTimelineEntry[] = data.map((f) => ({
 						failureId: f.failureId,
 						failureType: f.failureType,
@@ -78,12 +86,42 @@ export default function FailuresPage() {
 		setAnalyzing(true);
 
 		try {
-			// Fetch remediation for this failure
+			// Fetch existing remediation for this failure
 			const remRes = await fetch(`${API_BASE}/api/remediation?failureId=${failureId}`);
+			let hasRootCause = false;
+
 			if (remRes.ok) {
 				const remediations = (await remRes.json()) as Remediation[];
 				if (remediations.length > 0) {
 					const rem = remediations[0] as Remediation;
+					if (rem.rootCause) {
+						hasRootCause = true;
+						setRootCause(rem.rootCause);
+						setRemediation({
+							remediationId: rem.remediationId,
+							status: rem.status,
+							failureId: rem.failureId,
+							parentLockId: rem.parentLockId,
+							remediationLockId: rem.remediationLockId,
+							createdAt: rem.createdAt,
+							updatedAt: rem.updatedAt,
+						});
+					}
+				}
+			}
+
+			// If no root cause exists, trigger on-demand analysis
+			if (!hasRootCause) {
+				const failure = failureMap.get(failureId);
+				const runId = failure?.runId ?? "";
+				const analyzeRes = await fetch(`${API_BASE}/api/remediation/analyze-failure`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ failureId, runId, projectId }),
+				});
+				if (analyzeRes.ok) {
+					const data = (await analyzeRes.json()) as { remediation: Remediation };
+					const rem = data.remediation;
 					setRootCause(rem.rootCause);
 					setRemediation({
 						remediationId: rem.remediationId,
@@ -101,7 +139,7 @@ export default function FailuresPage() {
 		} finally {
 			setAnalyzing(false);
 		}
-	}, []);
+	}, [failureMap, projectId]);
 
 	const handleAuthorize = useCallback(async () => {
 		if (!remediation) return;

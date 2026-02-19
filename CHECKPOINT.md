@@ -9,11 +9,11 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-19
-- **Session**: 21
+- **Session**: 22
 
 ## Current State
-- **Phase**: Demo Preparation — 5 demo polish issues fixed, ready for E2E testing + demo recording
-- **Last completed task**: Session 21 — Demo polish (Cost Governance, SCR Designer Chat, Mark as Deployed, Failure Cosmos fallback, Budget auto-init)
+- **Phase**: Demo Preparation — On-demand root cause analysis fixed, ready for E2E testing + demo recording
+- **Last completed task**: Session 22 — On-demand root cause analysis (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
 - **Next task**: E2E test all flows → demo recording → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
@@ -23,7 +23,18 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–21)
+## What Just Happened (Sessions 10–22)
+
+### Session 22: On-Demand Root Cause Analysis
+
+**Problem**: Failures tab shows 31 failures from Cosmos but clicking any failure shows "Root cause analysis not yet available" and "No remediation in progress". The `autoAnalyzeFailure()` in orchestrator runs fire-and-forget during `failTask()`. If the Azure OpenAI call fails silently or the API restarts, no remediation is ever created, and there's no retry mechanism.
+
+**Fix (3 files):**
+1. `apps/api/src/services/remediation.ts` — New `triggerAnalysis(failureId, runId, projectId)` function: gets or creates remediation, loads failure from Cosmos, calls `analyzeFailure()` synchronously (awaited, not fire-and-forget), attaches root cause on success. Reuses existing `analyzeFailure` from `@blueflame/foundry` and FixerConfig pattern from orchestrator.
+2. `apps/api/src/routes/remediation.ts` — New `POST /api/remediation/analyze-failure` endpoint: accepts `{ failureId, runId, projectId }`, calls `triggerAnalysis()`, returns `{ remediation }` with rootCause populated. Registered before `/:remediationId` to avoid route shadowing.
+3. `apps/web/app/project/[projectId]/failures/page.tsx` — Auto-trigger analysis on failure select: stores failureId→NormalizedFailure map for runId lookups; in `handleSelect()`, if existing remediation has no rootCause, calls the new endpoint. "Analyzing" spinner shows while LLM runs, then displays results.
+
+**Tests**: All 242 API + 128 Web tests pass. Full build clean (6/6).
 
 ### Session 21: Demo Polish — 5 Issues Fixed
 
@@ -396,6 +407,7 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 - **Session 19**: Orchestrator workflow fixes (5 bugs), model routing stabilization, healing dedup, scrollbar fix
 - **Session 20**: Plan preview in ValidationPanel (state lifting, DAG, task list, σ-estimates)
 - **Session 21**: Demo polish (5 issues: Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos, Budget auto-init)
+- **Session 22**: On-demand root cause analysis (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
 
 ## What To Pick Up Next
 

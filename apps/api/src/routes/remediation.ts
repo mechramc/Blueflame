@@ -23,6 +23,7 @@ import {
 	getRemediationsByRunId,
 	startAnalysis,
 	startRemediationExecution,
+	triggerAnalysis,
 } from "../services/remediation.js";
 
 export const remediationRouter = Router();
@@ -71,6 +72,38 @@ remediationRouter.get("/", async (req, res) => {
 	}
 
 	res.status(400).json({ error: "failureId or runId query parameter required" });
+});
+
+/**
+ * POST /api/remediation/analyze-failure
+ * On-demand root cause analysis. Creates remediation if needed, runs AI analysis,
+ * and returns the remediation with rootCause populated.
+ * Body: { failureId, runId, projectId }
+ * MUST be registered before /:remediationId to avoid route shadowing.
+ */
+remediationRouter.post("/analyze-failure", async (req, res) => {
+	const { failureId, runId, projectId } = req.body as {
+		failureId: string;
+		runId: string;
+		projectId: string;
+	};
+
+	if (!failureId || !runId || !projectId) {
+		res.status(400).json({ error: "failureId, runId, and projectId are required" });
+		return;
+	}
+
+	try {
+		const remediation = await triggerAnalysis(failureId, runId, projectId);
+		if (!remediation) {
+			res.status(500).json({ error: "Analysis failed — no remediation created" });
+			return;
+		}
+		res.json({ remediation });
+	} catch (error) {
+		console.error("[Remediation] analyze-failure error:", error);
+		res.status(500).json({ error: "Root cause analysis failed" });
+	}
 });
 
 /**

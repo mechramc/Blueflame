@@ -7,9 +7,12 @@
  * Source: Blueflame-Spec-v3-ACAR.md Section 10.5
  */
 
+import { analyzeFailure } from "@blueflame/foundry";
+import type { FixerConfig } from "@blueflame/foundry";
 import type { Remediation, RootCauseAnalysis } from "@blueflame/shared";
 import { RemediationStatus } from "@blueflame/shared";
 import { db } from "../db.js";
+import { getFailure } from "./failure-store.js";
 
 /** In-memory remediation cache — backed by Cosmos */
 const remediations = new Map<string, Remediation>();
@@ -251,6 +254,78 @@ export async function loadRemediationsFromCosmos(projectId: string): Promise<voi
 	} catch {
 		// Cosmos unavailable
 	}
+}
+
+/**
+ * On-demand root cause analysis — gets or creates a remediation for a failure,
+ * runs AI analysis via Azure OpenAI, and returns the remediation with rootCause.
+ *
+ * Unlike autoAnalyzeFailure() in orchestrator (fire-and-forget), this is
+ * synchronously awaited so the frontend gets the result immediately.
+ */
+export async function triggerAnalysis(
+	failureId: string,
+	runId: string,
+	projectId: string,
+): Promise<Remediation | null> {
+	// Check if remediation already exists with root cause
+	const existing = await getRemediationsByFailureId(failureId);
+	const first = existing[0] as Remediation | undefined;
+	if (first?.rootCause) {
+		return first;
+	}
+
+	// Get or create remediation
+	let rem: Remediation;
+	if (first) {
+		rem = first;
+	} else {
+		rem = createRemediation({
+			failureId,
+			runId,
+			projectId,
+			parentLockId: `auto-${Date.now()}`,
+		});
+	}
+
+	// Transition to ANALYZING if still PENDING
+	if (rem.status === RemediationStatus.Pending) {
+		const analyzed = startAnalysis(rem.remediationId);
+		if (analyzed) rem = analyzed;
+	}
+
+	// Load the failure from Cosmos
+	const failure = await getFailure(failureId);
+	if (!failure) {
+		console.error(`[remediation] triggerAnalysis: failure not found: ${failureId}`);
+		return rem;
+	}
+
+	// Build Fixer config from env vars (same pattern as orchestrator.autoAnalyzeFailure)
+	const endpoint = process.env.FOUNDRY_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? "";
+	const apiKey = process.env.FOUNDRY_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? "";
+	if (!endpoint || !apiKey) {
+		console.error("[remediation] triggerAnalysis: no Azure OpenAI credentials configured");
+		return rem;
+	}
+
+	const config: FixerConfig = {
+		endpoint,
+		apiKey,
+		deployment: "gpt-4o-mini",
+		apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? "2024-12-01-preview",
+	};
+
+	// Run AI analysis (synchronously awaited)
+	const result = await analyzeFailure(config, failure);
+	if (result.ok) {
+		const updated = attachRootCause(rem.remediationId, result.value.rootCause);
+		if (updated) return updated;
+	} else {
+		console.error(`[remediation] triggerAnalysis failed for ${failureId}:`, result.error.error);
+	}
+
+	return rem;
 }
 
 /**

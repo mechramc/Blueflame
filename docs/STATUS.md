@@ -262,6 +262,13 @@
 | Failure Intelligence: Cosmos cross-partition query fallback | API | P0 | **DONE** |
 | Budget auto-init + cost refresh on GET | API | P0 | **DONE** |
 
+### Session 22 — On-Demand Root Cause Analysis
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| triggerAnalysis() service function (sync, not fire-and-forget) | S11 | P0 | **DONE** |
+| POST /api/remediation/analyze-failure endpoint | S11 | P0 | **DONE** |
+| Frontend auto-trigger analysis on failure select (no rootCause → call API) | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
@@ -289,7 +296,8 @@
 - **Session 19 Orchestrator Fixes**: 8/8 (auto-approve fixer, unreachable deferral, model escalation, providerConfig fix, routing fix, healing dedup, scrollbar, tests)
 - **Session 20 Plan Preview + Admin Override + Failure Intelligence**: 14/14
 - **Session 21 Demo Polish**: 5/5 (Cost Governance, SCR Chat, Mark Deployed, Failure Cosmos fallback, Budget auto-init)
-- **Grand Total**: 144/147 complete (2 deferred, 3 demo remaining)
+- **Session 22 On-Demand RCA**: 3/3 (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
+- **Grand Total**: 147/150 complete (2 deferred, 3 demo remaining)
 - **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
