@@ -166,9 +166,7 @@ export function SCRPanel({ projectId, frozenSpecId, frozenContent, onClose }: SC
 				</div>
 			)}
 
-			{step === "idle" && (
-				<IdleView onStartDescribe={handleStartDescribe} onClose={onClose} />
-			)}
+			{step === "idle" && <IdleView onStartDescribe={handleStartDescribe} onClose={onClose} />}
 
 			{step === "describing" && (
 				<DescribingView

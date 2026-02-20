@@ -8,7 +8,7 @@
  *   3. Delta execution (patch existing plan, only re-execute affected tasks)
  */
 
-import { generateSpec, type SpecGeneratorConfig } from "@blueflame/foundry";
+import { type SpecGeneratorConfig, generateSpec } from "@blueflame/foundry";
 import type {
 	BaselineSnapshot,
 	DiffPack,
