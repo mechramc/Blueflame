@@ -107,6 +107,7 @@ process.on("uncaughtException", (err) => {
 // Load persisted data from Cosmos on startup
 import { loadAuditLogFromCosmos } from "./services/audit-logger.js";
 import { loadCostEntriesFromCosmos } from "./services/cost-tracker.js";
+import { db } from "./db.js";
 
 httpServer.listen(Number(PORT), "0.0.0.0", () => {
 	console.log(`Blueflame API listening on http://0.0.0.0:${PORT}`);
@@ -115,7 +116,7 @@ httpServer.listen(Number(PORT), "0.0.0.0", () => {
 	loadCostEntriesFromCosmos("global").catch((err) =>
 		console.warn("[Startup] Cost entries load failed:", err),
 	);
-	db.projects.findAll().catch((err) => console.warn("[Startup] Projects pre-warm failed:", err));
+	db.projects.findAll().catch((err: unknown) => console.warn("[Startup] Projects pre-warm failed:", err));
 });
 
 export default app;
