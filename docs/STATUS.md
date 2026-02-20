@@ -289,6 +289,15 @@
 | Fix 5: Sigma values on DAG nodes (replace "Azure OpenAI" text) | UI | P0 | **DONE** |
 | Fix 6: Task output in run detail panel (Agent Output section) | UI | P0 | **DONE** |
 
+### Session 25 — Failure Intelligence Override Status Sync
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Add OVERRIDDEN to RemediationStatus enum | Shared | P0 | **DONE** |
+| overrideTask() syncs remediation to OVERRIDDEN | S7 | P0 | **DONE** |
+| RemediationPlanView: OVERRIDDEN badge + View Run link | UI | P0 | **DONE** |
+| FailureTimeline: distinguish "Overridden" vs "Remediated" badge | UI | P0 | **DONE** |
+| Failures page: pass runId + remediationStatus to components | UI | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|

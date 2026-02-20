@@ -10,6 +10,7 @@ export interface FailureTimelineEntry {
 	timestamp: string;
 	branchRef: string;
 	hasRemediation: boolean;
+	remediationStatus?: string;
 }
 
 interface FailureTimelineProps {
@@ -82,10 +83,12 @@ export function FailureTimeline({ failures, onSelect, selectedId }: FailureTimel
 								</span>
 								{f.hasRemediation && (
 									<span
-										className="text-[10px] text-emerald-400 font-medium"
+										className={`text-[10px] font-medium ${
+											f.remediationStatus === "OVERRIDDEN" ? "text-amber-400" : "text-emerald-400"
+										}`}
 										data-testid="remediation-badge"
 									>
-										Remediated
+										{f.remediationStatus === "OVERRIDDEN" ? "Overridden" : "Remediated"}
 									</span>
 								)}
 							</div>

@@ -52,7 +52,10 @@ export default function FailuresPage() {
 							// skip
 						}
 					}
-					const remFailureIds = new Set(allRemediations.map((r) => r.failureId));
+					const remByFailureId = new Map<string, Remediation>();
+					for (const r of allRemediations) {
+						remByFailureId.set(r.failureId, r);
+					}
 
 					// Store failureId → failure map for runId lookups
 					const fMap = new Map<string, NormalizedFailure>();
@@ -61,15 +64,19 @@ export default function FailuresPage() {
 					}
 					setFailureMap(fMap);
 
-					const entries: FailureTimelineEntry[] = data.map((f) => ({
-						failureId: f.failureId,
-						failureType: f.failureType,
-						buildNumber: f.buildNumber,
-						source: f.source,
-						timestamp: f.timestamp,
-						branchRef: f.branchRef,
-						hasRemediation: remFailureIds.has(f.failureId),
-					}));
+					const entries: FailureTimelineEntry[] = data.map((f) => {
+						const rem = remByFailureId.get(f.failureId);
+						return {
+							failureId: f.failureId,
+							failureType: f.failureType,
+							buildNumber: f.buildNumber,
+							source: f.source,
+							timestamp: f.timestamp,
+							branchRef: f.branchRef,
+							hasRemediation: !!rem,
+							remediationStatus: rem?.status,
+						};
+					});
 					setFailures(entries);
 				}
 			} catch {
@@ -106,6 +113,7 @@ export default function FailuresPage() {
 								remediationLockId: rem.remediationLockId,
 								createdAt: rem.createdAt,
 								updatedAt: rem.updatedAt,
+								runId: rem.runId,
 							});
 						}
 					}
@@ -132,6 +140,7 @@ export default function FailuresPage() {
 							remediationLockId: rem.remediationLockId,
 							createdAt: rem.createdAt,
 							updatedAt: rem.updatedAt,
+							runId: rem.runId,
 						});
 					}
 				}
@@ -165,6 +174,7 @@ export default function FailuresPage() {
 					remediationLockId: updated.remediationLockId,
 					createdAt: updated.createdAt,
 					updatedAt: updated.updatedAt,
+					runId: updated.runId,
 				});
 			}
 		} catch {
@@ -189,6 +199,7 @@ export default function FailuresPage() {
 					remediationLockId: updated.remediationLockId,
 					createdAt: updated.createdAt,
 					updatedAt: updated.updatedAt,
+					runId: updated.runId,
 				});
 			}
 		} catch {

@@ -146,6 +146,43 @@ export function failRemediation(remediationId: string): Remediation | null {
 }
 
 /**
+ * Override all non-completed remediations linked to a specific task.
+ * Matches by failureId pattern: `fail-{runId}-{taskId}-*`.
+ * Returns the number of remediations overridden.
+ */
+export function overrideRemediationsForTask(runId: string, taskId: string): number {
+	let count = 0;
+	const prefix = `fail-${runId}-${taskId}-`;
+	for (const rem of remediations.values()) {
+		if (
+			rem.runId === runId &&
+			rem.failureId.startsWith(prefix) &&
+			rem.status !== RemediationStatus.Completed
+		) {
+			rem.status = RemediationStatus.Overridden;
+			rem.updatedAt = new Date().toISOString();
+			persistRemediation(rem);
+			count++;
+		}
+	}
+	return count;
+}
+
+/**
+ * Mark remediation as overridden (admin override of the associated task).
+ * Accepts any non-COMPLETED status — if already completed, no-op.
+ */
+export function overrideRemediation(remediationId: string): Remediation | null {
+	const rem = remediations.get(remediationId);
+	if (!rem || rem.status === RemediationStatus.Completed) return null;
+
+	rem.status = RemediationStatus.Overridden;
+	rem.updatedAt = new Date().toISOString();
+	persistRemediation(rem);
+	return rem;
+}
+
+/**
  * Get a remediation by ID. Falls back to Cosmos on cache miss.
  */
 export async function getRemediation(remediationId: string): Promise<Remediation | undefined> {

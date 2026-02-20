@@ -10,6 +10,9 @@ export interface RemediationViewData {
 	remediationLockId: string | null;
 	createdAt: string;
 	updatedAt: string;
+	resolvedVia?: "override" | "fixer" | null;
+	resolvedBy?: string;
+	runId?: string;
 }
 
 interface RemediationPlanViewProps {
@@ -26,6 +29,7 @@ const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }
 	EXECUTING: { dot: "bg-indigo-400", text: "text-indigo-400", label: "Executing" },
 	COMPLETED: { dot: "bg-emerald-400", text: "text-emerald-400", label: "Completed" },
 	FAILED: { dot: "bg-red-400", text: "text-red-400", label: "Failed" },
+	OVERRIDDEN: { dot: "bg-amber-400", text: "text-amber-400", label: "Overridden (Admin)" },
 };
 
 export function RemediationPlanView({
@@ -48,6 +52,8 @@ export function RemediationPlanView({
 	};
 	const statusStyle = STATUS_STYLES[remediation.status] ?? DEFAULT_STATUS;
 	const showAuthorize = remediation.status === "PLAN_READY" && onAuthorize;
+	const isOverridden = remediation.status === "OVERRIDDEN";
+	const isResolved = isOverridden || remediation.status === "COMPLETED";
 
 	return (
 		<div className="space-y-3" data-testid="remediation-view">
@@ -89,20 +95,54 @@ export function RemediationPlanView({
 				</div>
 			</div>
 
-			{/* Authorize button */}
-			{showAuthorize && (
-				<button
-					type="button"
-					onClick={onAuthorize}
-					className="w-full py-2 px-3 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded transition-colors animate-pulse-glow"
-					data-testid="authorize-remediation-btn"
+			{/* Resolved via admin override — static badge */}
+			{isOverridden && (
+				<div
+					className="w-full py-2 px-3 text-sm font-medium text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded text-center"
+					data-testid="override-badge"
 				>
-					Authorize Remediation Plan
-				</button>
+					Resolved via admin override
+					{remediation.resolvedBy && (
+						<span className="text-xs text-amber-400/70 ml-1">by {remediation.resolvedBy}</span>
+					)}
+				</div>
+			)}
+
+			{/* Resolved via fixer — static badge */}
+			{remediation.status === "COMPLETED" && remediation.resolvedVia === "fixer" && (
+				<div
+					className="w-full py-2 px-3 text-sm font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded text-center"
+					data-testid="fixer-resolved-badge"
+				>
+					Resolved via automated fixer
+				</div>
+			)}
+
+			{/* Authorize button + View Run link for PLAN_READY */}
+			{showAuthorize && (
+				<div className="space-y-2">
+					<button
+						type="button"
+						onClick={onAuthorize}
+						className="w-full py-2 px-3 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded transition-colors animate-pulse-glow"
+						data-testid="authorize-remediation-btn"
+					>
+						Authorize Remediation Plan
+					</button>
+					{remediation.runId && (
+						<a
+							href={`/project/${remediation.runId.split("-").slice(0, 1).join("")}/runs`}
+							className="block w-full py-2 px-3 text-sm font-medium text-[--accent] bg-[--accent]/10 border border-[--accent]/30 rounded text-center hover:bg-[--accent]/20 transition-colors"
+							data-testid="view-run-link"
+						>
+							View Run
+						</a>
+					)}
+				</div>
 			)}
 
 			{/* Execute button — shown after authorization */}
-			{remediation.status === "AUTHORIZED" && onExecute && (
+			{!isResolved && remediation.status === "AUTHORIZED" && onExecute && (
 				<button
 					type="button"
 					onClick={onExecute}

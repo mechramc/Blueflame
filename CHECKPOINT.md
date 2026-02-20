@@ -8,12 +8,12 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-19
-- **Session**: 24
+- **Date**: 2026-02-20
+- **Session**: 25
 
 ## Current State
-- **Phase**: Demo Ready — All 6 demo script gaps fixed, build green
-- **Last completed task**: Session 24 — Demo script gap fixes (PRD upload, constraint registry, budget input, remediation execute, sigma on DAG, task output panel)
+- **Phase**: Demo Ready — Override-remediation sync fix, build green
+- **Last completed task**: Session 25 — Fix Failure Intelligence tab override status sync (OVERRIDDEN remediation status, orchestrator sync, UI badges)
 - **Next task**: Docker build + push → redeploy to Azure → demo recording (7 workflows) → submission package
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
@@ -23,7 +23,22 @@
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–24)
+## What Just Happened (Sessions 10–25)
+
+### Session 25: Fix Failure Intelligence Override Status Sync
+
+**Goal**: When a user overrides a failed task, sync the remediation record to OVERRIDDEN so the Failure Intelligence tab stops showing "Authorize Remediation Plan".
+
+**Changes (7 files modified):**
+
+1. **`packages/shared/src/types/enums.ts`** — Added `Overridden = "OVERRIDDEN"` to `RemediationStatus` enum
+2. **`apps/api/src/services/remediation.ts`** — Added `overrideRemediationsForTask()` and `overrideRemediation()` functions to mark remediations as OVERRIDDEN
+3. **`apps/api/src/services/orchestrator.ts`** — `overrideTask()` now calls `overrideRemediationsForTask()` after clearing pending fixes
+4. **`apps/web/components/failures/RemediationPlanView.tsx`** — OVERRIDDEN status style (amber), static "Resolved via admin override" badge, "View Run" link for PLAN_READY, added `resolvedVia`/`resolvedBy`/`runId` fields
+5. **`apps/web/app/project/[projectId]/failures/page.tsx`** — Passes `runId` and `remediationStatus` through to components
+6. **`apps/web/components/failures/FailureTimeline.tsx`** — Badge shows "Overridden" (amber) vs "Remediated" (green) based on remediation status
+
+**Build**: 6/6 turbo tasks pass. 0 new lint errors.
 
 ### Session 24: Demo Script Gap Fixes (6 Missing Features)
 

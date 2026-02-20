@@ -51,7 +51,12 @@ import {
 import { storeFailure } from "./failure-store.js";
 import { createHealingProject, shouldAutoHeal } from "./healing-engine.js";
 import { extractPatternsFromRun } from "./knowledge-store.js";
-import { attachRootCause, createRemediation, startAnalysis } from "./remediation.js";
+import {
+	attachRootCause,
+	createRemediation,
+	overrideRemediationsForTask,
+	startAnalysis,
+} from "./remediation.js";
 import { incrementProjectStat } from "./spec-generation.js";
 import { executeTask } from "./task-executor.js";
 
@@ -1141,6 +1146,14 @@ export async function overrideTask(
 
 	// Clear any pending fixes for this task
 	run.pendingFixes = run.pendingFixes.filter((f) => f.taskId !== taskId);
+
+	// Mark associated remediations as OVERRIDDEN (fire-and-forget)
+	const overriddenCount = overrideRemediationsForTask(runId, taskId);
+	if (overriddenCount > 0) {
+		console.log(
+			`[overrideTask] Marked ${overriddenCount} remediation(s) as OVERRIDDEN for task ${taskId}`,
+		);
+	}
 
 	// Unblock DEFERRED dependents: reset any DEFERRED task whose dependencies
 	// are now all COMPLETED back to PENDING so getReadyTasks picks them up

@@ -134,4 +134,5 @@ export enum RemediationStatus {
 	Executing = "EXECUTING",
 	Completed = "COMPLETED",
 	Failed = "FAILED",
+	Overridden = "OVERRIDDEN",
 }
