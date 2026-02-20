@@ -84,8 +84,6 @@ scripts/        # Automation scripts
 ### Commit Format
 ```
 <type>(<scope>): <description>
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
 Types: `phase`, `qa`, `fix`, `docs`, `refactor`, `test`, `chore`
 Scopes: `s1`..`s10` (system), phase name, or app name
