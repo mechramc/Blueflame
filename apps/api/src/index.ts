@@ -110,11 +110,12 @@ import { loadCostEntriesFromCosmos } from "./services/cost-tracker.js";
 
 httpServer.listen(Number(PORT), "0.0.0.0", () => {
 	console.log(`Blueflame API listening on http://0.0.0.0:${PORT}`);
-	// Fire-and-forget: warm caches from Cosmos
+	// Fire-and-forget: warm caches and connections from Cosmos
 	loadAuditLogFromCosmos().catch((err) => console.warn("[Startup] Audit log load failed:", err));
 	loadCostEntriesFromCosmos("global").catch((err) =>
 		console.warn("[Startup] Cost entries load failed:", err),
 	);
+	db.projects.findAll().catch((err) => console.warn("[Startup] Projects pre-warm failed:", err));
 });
 
 export default app;
