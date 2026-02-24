@@ -5,7 +5,7 @@
 > This is NOT the handoff document — see `CHECKPOINT.md` for cross-tool handoff.
 
 ## Current Phase
-**Live Deployment** — All features deployed to Azure. API and Web container apps running on Azure Container Apps with dev mode auth (no Entra ID required). Cosmos DB connected, Azure OpenAI configured. Live URLs accessible by hackathon judges. Next: demo recording + submission.
+**Live Deployment (Session 27 refresh)** — All features including Session 26 changes (Azure Web PubSub adapter + App Insights span instrumentation) deployed to Azure. API (revision 0000066) and Web (revision 0000059) container apps running on Azure Container Apps with dev mode auth (no Entra ID required). Cosmos DB connected, Azure OpenAI configured. Live URLs accessible by hackathon judges. Next: demo recording + submission.
 
 ## Sprint Progress
 
@@ -308,12 +308,20 @@
 | TraceViewer wired into run dashboard (fetch + render) | S16 | P1 | **DONE** |
 | Biome lint auto-fix (import ordering, formatting) | CI/CD | P0 | **DONE** |
 
+### Session 27 — Docker Rebuild + Azure Redeploy
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Install Azure CLI + Docker Desktop (macOS) | Infra | P0 | **DONE** |
+| Docker build linux/amd64 (API + Web) | CI/CD | P0 | **DONE** |
+| Push to ACR (blueflamecr.azurecr.io) | CI/CD | P0 | **DONE** |
+| Redeploy API container app (revision 0000066) | Infra | P0 | **DONE** |
+| Redeploy Web container app (revision 0000059) | Infra | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
-| Docker rebuild + push to ACR | P0 | Not started |
-| Redeploy to Azure Container Apps | P0 | Not started |
 | End-to-end testing (Spec→Plan→Execute flow) | P0 | In progress |
+| Enable Azure SignalR (optional) | P1 | Not started |
 | Demo recording (7 workflows) | P0 | Not started |
 | Submission package | P0 | Not started |
 
@@ -339,8 +347,9 @@
 - **Session 23 Azure Deployment**: 6/6 (0.0.0.0 bind, Dockerfile build arg, Docker build+push, API deploy, Web deploy, smoke test)
 - **Session 24 Demo Script Gaps**: 6/6 (PRD upload, constraint registry, budget input, remediation execute, sigma on DAG, task output panel)
 - **Session 26 Deferred Enterprise**: 6/6 (SignalR adapter, async hub, orchestrator spans, spans API, TraceViewer wiring, lint fix)
-- **Grand Total**: 165/167 complete (0 deferred, 5 demo/deploy remaining)
-- **Critical path**: Docker rebuild → redeploy → E2E testing → demo recording → submission package
+- **Session 27 Docker Redeploy**: 5/5 (install tools, build amd64, push ACR, redeploy API, redeploy Web)
+- **Grand Total**: 170/172 complete (0 deferred, 3 demo/submit remaining)
+- **Critical path**: E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
 

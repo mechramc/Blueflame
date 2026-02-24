@@ -9,21 +9,38 @@
 ## Last Updated By
 - **Tool**: Claude Code
 - **Date**: 2026-02-24
-- **Session**: 26
+- **Session**: 27
 
 ## Current State
-- **Phase**: Enterprise Complete — All deferred features implemented, ready for Docker rebuild + redeploy
-- **Last completed task**: Session 26 — S16-004 (Azure SignalR migration) + S16-005 (App Insights span instrumentation + TraceViewer wiring)
-- **Next task**: Docker build + push → redeploy to Azure → demo recording (7 workflows) → submission package
+- **Phase**: Deployed — All Session 26 changes (SignalR + App Insights spans) live on Azure
+- **Last completed task**: Session 27 — Docker rebuild (linux/amd64) + push to ACR + redeploy both container apps
+- **Next task**: Demo recording (7 workflows) → submission package → optional Azure SignalR connection string
 - **Branch**: `main`
 - **Repo is green**: YES (full build passes — 12/12 turbo tasks, 0 lint errors, 636+ tests)
-- **CI/CD**: Changes need commit + push, then Docker rebuild
+- **CI/CD**: Both containers redeployed with latest images
 - **Known issue**: None
-- **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (needs redeploy with Session 26 changes)
-- **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (needs redeploy with Session 26 changes)
+- **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (revision 0000066, current)
+- **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (revision 0000059, current)
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–26)
+## What Just Happened (Sessions 10–27)
+
+### Session 27: Docker Rebuild + Azure Redeploy
+
+**Goal**: Rebuild Docker images with Session 26 changes (Azure Web PubSub + App Insights spans) and redeploy to Azure Container Apps.
+
+**Steps completed:**
+1. Installed Azure CLI (v2.83.0) + Docker Desktop (v29.2.1) on macOS via Homebrew
+2. Logged into Azure + ACR (`blueflamecr.azurecr.io`)
+3. Built both images — initial ARM build failed on Azure (`no child with platform linux/amd64`), rebuilt with `--platform linux/amd64`
+4. Pushed both amd64 images to ACR
+5. Redeployed both container apps via `az containerapp update`
+
+**Result:**
+- API: revision `blueflame-api-dev--0000066`, status `Running`
+- Web: revision `blueflame-web-dev--0000059`, status `Running`
+
+**Lesson learned**: Always use `--platform linux/amd64` when building on Apple Silicon for Azure Container Apps.
 
 ### Session 26: Deferred Enterprise Features (S16-004 + S16-005)
 
@@ -491,20 +508,14 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 
 ## What To Pick Up Next
 
-### Immediate (Session 27)
-1. **Docker build + push** — Rebuild both images with Session 26 changes, push to ACR:
+### Immediate (Session 28)
+1. **Optionally set** `AZURE_SIGNALR_CONNECTION_STRING` on API container app to enable Azure Web PubSub:
    ```bash
-   az acr login --name blueflamecr
-   docker build -t blueflamecr.azurecr.io/blueflame-api:latest -f apps/api/Dockerfile .
-   docker push blueflamecr.azurecr.io/blueflame-api:latest
-   docker build --build-arg NEXT_PUBLIC_API_URL=https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io -t blueflamecr.azurecr.io/blueflame-web:latest -f apps/web/Dockerfile .
-   docker push blueflamecr.azurecr.io/blueflame-web:latest
+   az containerapp update --name blueflame-api-dev --resource-group blueflame-rg --set-env-vars AZURE_SIGNALR_CONNECTION_STRING=<connection-string>
    ```
-2. **Redeploy to Azure** — `az containerapp update` for API and Web
-3. **Optionally set** `AZURE_SIGNALR_CONNECTION_STRING` on API container app to enable Azure Web PubSub
-4. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
-5. **Submission package** — README (done), architecture diagram, demo video
-6. **Final E2E validation** — Run through all flows; verify TraceViewer shows spans on run dashboard
+2. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
+3. **Submission package** — README (done), architecture diagram, demo video
+4. **Final E2E validation** — Run through all flows; verify TraceViewer shows spans on run dashboard
 
 ### What's Deferred (OK to skip)
 - Nothing — all enterprise features implemented
