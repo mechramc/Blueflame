@@ -2,6 +2,7 @@
  * Execution routes — start, advance, interrupt runs.
  */
 
+import { getRunSpans, getSpanTree } from "@blueflame/foundry";
 import { Router } from "express";
 import { requireRole } from "../middleware/auth.js";
 import { getAgentsByRunId } from "../services/agent-spawner.js";
@@ -197,6 +198,17 @@ executionRouter.post("/:runId/interrupt", (req, res) => {
 	}
 
 	res.json({ runId, interruptRequested: true });
+});
+
+/**
+ * GET /api/execution/:runId/spans
+ * Get trace spans for a run (flat list + tree).
+ */
+executionRouter.get("/:runId/spans", (req, res) => {
+	const { runId } = req.params;
+	const spans = getRunSpans(runId);
+	const tree = getSpanTree(runId);
+	res.json({ spans, tree });
 });
 
 /**

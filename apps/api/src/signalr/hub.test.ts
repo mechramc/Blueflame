@@ -15,15 +15,19 @@ describe("SignalR Hub", () => {
 
 	beforeAll(
 		() =>
-			new Promise<void>((resolve) => {
+			new Promise<void>((resolve, reject) => {
 				httpServer = createServer();
-				ioServer = createHub(httpServer);
-				httpServer.listen(0, () => {
-					port = (httpServer.address() as AddressInfo).port;
-					clientSocket = ioClient(`http://localhost:${port}`, {
-						transports: ["websocket"],
-					}) as TypedClientSocket;
-					clientSocket.on("connect", () => resolve());
+				httpServer.listen(0, async () => {
+					try {
+						port = (httpServer.address() as AddressInfo).port;
+						ioServer = await createHub(httpServer);
+						clientSocket = ioClient(`http://localhost:${port}`, {
+							transports: ["websocket"],
+						}) as TypedClientSocket;
+						clientSocket.on("connect", () => resolve());
+					} catch (err) {
+						reject(err);
+					}
 				});
 			}),
 	);

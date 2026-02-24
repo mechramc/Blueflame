@@ -8,22 +8,42 @@
 
 ## Last Updated By
 - **Tool**: Claude Code
-- **Date**: 2026-02-20
-- **Session**: 25
+- **Date**: 2026-02-24
+- **Session**: 26
 
 ## Current State
-- **Phase**: Demo Ready — Override-remediation sync fix, build green
-- **Last completed task**: Session 25 — Fix Failure Intelligence tab override status sync (OVERRIDDEN remediation status, orchestrator sync, UI badges)
+- **Phase**: Enterprise Complete — All deferred features implemented, ready for Docker rebuild + redeploy
+- **Last completed task**: Session 26 — S16-004 (Azure SignalR migration) + S16-005 (App Insights span instrumentation + TraceViewer wiring)
 - **Next task**: Docker build + push → redeploy to Azure → demo recording (7 workflows) → submission package
 - **Branch**: `main`
-- **Repo is green**: YES (full build passes — 6/6 turbo tasks, 0 lint errors)
-- **CI/CD**: All changes committed and pushed
-- **Known issue**: None — catalog model JSON parsing resolved (Phi-4 removed from JSON-requiring roles)
-- **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
-- **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io`
+- **Repo is green**: YES (full build passes — 12/12 turbo tasks, 0 lint errors, 636+ tests)
+- **CI/CD**: Changes need commit + push, then Docker rebuild
+- **Known issue**: None
+- **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (needs redeploy with Session 26 changes)
+- **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (needs redeploy with Session 26 changes)
 - **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
 
-## What Just Happened (Sessions 10–25)
+## What Just Happened (Sessions 10–26)
+
+### Session 26: Deferred Enterprise Features (S16-004 + S16-005)
+
+**Goal**: Implement the two previously deferred features — Azure SignalR migration and Application Insights span instrumentation — completing all 18 enterprise stream tasks.
+
+**S16-004: Azure SignalR Migration (3 files)**
+1. **`apps/api/package.json`** — Added `@azure/web-pubsub-socket.io@^1.1.0` dependency
+2. **`apps/api/src/signalr/hub.ts`** — `createHub()` now async; conditionally attaches Azure Web PubSub adapter when `AZURE_SIGNALR_CONNECTION_STRING` is set, falls back to in-memory adapter for local dev
+3. **`apps/api/src/index.ts`** — Hub creation now uses `.catch()` for async error handling
+4. **`apps/api/src/signalr/hub.test.ts`** — Updated for async `createHub` signature
+
+**S16-005: Application Insights Span Instrumentation (6 files)**
+1. **`apps/api/src/services/orchestrator.ts`** — Full span lifecycle: `startRunTrace()` in `startExecution()`, `startAgentSpan()` for every agent spawn (builder, verifier, fixer), `endSpan()` with metrics in `completeTask()`/`failTask()`, root span ended in `completeRun()`
+2. **`apps/api/src/routes/execution.ts`** — New `GET /api/execution/:runId/spans` endpoint returning flat spans + tree
+3. **`apps/web/app/project/[projectId]/run/[runId]/page.tsx`** — Polls `/spans` endpoint alongside existing run/budget fetches, passes spans to dashboard
+4. **`apps/web/components/dashboard/RunDashboardPanes.tsx`** — Threads `spans` prop to DashboardLayout
+5. **`apps/web/components/dashboard/DashboardLayout.tsx`** — Mounts TraceViewer component below Azure Service Usage panel
+6. Biome auto-fix on 2 files (import ordering, line length formatting)
+
+**Build**: 12/12 turbo tasks pass (6 builds + 6 tests). 636+ tests. 0 lint errors.
 
 ### Session 25: Fix Failure Intelligence Override Status Sync
 
@@ -471,16 +491,23 @@ Resolved all 13 integration gaps identified in the gap analysis. Every phase ver
 
 ## What To Pick Up Next
 
-### Immediate (Session 25)
-1. **Docker build + push** — Rebuild both images with demo fixes, push to ACR
+### Immediate (Session 27)
+1. **Docker build + push** — Rebuild both images with Session 26 changes, push to ACR:
+   ```bash
+   az acr login --name blueflamecr
+   docker build -t blueflamecr.azurecr.io/blueflame-api:latest -f apps/api/Dockerfile .
+   docker push blueflamecr.azurecr.io/blueflame-api:latest
+   docker build --build-arg NEXT_PUBLIC_API_URL=https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io -t blueflamecr.azurecr.io/blueflame-web:latest -f apps/web/Dockerfile .
+   docker push blueflamecr.azurecr.io/blueflame-web:latest
+   ```
 2. **Redeploy to Azure** — `az containerapp update` for API and Web
-3. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
-4. **Submission package** — README (done), architecture diagram, demo video
-5. **Final E2E validation** — Run through all flows on the live deployment
+3. **Optionally set** `AZURE_SIGNALR_CONNECTION_STRING` on API container app to enable Azure Web PubSub
+4. **Demo recording** — 7 workflow demonstrations (WF1-WF7) using live URLs
+5. **Submission package** — README (done), architecture diagram, demo video
+6. **Final E2E validation** — Run through all flows; verify TraceViewer shows spans on run dashboard
 
 ### What's Deferred (OK to skip)
-- **S16-004: Azure SignalR migration** — Socket.IO works; migration is mechanical
-- **S16-005: Application Insights SDK** — OTel spans already provide instrumentation
+- Nothing — all enterprise features implemented
 
 ## Staged But Uncommitted Changes
 None — all changes committed and pushed.

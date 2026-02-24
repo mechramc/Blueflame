@@ -10,6 +10,7 @@ import type { AgentCardData } from "./AgentStatusCard";
 import { AzureServiceUsagePanel } from "./AzureServiceUsagePanel";
 import { DAGProgress } from "./DAGProgress";
 import { ExecutionActivityBanner } from "./ExecutionActivityBanner";
+import { type TraceSpanData, TraceViewer } from "./TraceViewer";
 
 interface DashboardLayoutProps {
 	runId: string;
@@ -26,6 +27,7 @@ interface DashboardLayoutProps {
 	preservedTaskIds?: string[];
 	selectedTaskId?: string | null;
 	onSelectTask?: (task: PlanTask) => void;
+	spans?: TraceSpanData[];
 }
 
 /**
@@ -46,6 +48,7 @@ export function DashboardLayout({
 	preservedTaskIds = [],
 	selectedTaskId,
 	onSelectTask,
+	spans = [],
 }: DashboardLayoutProps) {
 	const taskCount = tasks.length;
 	const completedCount = tasks.filter((t) => t.status === "COMPLETED").length;
@@ -102,6 +105,16 @@ export function DashboardLayout({
 
 			{/* Azure Service Usage */}
 			<AzureServiceUsagePanel agents={agents} taskCount={taskCount} currentSpend={currentSpend} />
+
+			{/* Reasoning Trace */}
+			{spans.length > 0 && (
+				<div>
+					<h2 className="text-xs font-semibold uppercase text-[--text-muted] tracking-wider mb-2">
+						Reasoning Trace
+					</h2>
+					<TraceViewer spans={spans} runId={runId} />
+				</div>
+			)}
 
 			{/* Action stream */}
 			<div>

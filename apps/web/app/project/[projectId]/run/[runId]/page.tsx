@@ -13,6 +13,7 @@ import type { AgentCardData } from "@/components/dashboard/AgentStatusCard";
 import type { TaskOutput } from "@/components/dashboard/FileTreePane";
 import { FixerDiffView } from "@/components/dashboard/FixerDiffView";
 import { RunDashboardPanes } from "@/components/dashboard/RunDashboardPanes";
+import type { TraceSpanData } from "@/components/dashboard/TraceViewer";
 import { PostRunActionsPanel } from "@/components/deployment/PostRunActionsPanel";
 import { SpecViewerPanel } from "@/components/spec/SpecViewerPanel";
 import { useRole } from "@/hooks/useRole";
@@ -126,6 +127,7 @@ export default function RunPage() {
 	const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
 	const [taskOutputs, setTaskOutputs] = useState<Record<string, TaskOutput>>({});
 	const [deploymentState, setDeploymentState] = useState<DeploymentState | null>(null);
+	const [spans, setSpans] = useState<TraceSpanData[]>([]);
 	const [showPauseModal, setShowPauseModal] = useState(false);
 	const [showSpec, setShowSpec] = useState(false);
 	const [selectedTask, setSelectedTask] = useState<PlanTask | null>(null);
@@ -206,12 +208,14 @@ export default function RunPage() {
 
 	const fetchStatus = useCallback(async () => {
 		try {
-			const [data, budgetData] = await Promise.all([
+			const [data, budgetData, spansData] = await Promise.all([
 				apiGet<RunApiResponse>(`/api/execution/${runId}`).catch(() => null),
 				apiGet<BudgetApiResponse>(`/api/budget/${runId}`).catch(() => null),
+				apiGet<{ spans: TraceSpanData[] }>(`/api/execution/${runId}/spans`).catch(() => null),
 			]);
 			if (data) processRunData(data);
 			if (budgetData) processBudgetData(budgetData);
+			if (spansData?.spans) setSpans(spansData.spans);
 		} catch {
 			// Silently handle fetch errors during polling
 		}
@@ -601,6 +605,7 @@ export default function RunPage() {
 					preservedTaskIds={preservedTaskIds}
 					selectedTaskId={selectedTask?.id ?? null}
 					onSelectTask={handleSelectTask}
+					spans={spans}
 				/>
 			</div>
 			{/* Fixer Diff Views */}

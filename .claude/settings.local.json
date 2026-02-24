@@ -36,7 +36,12 @@
       "Bash(git diff:*)",
       "Bash(gh api:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(az acr login --name blueflamecr)",
+      "Bash(head:*)",
+      "Bash(echo Docker not installed:*)",
+      "Bash(brew install:*)",
+      "Bash(az:*)"
     ]
   }
 }

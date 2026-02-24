@@ -10,8 +10,15 @@
  * Hybrid: in-memory RunState for hot execution + Cosmos DB for persistence.
  */
 
-import { SigmaRouter, analyzeFailure } from "@blueflame/foundry";
-import type { FixerConfig, RoutingDecision } from "@blueflame/foundry";
+import {
+	SigmaRouter,
+	SpanStatus,
+	analyzeFailure,
+	endSpan,
+	startAgentSpan,
+	startRunTrace,
+} from "@blueflame/foundry";
+import type { FixerConfig, RoutingDecision, TraceSpan } from "@blueflame/foundry";
 import type {
 	ActionEvent,
 	AgentState,
@@ -73,6 +80,12 @@ const agentProviderConfigs = new Map<string, RoutingDecision>();
 export function getAgentRoutingDecision(agentId: string): RoutingDecision | undefined {
 	return agentProviderConfigs.get(agentId);
 }
+
+/** Root trace spans keyed by runId — for App Insights + TraceViewer */
+const rootSpans = new Map<string, TraceSpan>();
+
+/** Active agent spans keyed by agentId — ended on completeTask/failTask */
+const activeSpans = new Map<string, TraceSpan>();
 
 /** Get routing log entries for a given run (for transparency) */
 export function getRoutingLog(): ReadonlyArray<RoutingDecision> {
@@ -233,6 +246,10 @@ export async function startExecution(plan: TaskPlan, lock: PlanLock): Promise<Re
 	runs.set(plan.runId, runState);
 	checkpointRun(runState);
 
+	// Start root trace span for this run (App Insights + TraceViewer)
+	const rootSpan = startRunTrace(plan.runId);
+	rootSpans.set(plan.runId, rootSpan);
+
 	// Auto-init budget with default ceiling based on estimated task costs
 	const estimatedCeiling = plan.tasks.reduce((sum, t) => sum + (t.estimatedCost ?? 0.1), 0) * 3;
 	initBudget(plan.runId, Math.max(estimatedCeiling, 5.0), plan.projectId);
@@ -359,6 +376,20 @@ export async function executeNextWave(runId: string): Promise<Result<AgentState[
 		// Store routing decision so task executor can use correct provider
 		agentProviderConfigs.set(agent.agentId, decision);
 
+		// Start agent trace span (child of root run span)
+		const rootSpan = rootSpans.get(runId);
+		if (rootSpan) {
+			const agentSpan = startAgentSpan(
+				runId,
+				rootSpan,
+				agent.agentId,
+				task.agentRole,
+				task.id,
+				decision,
+			);
+			activeSpans.set(agent.agentId, agentSpan);
+		}
+
 		// Mark task as running
 		task.status = TaskStatus.Running;
 
@@ -416,6 +447,17 @@ export async function completeTask(
 	if (agent) {
 		recordCost(agentId, runId, agent.model, tokensUsed, Math.ceil(tokensUsed * 0.3), run.projectId);
 		checkBudgetThresholds(runId);
+	}
+
+	// End agent trace span with success metrics
+	const agentSpan = activeSpans.get(agentId);
+	if (agentSpan) {
+		endSpan(agentSpan, SpanStatus.Ok, {
+			inputTokens: tokensUsed,
+			outputTokens: Math.ceil(tokensUsed * 0.3),
+			cost: costIncurred,
+		});
+		activeSpans.delete(agentId);
 	}
 
 	// Use explicit completingRole if provided, otherwise fall back to task.agentRole
@@ -478,6 +520,21 @@ export async function completeTask(
 		routingLog.push(verifierDecision);
 		const verifier = await spawnAgent(runId, AgentRole.Verifier, taskId, verifierDecision.model);
 		await updateAgentStatus(verifier.agentId, AgentStatus.Executing);
+
+		// Start verifier agent trace span
+		const verifierRootSpan = rootSpans.get(runId);
+		if (verifierRootSpan) {
+			const vSpan = startAgentSpan(
+				runId,
+				verifierRootSpan,
+				verifier.agentId,
+				AgentRole.Verifier,
+				taskId,
+				verifierDecision,
+			);
+			activeSpans.set(verifier.agentId, vSpan);
+		}
+
 		pushEvent(
 			run,
 			verifier.agentId,
@@ -551,6 +608,17 @@ export async function failTask(
 			run.projectId,
 		);
 		checkBudgetThresholds(runId);
+	}
+
+	// End agent trace span with error status
+	const agentSpan = activeSpans.get(agentId);
+	if (agentSpan) {
+		endSpan(agentSpan, SpanStatus.Error, {
+			inputTokens: tokensUsed,
+			outputTokens: Math.ceil(tokensUsed * 0.3),
+			cost: costIncurred,
+		});
+		activeSpans.delete(agentId);
 	}
 
 	// Use explicit failingRole if provided, otherwise fall back to task.agentRole
@@ -646,6 +714,20 @@ export async function failTask(
 		routingLog.push(fixerDecision);
 		const fixer = await spawnAgent(runId, AgentRole.Builder, taskId, fixerDecision.model);
 		await updateAgentStatus(fixer.agentId, AgentStatus.Executing);
+
+		// Start fixer agent trace span
+		const fixerRootSpan = rootSpans.get(runId);
+		if (fixerRootSpan) {
+			const fSpan = startAgentSpan(
+				runId,
+				fixerRootSpan,
+				fixer.agentId,
+				AgentRole.Builder,
+				taskId,
+				fixerDecision,
+			);
+			activeSpans.set(fixer.agentId, fSpan);
+		}
 
 		const retryDetail = errorMessage
 			? `Verifier failed task ${taskId}: ${errorMessage} (retry ${retryCount + 1}/${MAX_FIXER_RETRIES})`
@@ -1322,6 +1404,13 @@ function completeRun(run: RunState): void {
 	run.completedAt = new Date().toISOString();
 	checkpointRun(run);
 	notifyStatusChange(run.runId, run.status);
+
+	// End root trace span for App Insights export
+	const rootSpan = rootSpans.get(run.runId);
+	if (rootSpan) {
+		endSpan(rootSpan, hasFailed ? SpanStatus.Error : SpanStatus.Ok);
+		rootSpans.delete(run.runId);
+	}
 
 	// WF7: Extract learned patterns from completed tasks
 	extractPatternsFromRun({

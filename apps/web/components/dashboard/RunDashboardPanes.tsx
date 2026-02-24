@@ -10,6 +10,7 @@ import type { AgentCardData } from "./AgentStatusCard";
 import { CodeViewerPane } from "./CodeViewerPane";
 import { DashboardLayout } from "./DashboardLayout";
 import { FileTreePane, type TaskOutput } from "./FileTreePane";
+import type { TraceSpanData } from "./TraceViewer";
 
 interface RunDashboardPanesProps {
 	runId: string;
@@ -27,6 +28,7 @@ interface RunDashboardPanesProps {
 	preservedTaskIds?: string[];
 	selectedTaskId?: string | null;
 	onSelectTask?: (task: PlanTask) => void;
+	spans?: TraceSpanData[];
 }
 
 /**
@@ -49,6 +51,7 @@ export function RunDashboardPanes({
 	preservedTaskIds,
 	selectedTaskId,
 	onSelectTask,
+	spans,
 }: RunDashboardPanesProps) {
 	const [selectedFile, setSelectedFile] = useState<{ path: string; content: string } | null>(null);
 
@@ -86,6 +89,7 @@ export function RunDashboardPanes({
 								preservedTaskIds={preservedTaskIds}
 								selectedTaskId={selectedTaskId}
 								onSelectTask={onSelectTask}
+								spans={spans}
 							/>
 						</div>
 					}

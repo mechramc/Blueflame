@@ -2,7 +2,8 @@
  * SignalR hub — Socket.IO server integrated with Express.
  *
  * Provides real-time communication between API and web clients.
- * Uses Socket.IO locally; upgrade to Azure Web PubSub Socket.IO adapter for production.
+ * Uses Socket.IO in-memory adapter locally; Azure Web PubSub Socket.IO adapter for production
+ * when AZURE_SIGNALR_CONNECTION_STRING is set.
  */
 
 import type { Server as HttpServer } from "node:http";
@@ -27,8 +28,11 @@ let io: TypedServer | null = null;
 /**
  * Creates and attaches the Socket.IO server to an HTTP server.
  * Call this once after `app.listen()`.
+ *
+ * When AZURE_SIGNALR_CONNECTION_STRING is set, attaches the Azure Web PubSub
+ * Socket.IO adapter for multi-instance message routing in production.
  */
-export function createHub(httpServer: HttpServer): TypedServer {
+export async function createHub(httpServer: HttpServer): Promise<TypedServer> {
 	io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(
 		httpServer,
 		{
@@ -39,6 +43,25 @@ export function createHub(httpServer: HttpServer): TypedServer {
 			transports: ["websocket", "polling"],
 		},
 	);
+
+	// Attach Azure Web PubSub adapter when connection string is available
+	const connectionString = process.env.AZURE_SIGNALR_CONNECTION_STRING;
+	if (connectionString) {
+		try {
+			const { useAzureSocketIO } = await import("@azure/web-pubsub-socket.io");
+			// Cast to satisfy Azure adapter's generic Server type expectation
+			await useAzureSocketIO(io as unknown as Parameters<typeof useAzureSocketIO>[0], {
+				hub: "blueflame",
+				connectionString,
+			});
+			console.log("[SignalR] Azure Web PubSub adapter attached");
+		} catch (err) {
+			console.error("[SignalR] Failed to attach Azure Web PubSub adapter:", err);
+			console.log("[SignalR] Falling back to in-memory adapter");
+		}
+	} else {
+		console.log("[SignalR] Using in-memory adapter (local dev)");
+	}
 
 	io.on("connection", (socket) => {
 		console.log(`[SignalR] Client connected: ${socket.id}`);

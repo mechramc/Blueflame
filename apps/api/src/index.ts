@@ -93,7 +93,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 const httpServer = createServer(app);
 
-createHub(httpServer);
+createHub(httpServer).catch((err) => console.error("[SignalR] Hub initialization failed:", err));
 
 // ─── Process-level safety nets (log but don't crash) ───
 process.on("unhandledRejection", (reason) => {

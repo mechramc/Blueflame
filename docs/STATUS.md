@@ -298,18 +298,28 @@
 | FailureTimeline: distinguish "Overridden" vs "Remediated" badge | UI | P0 | **DONE** |
 | Failures page: pass runId + remediationStatus to components | UI | P0 | **DONE** |
 
+### Session 26 — Deferred Enterprise Features (S16-004, S16-005)
+| Task | System | Priority | Status |
+|------|--------|----------|--------|
+| Azure Web PubSub Socket.IO adapter (conditional) | S16 | P1 | **DONE** |
+| Async hub creation + fallback to in-memory | S16 | P1 | **DONE** |
+| Orchestrator span instrumentation (start/end lifecycle) | S16 | P1 | **DONE** |
+| GET /execution/:runId/spans API endpoint | S16 | P1 | **DONE** |
+| TraceViewer wired into run dashboard (fetch + render) | S16 | P1 | **DONE** |
+| Biome lint auto-fix (import ordering, formatting) | CI/CD | P0 | **DONE** |
+
 ### Final — Demo + Submit
 | Task | Priority | Status |
 |------|----------|--------|
-| S16-004: Azure SignalR migration | P1 | Deferred (Socket.IO adequate) |
-| S16-005: Application Insights SDK | P1 | Deferred (OTel spans cover this) |
+| Docker rebuild + push to ACR | P0 | Not started |
+| Redeploy to Azure Container Apps | P0 | Not started |
 | End-to-end testing (Spec→Plan→Execute flow) | P0 | In progress |
 | Demo recording (7 workflows) | P0 | Not started |
 | Submission package | P0 | Not started |
 
 ## Task Progress
 - **MVP Complete**: 34/34 (all S1–S11 + demo wiring + UI redesign)
-- **Enterprise Streams**: 15/18 complete (S12–S16, 2 deferred, 1 skipped)
+- **Enterprise Streams**: 17/18 complete (S12–S16, 0 deferred, 1 skipped)
 - **Gap Resolution**: 12/12 phases complete (all 13 gaps resolved)
 - **SCR Governance + Delta Execution**: 7/7 (types, service, routes, orchestrator, UI, wiring)
 - **Session 14 UX Fixes**: 11/11 (execution flow, stats, delta detection, retry, CI)
@@ -328,8 +338,9 @@
 - **Session 22 On-Demand RCA**: 3/3 (triggerAnalysis service, analyze-failure endpoint, frontend auto-trigger)
 - **Session 23 Azure Deployment**: 6/6 (0.0.0.0 bind, Dockerfile build arg, Docker build+push, API deploy, Web deploy, smoke test)
 - **Session 24 Demo Script Gaps**: 6/6 (PRD upload, constraint registry, budget input, remediation execute, sigma on DAG, task output panel)
-- **Grand Total**: 159/162 complete (2 deferred, 3 demo remaining)
-- **Critical path**: E2E testing → demo recording → submission package
+- **Session 26 Deferred Enterprise**: 6/6 (SignalR adapter, async hub, orchestrator spans, spans API, TraceViewer wiring, lint fix)
+- **Grand Total**: 165/167 complete (0 deferred, 5 demo/deploy remaining)
+- **Critical path**: Docker rebuild → redeploy → E2E testing → demo recording → submission package
 
 ## Enterprise Streams Overview
 
@@ -339,7 +350,7 @@
 | **Enterprise Governance** | S13 | 3 | **3/3** | OTel tracing + compliance dashboard + trace viewer |
 | **Spec Delta Detection** | S14 | 2 | **2/2** | Spec change → PRESERVE/REBUILD/NEW/REMOVE per task |
 | **CI/CD Templates** | S15 | 5 | **5/5** | Cosmos failures + verifier templates + ADO + normalizer |
-| **Enterprise Budgeting** | S16 | 5 | **3/5** | Budget pools + chargeback (SignalR + AppInsights deferred) |
+| **Enterprise Budgeting** | S16 | 5 | **5/5** | Budget pools + chargeback + SignalR adapter + App Insights spans |
 | **SCR Governance** | S14+ | 7 | **7/7** | Spec-Freeze Doctrine, SCR workflow, DiffPack, TaskPatch, delta execution, Patch Mode |
 
 ## Decisions Log
