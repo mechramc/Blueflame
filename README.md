@@ -3,7 +3,7 @@
 **The Governed AI Software Refinery**
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-540%2B%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-636%20passing-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 [![Hackathon](https://img.shields.io/badge/Microsoft%20AI%20Dev%20Days-2026-purple)]()
@@ -165,7 +165,7 @@ Persistent, project-level rules (architectural, security, performance) survive a
 | IaC | Azure Bicep | Repeatable infrastructure deployment |
 | Monorepo | Turborepo + npm workspaces | Build orchestration |
 | Linting | Biome | Fast lint + format |
-| Testing | Vitest (unit) + Playwright (E2E) | 540+ tests |
+| Testing | Vitest (unit) + Playwright (E2E) | 636 tests |
 
 ---
 
@@ -270,13 +270,13 @@ npx turbo dev
 ## Testing
 
 ```
-Total: 540+ tests across 7 packages
-├── apps/api:      234 tests (services, routes, middleware, webhooks, SignalR, SCR)
-├── apps/web:      128 tests (components, hooks, dashboard, animations, budget, SCR panel)
-├── packages/foundry: 150 tests (6 agents, prompts, parsers, σ-routing)
-├── packages/cosmos:  44 tests (repositories, change feed)
+Total: 636 tests across 6 packages
+├── apps/api:        242 tests (services, routes, middleware, webhooks, SignalR, SCR)
+├── apps/web:        128 tests (components, hooks, dashboard, animations, budget, SCR panel)
+├── packages/foundry:  170 tests (6 agents, prompts, parsers, σ-routing)
+├── packages/cosmos:    44 tests (repositories, change feed)
 ├── packages/github-app: 24 tests (branches, PRs, actions, diffs)
-└── packages/shared:   28 tests (hash, types, schemas)
+└── packages/shared:     28 tests (hash, types, schemas)
 ```
 
 All tests run in CI via GitHub Actions on every PR.

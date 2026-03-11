@@ -239,3 +239,4 @@ See `.env.example` for all required variables. Key groups:
 - Fonts loaded via CSS variable strategy — `font-sans` and `font-mono` classes work via Tailwind config
 - ACAR σ-routing requires 3 model deployments in Azure OpenAI (gpt-4o-mini, gpt-4o, o1) + API keys for Anthropic, Google, OpenAI Direct
 - Multi-provider env vars: `ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY`, `OPENAI_API_KEY` (direct, non-Azure)
+- License: MIT (see LICENSE file in repo root)

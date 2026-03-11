@@ -21,7 +21,7 @@
 - **Known issue**: None
 - **Live API**: `https://blueflame-api-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (revision 0000066, current)
 - **Live Web**: `https://blueflame-web-dev.blackfield-ff30bbff.centralus.azurecontainerapps.io` (revision 0000059, current)
-- **Licensing**: BSL 1.1 (source-available, Murai Labs commercial ownership)
+- **Licensing**: MIT
 
 ## What Just Happened (Sessions 10–27)
 
@@ -587,4 +587,4 @@ None — all changes committed and pushed.
 - Catalog models (Phi-4, Llama) use `/openai/v1/` path with NO api-version; OpenAI models use `/openai/deployments/{name}` with api-version. Phi-4 removed from JSON-requiring roles (only used for Explainer prose).
 - ESM import hoisting: never call functions that read `process.env` at module load time — use lazy initialization
 - Authorize endpoint requires `Blueflame_Authorizer` role (dev mode: set `X-Dev-Role` header)
-- **Licensing**: BSL 1.1 — treat as commercially owned, not open source
+- **Licensing**: MIT
